@@ -5,6 +5,9 @@ import {
   window,
   Uri,
   ViewColumn,
+  workspace,
+  Selection,
+  TextEditorRevealType,
 } from "vscode";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
@@ -160,21 +163,44 @@ export class FlamegraphPanel {
    */
   private _setWebviewMessageListener(webview: Webview) {
     webview.onDidReceiveMessage(
-      (message: any) => {
-        const command = message.command;
-        const text = message.text;
+      async (message: any) => {
+        const command = message.command
 
         switch (command) {
           case "hello":
-            // Code that should run in response to the hello message command
-            window.showInformationMessage(text);
-            return;
-          // Add more switch case statements here as more webview message commands
-          // are created within the webview context (i.e. inside media/main.js)
+            window.showInformationMessage(message.text)
+            return
+
+          case "open-file":
+            try {
+              // Find the file in the workspace
+              const files = await workspace.findFiles(`**/${message.file}`)
+              
+              if (files.length === 0) {
+                window.showErrorMessage(`File not found: ${message.file}`)
+                return
+              }
+
+              // Open the first matching file
+              const document = await workspace.openTextDocument(files[0])
+              const editor = await window.showTextDocument(document, {
+                viewColumn: ViewColumn.One,
+                preserveFocus: false
+              })
+
+              // Move cursor to specified line
+              const line = Math.max(0, message.line - 1) // Convert to 0-based line number
+              const range = document.lineAt(line).range
+              editor.selection = new Selection(range.start, range.start)
+              editor.revealRange(range, TextEditorRevealType.InCenter)
+            } catch (error) {
+              window.showErrorMessage(`Error opening file: ${error}`)
+            }
+            return
         }
       },
       undefined,
       this._disposables
-    );
+    )
   }
 }

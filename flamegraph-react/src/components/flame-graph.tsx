@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import './flame-graph.css'
+import { vscode } from '../utilities/vscode'
 
 export interface TreeNode {
   uid: number
@@ -68,6 +69,19 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
       opacity: node.depth < focusNode.depth ? 0.35 : 1,
     }
 
+    const handleClick = (e: React.MouseEvent) => {
+      if ((e.metaKey || e.ctrlKey) && node.file && node.line) {
+        // Send message to extension
+        vscode.postMessage({
+          command: 'open-file',
+          file: node.file,
+          line: node.line
+        })
+      } else {
+        setFocusNode(node)
+      }
+    }
+
     const className = `graph-node ${
       isHovered && isCommandPressed ? 'same-line-id command-pressed' : ''
     }`
@@ -77,7 +91,7 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
         key={node.uid}
         className={className}
         style={style}
-        onClick={() => setFocusNode(node)}
+        onClick={handleClick}
         onMouseEnter={() => setHoveredLineId(node.fileLineId)}
         onMouseLeave={() => setHoveredLineId(null)}
       >
