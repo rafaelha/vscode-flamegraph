@@ -15,8 +15,7 @@ export function loadProfileCommand(context: vscode.ExtensionContext) {
       return;
     }
     registerProfile(context, profileUri);
-
-    vscode.window.showInformationMessage("Profile loaded successfully.");
+    vscode.commands.executeCommand("flamegraph.showFlamegraph");
   });
 }
 
@@ -90,7 +89,7 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
     terminal.show();
 
     vscode.window.showInformationMessage(
-      "Profiler started. The profile will be registered when finished."
+      "Profiler started. The profile will be shown when finished."
     );
 
     // Wait for the terminal to finish
