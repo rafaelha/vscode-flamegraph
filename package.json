@@ -11,14 +11,23 @@
     "vscode": "^1.75.0"
   },
   "main": "./out/extension.js",
-  "activationEvents": [
-    "onCommand:flamegraph.showFlamegraph"
-  ],
   "contributes": {
     "commands": [
       {
         "command": "flamegraph.showFlamegraph",
-        "title": "Hello World (React + CRA): Show"
+        "title": "Flamegraph: Show"
+      },
+      {
+        "command": "flamegraph.loadProfile",
+        "title": "Flamegraph: Load Profile"
+      },
+      {
+        "command": "flamegraph.toggleProfile",
+        "title": "Flamegraph: Toggle Inline Profile"
+      },
+      {
+        "command": "flamegraph.runProfiler",
+        "title": "Flamegraph: Run Profiler"
       }
     ]
   },
