@@ -65,21 +65,27 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
     }
 
     const relativePath = path.relative(workspaceFolder.uri.fsPath, filePath);
-    const terminal = vscode.window.createTerminal("PySpy Profiler");
+    let terminal: vscode.Terminal;
 
     const platform = os.platform();
     if (platform === "darwin" || platform === "linux") {
       // macOS or Linux
+      terminal = vscode.window.createTerminal("PySpy Profiler");
       terminal.sendText(
-        `sudo py-spy record -o .pyspy-profile --format raw -- python ${relativePath}`
+        `sudo py-spy record -o .pyspy-profile --format raw -- python ${relativePath} && exit`
       );
     } else if (platform === "win32") {
       // Windows
+      terminal = vscode.window.createTerminal("PySpy Profiler", "cmd.exe");
       terminal.sendText(
-        `py-spy record -o .pyspy-profile --format raw -s python ${relativePath}`
+        `py-spy record -o .pyspy-profile --format raw -s python ${relativePath.replace(
+          /\\/g,
+          "/"
+        )} && exit`
       );
     } else {
-      console.error("Unsupported platform");
+      vscode.window.showErrorMessage("Unsupported platform");
+      return;
     }
     terminal.show();
 
@@ -93,7 +99,7 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
         if (closedTerminal === terminal) {
           disposable.dispose();
 
-          // Check if profile.txt exists
+          // Check if .pyspy-profile exists
           const profileUri = vscode.Uri.file(
             path.join(workspaceFolder.uri.fsPath, ".pyspy-profile")
           );
@@ -103,9 +109,9 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
             await registerProfile(context, profileUri);
             context.workspaceState.update("profileUri", profileUri);
             context.workspaceState.update("profileVisible", true);
-            vscode.window.showInformationMessage(
-              "Profile registered successfully."
-            );
+
+            // open the flamegraph
+            vscode.commands.executeCommand("flamegraph.showFlamegraph");
           } catch {
             vscode.window.showErrorMessage(
               "Profile file not found after profiling."
