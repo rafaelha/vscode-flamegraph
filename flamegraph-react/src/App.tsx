@@ -1,26 +1,6 @@
 import { FlameGraph, TreeNode } from './components/flame-graph'
-import React, { useState, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import './tailwind.css'
-
-const MYDATA = `<module> (myproject/profile_test.py:20);main (myproject/profile_test.py:10);<listcomp> (myproject/profile_test.py:10) 26
-<module> (myproject/profile_test.py:21);outer_func (myproject/profile_test.py:17);main (myproject/profile_test.py:12);<listcomp> (myproject/profile_test.py:12) 56
-<module> (myproject/profile_test.py:21);outer_func (myproject/profile_test.py:17);main (myproject/profile_test.py:10) 8
-<module> (myproject/profile_test.py:21);outer_func (myproject/profile_test.py:17);main (myproject/profile_test.py:10);<listcomp> (myproject/profile_test.py:10) 33
-<module> (myproject/profile_test.py:21);outer_func (myproject/profile_test.py:17);main (myproject/profile_test.py:11);<listcomp> (myproject/profile_test.py:11) 94
-<module> (myproject/profile_test.py:20) 25
-<module> (myproject/profile_test.py:22);external_func (myproject/external_func.py:5);<listcomp> (myproject/external_func.py:5) 73
- 4
-<module> (myproject/profile_test.py:22);external_func (myproject/external_func.py:4) 2
-<module> (myproject/profile_test.py:20);main (myproject/profile_test.py:11) 33
-<module> (myproject/profile_test.py:22);external_func (myproject/external_func.py:3) 2
-<module> (myproject/profile_test.py:1);_find_and_load (<frozen importlib._bootstrap>:1176);_find_and_load_unlocked (<frozen importlib._bootstrap>:1147);_load_unlocked (<frozen importlib._bootstrap>:690);exec_module (<frozen importlib._bootstrap_external>:940);_call_with_frames_removed (<frozen importlib._bootstrap>:241);<module> (numpy/__init__.py:159);_handle_fromlist (<frozen importlib._bootstrap>:1232);_call_with_frames_removed (<frozen importlib._bootstrap>:241);_find_and_load (<frozen importlib._bootstrap>:1176);_find_and_load_unlocked (<frozen importlib._bootstrap>:1147);_load_unlocked (<frozen importlib._bootstrap>:690);exec_module (<frozen importlib._bootstrap_external>:940);_call_with_frames_removed (<frozen importlib._bootstrap>:241);<module> (numpy/ma/__init__.py:42);_handle_fromlist (<frozen importlib._bootstrap>:1232);_call_with_frames_removed (<frozen importlib._bootstrap>:241);_find_and_load (<frozen importlib._bootstrap>:1176);_find_and_load_unlocked (<frozen importlib._bootstrap>:1147);_load_unlocked (<frozen importlib._bootstrap>:690);exec_module (<frozen importlib._bootstrap_external>:940);_call_with_frames_removed (<frozen importlib._bootstrap>:241);<module> (numpy/ma/core.py:24);_find_and_load (<frozen importlib._bootstrap>:1176);_find_and_load_unlocked (<frozen importlib._bootstrap>:1147);_load_unlocked (<frozen importlib._bootstrap>:690);exec_module (<frozen importlib._bootstrap_external>:940);_call_with_frames_removed (<frozen importlib._bootstrap>:241);<module> (inspect.py:2654) 1
-<module> (myproject/profile_test.py:20);main (myproject/profile_test.py:11);<listcomp> (myproject/profile_test.py:11) 112
-<module> (myproject/profile_test.py:21);outer_func (myproject/profile_test.py:17);main (myproject/profile_test.py:11) 21
-<module> (myproject/profile_test.py:20);main (myproject/profile_test.py:10) 10
-<module> (myproject/profile_test.py:22);external_func (myproject/external_func.py:5) 20
-<module> (myproject/profile_test.py:21);outer_func (myproject/profile_test.py:17) 10
-<module> (myproject/profile_test.py:1);_find_and_load (<frozen importlib._bootstrap>:1176);_find_and_load_unlocked (<frozen importlib._bootstrap>:1147);_load_unlocked (<frozen importlib._bootstrap>:690);exec_module (<frozen importlib._bootstrap_external>:940);_call_with_frames_removed (<frozen importlib._bootstrap>:241);<module> (numpy/__init__.py:157);_handle_fromlist (<frozen importlib._bootstrap>:1232);_call_with_frames_removed (<frozen importlib._bootstrap>:241);_find_and_load (<frozen importlib._bootstrap>:1176);_find_and_load_unlocked (<frozen importlib._bootstrap>:1147);_load_unlocked (<frozen importlib._bootstrap>:690);exec_module (<frozen importlib._bootstrap_external>:940);_call_with_frames_removed (<frozen importlib._bootstrap>:241);<module> (numpy/random/__init__.py:180);_handle_fromlist (<frozen importlib._bootstrap>:1232);_call_with_frames_removed (<frozen importlib._bootstrap>:241);_find_and_load (<frozen importlib._bootstrap>:1176);_find_and_load_unlocked (<frozen importlib._bootstrap>:1147);_load_unlocked (<frozen importlib._bootstrap>:690);exec_module (<frozen importlib._bootstrap_external>:940);_call_with_frames_removed (<frozen importlib._bootstrap>:241);<module> (numpy/random/_pickle.py:2);_find_and_load (<frozen importlib._bootstrap>:1176);_find_and_load_unlocked (<frozen importlib._bootstrap>:1147);_load_unlocked (<frozen importlib._bootstrap>:676);module_from_spec (<frozen importlib._bootstrap>:573);create_module (<frozen importlib._bootstrap_external>:1233);_call_with_frames_removed (<frozen importlib._bootstrap>:241) 1
-<module> (myproject/profile_test.py:20);main (myproject/profile_test.py:12);<listcomp> (myproject/profile_test.py:12) 78`
 
 function hashString(str: string): number {
   let hash = 0
@@ -42,6 +22,25 @@ function getNodeColor(file?: string, line?: number, functionName?: string): stri
   const lightness = 25 + (line % 10)
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`
 }
+
+function sortTreeNodeChildren(node: TreeNode): TreeNode {
+  // Sort current node's children
+  if (node.children) {
+    node.children.sort((a, b) => {
+      // First compare by file
+      const fileCompare = (a.file || '').localeCompare(b.file || '')
+      if (fileCompare !== 0) return fileCompare
+      // Then by line number
+      return (a.line || 0) - (b.line || 0)
+    })
+    
+    // Recursively sort children's children
+    node.children.forEach(sortTreeNodeChildren)
+  }
+  
+  return node
+}
+
 
 function parseProfile(data: string): TreeNode {
   const lines = data.trim().split('\n')
@@ -87,7 +86,6 @@ function parseProfile(data: string): TreeNode {
 
     
     frames.forEach(frame => {
-      // const regex = /\s*(\w+)\s+\(([^:]+):(\d+)\)/;
       const regex = /\s*([<\w]+>?)\s+\(([^:]+):(\d+)\)/;
       const match = frame.match(regex)
       if (!match) {
@@ -117,7 +115,7 @@ function parseProfile(data: string): TreeNode {
     root.value += value
   })
 
-  return root
+  return sortTreeNodeChildren(root)
 }
 
 function getUniqueModules(data: TreeNode): Array<{ name: string, color: string, totalValue: number }> {
@@ -151,40 +149,42 @@ function getUniqueModules(data: TreeNode): Array<{ name: string, color: string, 
     .slice(0, 5) // Take only top 5
 }
 
+declare global {
+  interface Window {
+    acquireVsCodeApi?: () => {
+      postMessage: (message: any) => void
+    }
+  }
+}
+
 export default function Home() {
-  const [parsedData, setParsedData] = useState<TreeNode>(parseProfile(MYDATA))
+  const [parsedData, setParsedData] = useState<TreeNode | null>(null)
 
-  const moduleColors = useMemo(() => getUniqueModules(parsedData), [parsedData])
-
-  function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const content = e.target?.result as string
-      if (content) {
-        setParsedData(parseProfile(content))
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const message = event.data
+      if (message.type === 'profile-data') {
+        setParsedData(parseProfile(message.data))
       }
     }
-    reader.readAsText(file)
+
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [])
+
+  const moduleColors = useMemo(() => 
+    parsedData ? getUniqueModules(parsedData) : [], [parsedData]
+  )
+
+  if (!parsedData) {
+    return <div className="flex items-center justify-center min-h-screen">
+      <p className="text-gray-500">Loading profile data...</p>
+    </div>
   }
 
   return (
     <div className="App min-h-screen relative">
       <div className="pb-12">
-        <div className="mb-4">
-          <label htmlFor="file-upload" className="cursor-pointer bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Upload Profile File
-          </label>
-          <input
-            id="file-upload"
-            type="file"
-            accept=".txt"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-        </div>
         <FlameGraph data={parsedData} />
       </div>
       

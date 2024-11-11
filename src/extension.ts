@@ -13,7 +13,10 @@ export function activate(context: ExtensionContext) {
   const showFlamegraphCommand = commands.registerCommand(
     "flamegraph.showFlamegraph",
     () => {
-      FlamegraphPanel.render(context.extensionUri);
+      const profileData: string | undefined = context.workspaceState.get("profileData");
+      if (profileData) {
+        FlamegraphPanel.render(context.extensionUri, profileData);
+      }
     }
   );
 
