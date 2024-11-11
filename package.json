@@ -1,0 +1,48 @@
+{
+  "name": "flamegraph-react-cra",
+  "displayName": "flamegraph-react-cra",
+  "description": "A hello world sample extension to demonstrate using React + CRA with the Webview UI Toolkit for VS Code.",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/flamegraph-react-cra.git"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onCommand:flamegraph.showFlamegraph"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "flamegraph.showFlamegraph",
+        "title": "Hello World (React + CRA): Show"
+      }
+    ]
+  },
+  "scripts": {
+    "install:all": "npm install && cd flamegraph-react && npm install",
+    "start:webview": "cd flamegraph-react && npm run start",
+    "build:webview": "cd flamegraph-react && npm run build",
+    "test:webview": "cd flamegraph-react && npm run test",
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.1.3",
+    "@types/node": "^12.11.7",
+    "@types/vscode": "^1.46.0",
+    "@typescript-eslint/eslint-plugin": "^4.14.1",
+    "@typescript-eslint/parser": "^4.14.1",
+    "eslint": "^7.19.0",
+    "glob": "^7.1.6",
+    "prettier": "^2.2.1",
+    "typescript": "^4.1.3",
+    "vscode-test": "^1.5.0"
+  }
+}
