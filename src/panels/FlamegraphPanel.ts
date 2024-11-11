@@ -59,12 +59,12 @@ export class FlamegraphPanel {
    */
   public static render(extensionUri: Uri, profileData: string) {
     if (FlamegraphPanel.currentPanel) {
-      FlamegraphPanel.currentPanel._panel.reveal(ViewColumn.One);
+      FlamegraphPanel.currentPanel._panel.reveal(ViewColumn.Beside);
     } else {
       const panel = window.createWebviewPanel(
         "showFlamegraph",
         "Flamegraph profile",
-        ViewColumn.One,
+        ViewColumn.Beside,
         {
           enableScripts: true,
           retainContextWhenHidden: true,
