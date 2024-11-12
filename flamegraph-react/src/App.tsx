@@ -124,12 +124,12 @@ function getUniqueModules(data: TreeNode): Array<{ name: string, color: string, 
   function traverse(node: TreeNode) {
     if (node.file) {
       const moduleName = node.file.replace(/\//g, '\\').split('\\')[0]
-      if (!moduleMap.has(moduleName)) {
+      if (!moduleName.startsWith('<') && !moduleMap.has(moduleName)) {
         moduleMap.set(moduleName, {
           color: getNodeColor(node.file, 1, 'dummy'),
           totalValue: node.value
         })
-      } else {
+      } else if (!moduleName.startsWith('<')) {
         const current = moduleMap.get(moduleName)!
         moduleMap.set(moduleName, {
           ...current,
@@ -146,7 +146,7 @@ function getUniqueModules(data: TreeNode): Array<{ name: string, color: string, 
   return Array.from(moduleMap.entries())
     .map(([name, { color, totalValue }]) => ({ name, color, totalValue }))
     .sort((a, b) => b.totalValue - a.totalValue)
-    .slice(0, 5) // Take only top 5
+    .slice(0, 3) // Take only top 5
 }
 
 declare global {
