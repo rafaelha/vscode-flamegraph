@@ -25,6 +25,8 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
   const [hoveredLineId, setHoveredLineId] = useState<number | null>(null)
   const [isCommandPressed, setIsCommandPressed] = useState(false)
 
+  const rootValue = data.value
+
   React.useEffect(() => {
     setFocusNode(data)
   }, [data])
@@ -86,6 +88,15 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
       isHovered && isCommandPressed ? 'same-line-id command-pressed' : ''
     }`
 
+    // Add tooltip content
+    const percentageOfTotal = ((node.value / rootValue) * 100).toFixed(1)
+    const percentageOfFocus = ((node.value / focusNode.value) * 100).toFixed(1)
+    const tooltipContent = [
+      `${node.name}`,
+      node.file && node.line ? `${node.file}:${node.line}` : null,
+      `${node.value / 100}s / ${percentageOfTotal}% / ${percentageOfFocus}%`,
+    ].filter(Boolean).join('\n')
+
     return (
       <div
         key={node.uid}
@@ -94,6 +105,7 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
         onClick={handleClick}
         onMouseEnter={() => setHoveredLineId(node.fileLineId)}
         onMouseLeave={() => setHoveredLineId(null)}
+        title={tooltipContent}
       >
         {renderNodeContent(node)}
       </div>
