@@ -66,12 +66,14 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
     const relativePath = path.relative(workspaceFolder.uri.fsPath, filePath);
 
     // Get the Python path from VSCode settings
-    const pythonConfig = vscode.workspace.getConfiguration('python')
-    const pythonPath = pythonConfig.get<string>('defaultInterpreterPath')
-    
+    const pythonConfig = vscode.workspace.getConfiguration("python");
+    const pythonPath = pythonConfig.get<string>("defaultInterpreterPath");
+
     if (!pythonPath) {
-      vscode.window.showErrorMessage('No Python interpreter selected. Please select a Python interpreter in VSCode.')
-      return
+      vscode.window.showErrorMessage(
+        "No Python interpreter selected. Please select a Python interpreter in VSCode."
+      );
+      return;
     }
 
     let terminal: vscode.Terminal;
@@ -79,12 +81,18 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
     if (platform === "darwin" || platform === "linux") {
       terminal = vscode.window.createTerminal("PySpy Profiler");
       terminal.sendText(
-        `sudo py-spy record -o .pyspy-profile --format raw -- "${pythonPath}" ${relativePath.replace(/ /g, '\\ ')} && exit`
+        `sudo py-spy record -o .pyspy-profile --format raw -- "${pythonPath}" ${relativePath.replace(
+          / /g,
+          "\\ "
+        )} && exit`
       );
     } else if (platform === "win32") {
       terminal = vscode.window.createTerminal("PySpy Profiler", "cmd.exe");
       terminal.sendText(
-        `py-spy record -o .pyspy-profile --format raw -s "${pythonPath}" "${relativePath.replace(/\\/g, '/')}" && exit`
+        `py-spy record -o .pyspy-profile --format raw -s "${pythonPath}" "${relativePath.replace(
+          /\\/g,
+          "/"
+        )}" && exit`
       );
     } else {
       vscode.window.showErrorMessage("Unsupported platform");
