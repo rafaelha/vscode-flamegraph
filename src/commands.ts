@@ -68,19 +68,16 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
 
     const platform = os.platform();
     if (platform === "darwin" || platform === "linux") {
-      // macOS or Linux
+      // macOS or Linux - Escape spaces with backslashes
       terminal = vscode.window.createTerminal("PySpy Profiler");
       terminal.sendText(
-        `sudo py-spy record -o .pyspy-profile --format raw -- python ${relativePath} && exit`
+        `sudo py-spy record -o .pyspy-profile --format raw -- python ${relativePath.replace(/ /g, '\\ ')} && exit`
       );
     } else if (platform === "win32") {
-      // Windows
+      // Windows - Wrap the entire path in quotes
       terminal = vscode.window.createTerminal("PySpy Profiler", "cmd.exe");
       terminal.sendText(
-        `py-spy record -o .pyspy-profile --format raw -s python ${relativePath.replace(
-          /\\/g,
-          "/"
-        )} && exit`
+        `py-spy record -o .pyspy-profile --format raw -s python "${relativePath.replace(/\\/g, '/')}" && exit`
       );
     } else {
       vscode.window.showErrorMessage("Unsupported platform");
