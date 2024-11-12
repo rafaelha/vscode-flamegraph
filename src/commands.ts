@@ -67,7 +67,17 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
 
     // Get the Python path from VSCode settings
     const pythonConfig = vscode.workspace.getConfiguration("python");
-    const pythonPath = pythonConfig.get<string>("defaultInterpreterPath");
+    // const pythonPath = pythonConfig.get<string>("defaultInterpreterPath");
+    let pythonPath = pythonConfig.get<string>("pythonPath");
+
+    const pythonExtension = vscode.extensions.getExtension("ms-python.python");
+    if (pythonExtension) {
+      await pythonExtension.activate();
+      pythonPath = pythonExtension.exports.settings
+        .getExecutionDetails()
+        .execCommand.join(" ");
+      console.log("Python Path:", pythonPath);
+    }
 
     if (!pythonPath) {
       vscode.window.showErrorMessage(
