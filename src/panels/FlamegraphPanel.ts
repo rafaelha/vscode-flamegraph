@@ -60,11 +60,11 @@ export class FlamegraphPanel {
   public static render(extensionUri: Uri, profileData: string) {
     if (FlamegraphPanel.currentPanel) {
       // Reveal the panel and update the profile data
-      FlamegraphPanel.currentPanel._panel.reveal(ViewColumn.Beside)
-      FlamegraphPanel.currentPanel._panel.webview.postMessage({ 
-        type: 'profile-data',
-        data: profileData 
-      })
+      FlamegraphPanel.currentPanel._panel.reveal(ViewColumn.Beside);
+      FlamegraphPanel.currentPanel._panel.webview.postMessage({
+        type: "profile-data",
+        data: profileData,
+      });
     } else {
       const panel = window.createWebviewPanel(
         "showFlamegraph",
@@ -78,14 +78,14 @@ export class FlamegraphPanel {
             Uri.joinPath(extensionUri, "flamegraph-react/build"),
           ],
         }
-      )
+      );
 
-      FlamegraphPanel.currentPanel = new FlamegraphPanel(panel, extensionUri)
-      
-      panel.webview.postMessage({ 
-        type: 'profile-data',
-        data: profileData 
-      })
+      FlamegraphPanel.currentPanel = new FlamegraphPanel(panel, extensionUri);
+
+      panel.webview.postMessage({
+        type: "profile-data",
+        data: profileData,
+      });
     }
   }
 
@@ -169,43 +169,43 @@ export class FlamegraphPanel {
   private _setWebviewMessageListener(webview: Webview) {
     webview.onDidReceiveMessage(
       async (message: any) => {
-        const command = message.command
+        const command = message.command;
 
         switch (command) {
           case "hello":
-            window.showInformationMessage(message.text)
-            return
+            window.showInformationMessage(message.text);
+            return;
 
           case "open-file":
             try {
               // Find the file in the workspace
-              const files = await workspace.findFiles(`**/${message.file}`)
-              
+              const files = await workspace.findFiles(`**/${message.file}`);
+
               if (files.length === 0) {
-                window.showErrorMessage(`File not found: ${message.file}`)
-                return
+                window.showErrorMessage(`File not found: ${message.file}`);
+                return;
               }
 
               // Open the first matching file
-              const document = await workspace.openTextDocument(files[0])
+              const document = await workspace.openTextDocument(files[0]);
               const editor = await window.showTextDocument(document, {
                 viewColumn: ViewColumn.One,
-                preserveFocus: false
-              })
+                preserveFocus: false,
+              });
 
               // Move cursor to specified line
-              const line = Math.max(0, message.line - 1) // Convert to 0-based line number
-              const range = document.lineAt(line).range
-              editor.selection = new Selection(range.start, range.start)
-              editor.revealRange(range, TextEditorRevealType.InCenter)
+              const line = Math.max(0, message.line - 1); // Convert to 0-based line number
+              const range = document.lineAt(line).range;
+              editor.selection = new Selection(range.start, range.start);
+              editor.revealRange(range, TextEditorRevealType.InCenter);
             } catch (error) {
-              window.showErrorMessage(`Error opening file: ${error}`)
+              window.showErrorMessage(`Error opening file: ${error}`);
             }
-            return
+            return;
         }
       },
       undefined,
       this._disposables
-    )
+    );
   }
 }
