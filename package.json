@@ -5,6 +5,7 @@
   "icon": "assets/flame.png",
   "license": "Apache-2.0",
   "version": "0.0.1",
+  "publisher": "rafaelha",
   "repository": {
     "type": "git",
     "url": "https://github.com/rafaelha/vscode-flamegraph"
