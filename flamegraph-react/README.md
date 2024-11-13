@@ -4,7 +4,7 @@ This directory contains all of the code that will be executed within the webview
 
 Types of content that can be contained here:
 
-- Frontend framework code (i.e. React, Svelte, Vue, etc.)
-- JavaScript files
-- CSS files
-- Assets / resources (i.e. images, illustrations, etc.)
+-   Frontend framework code (i.e. React, Svelte, Vue, etc.)
+-   JavaScript files
+-   CSS files
+-   Assets / resources (i.e. images, illustrations, etc.)

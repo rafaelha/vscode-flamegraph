@@ -6,13 +6,13 @@ Flamegraphs with hyperlinks and inline profiling results in VS Code.
 
 ## Commands
 
-- `Flamegraph: Profile active file with py-spy` - Profile the active file with py-spy and display the results inline.
+-   `Flamegraph: Profile active file with py-spy` - Profile the active file with py-spy and display the results inline.
 
-- `Flamegraph: Load Profile` - Load a profile from a file. Currently only py-spy profiles are supported.
+-   `Flamegraph: Load Profile` - Load a profile from a file. Currently only py-spy profiles are supported.
 
-- `Flamegraph: Toggle Inline Profile` - Show or hide the inline profile bars.
+-   `Flamegraph: Toggle Inline Profile` - Show or hide the inline profile bars.
 
-- `Flamegraph: Show` - Open a new tab showing the flamegraph.
+-   `Flamegraph: Show` - Open a new tab showing the flamegraph.
 
 ## Usage
 
@@ -22,7 +22,7 @@ Flamegraphs with hyperlinks and inline profiling results in VS Code.
 
 1. A new tab will open with the flamegraph and profiled timing info will be shown inline in the editor for all files where samples were recorded. Cmd + Click (or Ctrl + Click on Windows/Linux) on any element in the flamegraph to navigate to the corresponding file and line in the editor.
 
-<!-- 
+<!--
 ## Run The Sample
 
 ```bash
