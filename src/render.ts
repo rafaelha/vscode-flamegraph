@@ -41,9 +41,10 @@ export function updateDecorations(
   for (let i = 0; i < profilingResults.length; i++) {
     // the file path need not match exactly, but one should be the end of the other.
     // This ensures that relative paths are also matched.
+    const resultFilePath = normalizePath(profilingResults[i].filePath)
     if (
-      profilingResults[i].filePath.endsWith(filePath) ||
-      filePath.endsWith(profilingResults[i].filePath)
+      resultFilePath.endsWith(filePath) ||
+      filePath.endsWith(resultFilePath)
     ) {
       profilingResult = profilingResults[i];
       break;
