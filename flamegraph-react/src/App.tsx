@@ -146,7 +146,7 @@ function getUniqueModules(data: TreeNode): Array<{ name: string, color: string, 
   return Array.from(moduleMap.entries())
     .map(([name, { color, totalValue }]) => ({ name, color, totalValue }))
     .sort((a, b) => b.totalValue - a.totalValue)
-    .slice(0, 3) // Take only top 5
+    .slice(0, 5) // Take only top 5
 }
 
 declare global {
