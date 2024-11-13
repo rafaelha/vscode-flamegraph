@@ -2,6 +2,8 @@
 
 Flamegraphs with hyperlinks and inline profiling results in VS Code.
 
+This is an early version of the extension and is still under active development.  Currently only py-spy generated profiles are supported but support for other formats is planned.
+
 ![A demo of the extension](https://github.com/rafaelha/vscode-flamegraph/blob/main/assets/demo.gif?raw=true)
 
 ## Commands
@@ -22,27 +24,20 @@ Flamegraphs with hyperlinks and inline profiling results in VS Code.
 
 1. A new tab will open with the flamegraph and profiled timing info will be shown inline in the editor for all files where samples were recorded. Cmd + Click (or Ctrl + Click on Windows/Linux) on any element in the flamegraph to navigate to the corresponding file and line in the editor.
 
-<!--
-## Run The Sample
+
+## Contributing
+
+### Development
 
 ```bash
-# Copy sample extension locally
-npx degit microsoft/vscode-webview-ui-toolkit-samples/frameworks/flamegraph-react-cra flamegraph
-
-# Navigate into sample directory
-cd flamegraph
-
 # Install dependencies for both the extension and webview UI source code
 npm run install:all
 
 # Build webview UI source code
 npm run build:webview
-
-# Open sample in VS Code
-code .
 ```
 
-Once the sample is open inside VS Code you can run the extension by doing the following:
+Then, in VS Code
 
 1. Press `F5` to open a new Extension Development Host window
-2. Inside the host window, open the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac) and type `Flamegraph: Profile active file with py-spy` -->
+2. Inside the host window, open the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac) and type `Flamegraph: Profile active file with py-spy`
