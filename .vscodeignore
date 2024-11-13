@@ -18,6 +18,7 @@ flamegraph-react/tsconfig.json
 flamegraph-react/package-lock.json
 flamegraph-react/postcss.config.js
 flamegraph-react/tailwind.config.js
+assets/*.gif
 .eslintrc.json
 **/test/**
 **/.git/**
