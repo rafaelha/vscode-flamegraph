@@ -1,17 +1,28 @@
-# Hello World (React + Create React App)
+# Flamegraphs in VS Code
 
-This is an implementation of the default [Hello World](https://github.com/microsoft/vscode-webview-ui-toolkit-samples/tree/main/default/flamegraph) sample extension that demonstrates how to set up and use a [React](https://reactjs.org/) + [Create React App](https://create-react-app.dev/) + [Webview UI Toolkit](https://github.com/microsoft/vscode-webview-ui-toolkit) webview extension.
+Flamegraphs with hyperlinks and inline profiling results in VS Code.
 
-![A screenshot of the sample extension.](./assets/flamegraph.png)
+![A demo of the extension](./assets/demo.gif)
 
-## Documentation
+## Commands
 
-For a deeper dive into how this sample works, read the guides below.
+- `Flamegraph: Profile active file with py-spy` - Profile the active file with py-spy and display the results inline.
 
-- [Extension structure](./docs/extension-structure.md)
-- [Extension commands](./docs/extension-commands.md)
-- [Extension development cycle](./docs/extension-development-cycle.md)
+- `Flamegraph: Load Profile` - Load a profile from a file. Currently only py-spy profiles are supported.
 
+- `Flamegraph: Toggle Inline Profile` - Show or hide the inline profile bars.
+
+- `Flamegraph: Show` - Open a new tab showing the flamegraph.
+
+## Usage
+
+1. Install py-spy: `pip install py-spy`
+
+1. Profile your code by running the `Flamegraph: Profile active file with py-spy` command.
+
+1. A new tab will open with the flamegraph and profiled timing info will be shown inline in the editor for all files where samples were recorded. Cmd + Click (or Ctrl + Click on Windows/Linux) on any element in the flamegraph to navigate to the corresponding file and line in the editor.
+
+<!-- 
 ## Run The Sample
 
 ```bash
@@ -34,4 +45,4 @@ code .
 Once the sample is open inside VS Code you can run the extension by doing the following:
 
 1. Press `F5` to open a new Extension Development Host window
-2. Inside the host window, open the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac) and type `Hello World (React + CRA): Show`
+2. Inside the host window, open the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac) and type `Flamegraph: Profile active file with py-spy` -->
