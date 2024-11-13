@@ -2,7 +2,7 @@
   "name": "vscode-flamegraph",
   "displayName": "Flamegraph",
   "description": "Inline profile results and flamegraphs in VS Code",
-  "icon": "./assets/flame.png",
+  "icon": "assets/flame.png",
   "license": "Apache-2.0",
   "version": "0.0.1",
   "repository": {
@@ -13,6 +13,10 @@
     "vscode": "^1.75.0"
   },
   "main": "./out/extension.js",
+  "activationEvents": [
+    "onCommand:flamegraph.loadProfile",
+    "onCommand:flamegraph.runProfiler"
+  ],
   "contributes": {
     "commands": [
       {
