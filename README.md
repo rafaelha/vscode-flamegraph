@@ -2,7 +2,7 @@
 
 Flamegraphs with hyperlinks and inline profiling results in VS Code.
 
-![A demo of the extension](./assets/demo.gif)
+![A demo of the extension](https://github.com/rafaelha/vscode-flamegraph/blob/main/assets/demo.gif?raw=true)
 
 ## Commands
 
