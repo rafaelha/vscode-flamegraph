@@ -10,23 +10,21 @@ export async function registerProfile(context: vscode.ExtensionContext, profileU
     context.workspaceState.update('profileData', profileString);
     const result = parseProfilingData(profileString);
 
-    // Update decorations when the active editor changes
-    vscode.window.onDidChangeActiveTextEditor(
-        (editor) => {
+    // Store disposables for later cleanup
+    const disposables = [
+        vscode.window.onDidChangeActiveTextEditor(editor => {
             updateDecorations(editor, result);
-        },
-        null,
-        context.subscriptions
-    );
-
-    // Update decorations when the document changes
-    vscode.workspace.onDidChangeTextDocument(
-        (event) => {
+        }),
+        vscode.workspace.onDidChangeTextDocument(event => {
             updateDecorations(vscode.window.activeTextEditor, result);
-        },
-        null,
-        context.subscriptions
-    );
+        })
+    ]
+
+    // Add disposables to context subscriptions
+    context.subscriptions.push(...disposables);
+    
+    // Store disposables in workspaceState for cleanup
+    context.workspaceState.update('decorationDisposables', disposables);
 
     // Initial update for the current active editor
     updateDecorations(vscode.window.activeTextEditor, result);
@@ -34,23 +32,14 @@ export async function registerProfile(context: vscode.ExtensionContext, profileU
 
 export function unregisterProfile(context: vscode.ExtensionContext) {
     // Remove decorations
-    vscode.window.visibleTextEditors.forEach((editor) => {
+    vscode.window.visibleTextEditors.forEach(editor => {
         editor.setDecorations(lineColorDecorationType, []);
     });
 
-    vscode.window.onDidChangeActiveTextEditor(
-        (editor) => {
-            editor?.setDecorations(lineColorDecorationType, []);
-        },
-        null,
-        context.subscriptions
-    );
-
-    vscode.workspace.onDidChangeTextDocument(
-        (event) => {
-            vscode.window.activeTextEditor?.setDecorations(lineColorDecorationType, []);
-        },
-        null,
-        context.subscriptions
-    );
+    // Dispose of existing listeners
+    const disposables = context.workspaceState.get('decorationDisposables') as vscode.Disposable[] | undefined;
+    if (disposables) {
+        disposables.forEach(d => d.dispose());
+        context.workspaceState.update('decorationDisposables', undefined);
+    }
 }
