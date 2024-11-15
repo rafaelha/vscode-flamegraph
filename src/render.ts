@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import {
-    parseProfilingData,
     normalizePath,
     getFileName,
     ProfilingResult,

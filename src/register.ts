@@ -3,7 +3,6 @@ import { parseProfilingData } from './utilities/ProfileParser';
 import { updateDecorations } from './render';
 import { readTextFile, selectProfileFile } from './utilities/io';
 import { lineColorDecorationType } from './render';
-import { FlamegraphPanel } from './panels/FlamegraphPanel';
 
 export async function registerProfile(context: vscode.ExtensionContext, profileUri: vscode.Uri) {
     const profileString = await readTextFile(profileUri);
