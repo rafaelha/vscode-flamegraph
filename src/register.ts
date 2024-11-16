@@ -5,6 +5,9 @@ import { readTextFile, selectProfileFile } from './utilities/io';
 import { lineColorDecorationType } from './render';
 
 export async function registerProfile(context: vscode.ExtensionContext, profileUri: vscode.Uri) {
+    // Unregister any existing profile
+    unregisterProfile(context);
+
     const profileString = await readTextFile(profileUri);
     context.workspaceState.update('profileData', profileString);
     const result = parseProfilingData(profileString);
