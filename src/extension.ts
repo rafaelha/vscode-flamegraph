@@ -5,7 +5,7 @@ import { loadProfileCommand, runProfilerCommand, toggleProfileCommand } from './
 import { unregisterProfile } from './register';
 
 export function activate(context: ExtensionContext) {
-    // Create the show hello world command
+
     const showFlamegraphCommand = commands.registerCommand('flamegraph.showFlamegraph', () => {
         const profileData: string | undefined = context.workspaceState.get('profileData');
         if (profileData) {
@@ -25,8 +25,6 @@ export function activate(context: ExtensionContext) {
     );
 }
 
-// This method is called when your extension is deactivated
 export function deactivate(context: vscode.ExtensionContext) {
-    // Reset the lineDecorationsWidth when the extension is deactivated
     unregisterProfile(context);
 }

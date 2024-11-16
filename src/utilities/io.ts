@@ -10,7 +10,6 @@ export async function selectProfileFile(): Promise<vscode.Uri | undefined> {
         canSelectMany: false,
         openLabel: 'Select profile file',
         filters: {
-            'Text files': ['txt'],
             'All files': ['*'],
         },
     };
