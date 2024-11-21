@@ -6,7 +6,11 @@ import { lineColorDecorationType } from './render';
 
 export async function registerProfile(context: vscode.ExtensionContext, profileUri: vscode.Uri) {
     // Unregister any existing profile
-    unregisterProfile(context);
+    try {
+        unregisterProfile(context);
+    } catch {
+        console.log('Profile could not be unregistered; likely none was registered.');
+    }
 
     const profileString = await readTextFile(profileUri);
     context.workspaceState.update('profileData', profileString);
