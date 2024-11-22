@@ -13,9 +13,7 @@ export const lineColorDecorationType = vscode.window.createTextEditorDecorationT
 
 // Function to update decorations
 export function updateDecorations(activeEditor: vscode.TextEditor | undefined, result: ProfilingResults) {
-    if (!activeEditor || activeEditor.document.languageId !== 'python') {
-        return;
-    }
+    if (!activeEditor || activeEditor.document.languageId !== 'python') return;
 
     const decorations: vscode.DecorationOptions[] = [];
     const documentLines = activeEditor.document.lineCount;
@@ -23,9 +21,8 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined, r
     let fileName = basename(filePath);
     console.log(fileName);
 
-    if (!(fileName in result)) {
-        return;
-    }
+    if (!(fileName in result)) return;
+
     let profilingResults = result[fileName];
     let profilingResult: ProfilingResult | undefined = undefined;
 
@@ -39,9 +36,7 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined, r
             break;
         }
     }
-    if (!profilingResult) {
-        return;
-    }
+    if (!profilingResult) return;
 
     let colorIndex = -1;
     let lastFunctionName = '';

@@ -22,15 +22,11 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
 
     useEffect(() => {
         function handleKeyDown(e: KeyboardEvent) {
-            if (e.metaKey || e.ctrlKey) {
-                setIsCommandPressed(true);
-            }
+            if (e.metaKey || e.ctrlKey) setIsCommandPressed(true);
         }
 
         function handleKeyUp(e: KeyboardEvent) {
-            if (!e.metaKey && !e.ctrlKey) {
-                setIsCommandPressed(false);
-            }
+            if (!e.metaKey && !e.ctrlKey) setIsCommandPressed(false);
         }
 
         window.addEventListener('keydown', handleKeyDown);
@@ -146,9 +142,8 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
     }
 
     function renderNodeContent(node: TreeNode) {
-        const fileName = node.filePath ? node.filePath.split('/').pop() : 'unknown.js';
-        const lineNumber = node.lineNumber || 1;
-        const fileInfo = `${fileName}:${lineNumber}`;
+        const fileName = node.filePath ? node.filePath.split('/').pop() : 'unknown';
+        const fileInfo = node.lineNumber ? `${fileName}:${node.lineNumber}`: `${fileName}`;
 
         return (
             <div
@@ -172,7 +167,7 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
                         whiteSpace: 'nowrap',
                     }}
                 >
-                    {node.fileLineId}
+                    {node.functionName}
                 </span>
                 {node.filePath && node.lineNumber && (
                     <span

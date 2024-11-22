@@ -8,9 +8,7 @@ import { TreeNode } from './utilities/ProfileParser';
 export function activate(context: ExtensionContext) {
     const showFlamegraphCommand = commands.registerCommand('flamegraph.showFlamegraph', () => {
         const profileData: TreeNode | undefined = context.workspaceState.get('flameTree');
-        if (profileData) {
-            FlamegraphPanel.render(context.extensionUri, profileData);
-        }
+        if (profileData) FlamegraphPanel.render(context.extensionUri, profileData);
     });
 
     context.workspaceState.update('profileVisible', false);

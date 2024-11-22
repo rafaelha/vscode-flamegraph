@@ -1,4 +1,4 @@
-import { getModuleName } from "./getUri";
+import { getModuleName } from './getUri';
 
 const modernColorPalette: string[] = [
     '#FF6F61', // Coral
@@ -25,13 +25,12 @@ export function getColorByIndex(index: number): string {
 }
 
 export function hashString(str: string): number {
-    let hash = 0;
+    let hash = 0x9e3779b9; // Initial seed value for the hash function
     for (let i = 0; i < str.length; i++) {
         const char = str.charCodeAt(i);
-        hash = (hash << 5) - hash + char;
-        hash = hash & hash;
+        hash = ((hash << 5) + hash) ^ char;
     }
-    return Math.abs(hash);
+    return Math.abs(hash); // Ensure the result is non-negative
 }
 
 export function getNodeColor(file?: string, line?: number, functionName?: string): string {

@@ -89,15 +89,11 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
 
     lines.forEach((originalLine, lineIndex) => {
         const line = originalLine.trim();
-        if (line === '') {
-            return; // Skip empty lines
-        }
+        if (line === '') return; // Skip empty lines
 
         // Separate the call stack from the sample count
         const lastSpaceIndex = line.lastIndexOf(' ');
-        if (lastSpaceIndex === -1) {
-            return;
-        }
+        if (lastSpaceIndex === -1) return;
 
         let currentNode = root;
         let currentDepth = 0;
@@ -117,7 +113,6 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
             .map((frameStr) => frameStr.trim())
             .filter((f) => f !== '');
 
-        // To build the call stack progressively
         let accumulatedCallStack = '';
         const processedLocations = new Set<string>();
 
@@ -134,13 +129,10 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
             const filePath = matches[2].trim();
             const fileName = basename(filePath);
             const lineNumber = parseInt(matches[3].trim());
-            const locationKey = `${filePath}:${lineNumber}`;
             const moduleName = getModuleName(filePath);
-
             const fileLineKey = `${filePath}:${lineNumber}`;
-            if (!fileLineToInt[fileLineKey]) {
-                fileLineToInt[fileLineKey] = uid;
-            }
+
+            if (!fileLineToInt[fileLineKey]) fileLineToInt[fileLineKey] = uid;
 
             // construct the FlameTree node
             let childNode = currentNode.children?.find(
@@ -172,10 +164,8 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
 
             // Construct the decoration tree node
             // Skip if the location has already been processed in the current stack trace. This happens for recursive calls
-            if (processedLocations.has(locationKey)) {
-                return;
-            }
-            processedLocations.add(locationKey);
+            if (processedLocations.has(fileLineKey)) return;
+            processedLocations.add(fileLineKey);
 
             // Initialize the file entry if it doesn't exist
             decorationData[fileName] ??= [];
@@ -192,9 +182,7 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
                     functionProfile: {},
                 };
                 profilingResults.push(profilingResult);
-            } else {
-                profilingResult = profilingResults[filePathIndex];
-            }
+            } else profilingResult = profilingResults[filePathIndex];
 
             let profile = profilingResult.profile;
             let functionProfile = profilingResult.functionProfile;

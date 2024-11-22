@@ -14,8 +14,6 @@ export async function selectProfileFile(): Promise<vscode.Uri | undefined> {
         },
     };
     const fileUri = await vscode.window.showOpenDialog(options);
-    if (fileUri && fileUri[0]) {
-        return fileUri[0];
-    }
+    if (fileUri && fileUri[0]) return fileUri[0];
     return undefined;
 }
