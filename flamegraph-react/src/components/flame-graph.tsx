@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './flame-graph.css';
 import { vscode } from '../utilities/vscode';
+import { Legend } from './Legend'
 
 export interface TreeNode {
     uid: number;
@@ -13,6 +14,13 @@ export interface TreeNode {
     line?: number;
     children?: TreeNode[];
     parent?: TreeNode;
+}
+
+
+
+function getModuleName(node: TreeNode): string {
+    const moduleName = node.file?.replace(/\//g, '\\').split('\\')[0] || '';
+    return moduleName.startsWith('<') ? '' : moduleName
 }
 
 interface FlameGraphProps {
@@ -55,7 +63,20 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
         };
     }, []);
 
+    const moduleMap = new Map<string, { color: string; totalValue: number }>()
+
     function renderNode(node: TreeNode, x: number, width: number) {
+        // Update module map for legend
+        const moduleName = getModuleName(node);
+        if (moduleName !== '') {
+            const existing = moduleMap.get(moduleName)
+            moduleMap.set(moduleName, {
+                color: node.color,
+                totalValue: (existing?.totalValue || 0) + node.value
+            })
+        }
+
+
         const isHovered = hoveredLineId === node.fileLineId;
         const style = {
             left: `${x * 100}%`,
@@ -112,6 +133,7 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
         );
     }
 
+
     function renderNodes(): React.ReactNode[] {
         const nodes: React.ReactNode[] = [];
 
@@ -122,10 +144,10 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
             current = current.parent;
         }
 
-        // Render focus node
+        // Render focus node (full width)
         nodes.push(renderNode(focusNode, 0, 1));
 
-        // Render children
+        // Render children at respective position and width
         function renderChildren(node: TreeNode, startX: number) {
             let currentX = startX;
 
@@ -133,7 +155,7 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
                 const childWidth = child.value / focusNode.value;
                 nodes.push(renderNode(child, currentX, childWidth));
                 if (childWidth >= 0.009) {
-                    // Only process children in parent is large enough to be visible
+                    // Only process children if parent is large enough to be visible
                     renderChildren(child, currentX);
                 }
                 currentX += childWidth;
@@ -187,5 +209,12 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
         );
     }
 
-    return <div className="flamegraph">{renderNodes()}</div>;
+    const renderedNodes = renderNodes();
+
+
+    const legendItems = Array.from(moduleMap.entries())
+        .map(([name, { color, totalValue }]) => ({ name, color, totalValue }))
+        .sort((a, b) => b.totalValue - a.totalValue)
+
+    return <div className="flamegraph relative">{renderedNodes}<Legend items={legendItems} /></div>;
 }
