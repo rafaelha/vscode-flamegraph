@@ -49,7 +49,7 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined, r
     for (let line = 1; line < documentLines + 1; line++) {
         let samples = 0;
         let width = 0;
-        let sample_normalized = 0;
+        let numSamplesNormalized = 0;
         let toolTip = '';
         if (line in profilingResult.profile) {
             const lineProfile = profilingResult.profile[line];
@@ -60,8 +60,8 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined, r
                 lastFunctionName = functionName;
             }
             const stats = profilingResult.functionProfile[functionName];
-            for (const [callStack, num_samples] of Object.entries(callStacks)) {
-                samples += num_samples;
+            for (const [callStack, numSamples] of Object.entries(callStacks)) {
+                samples += numSamples;
             }
 
             const multipleCallers = Object.keys(callStacks).length > 1;
@@ -71,17 +71,17 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined, r
                 toolTip += `|---|---|---|---|\n`;
             }
 
-            for (const [callStack, num_samples] of Object.entries(callStacks)) {
+            for (const [callStack, numSamples] of Object.entries(callStacks)) {
                 if (multipleCallers) {
-                    const percentage = ((num_samples / samples) * 100).toFixed(1);
+                    const percentage = ((numSamples / samples) * 100).toFixed(1);
                     const barElements = 20;
-                    const barLength = Math.round((num_samples / stats.total_samples) * barElements);
+                    const barLength = Math.round((numSamples / stats.totalSamples) * barElements);
                     const bar = '█'.repeat(barLength) + ' '.repeat(barElements - barLength);
-                    toolTip += `| ${num_samples / 100}s | ${bar} | ${percentage}% | ${callStack} |\n`;
+                    toolTip += `| ${numSamples / 100}s | ${bar} | ${percentage}% | ${callStack} |\n`;
                 }
             }
-            sample_normalized = samples / stats.total_samples;
-            width = Math.round(sample_normalized * DECORATION_WIDTH);
+            numSamplesNormalized = samples / stats.totalSamples;
+            width = Math.round(numSamplesNormalized * DECORATION_WIDTH);
         }
         decorations.push({
             range: new vscode.Range(line - 1, 0, line - 1, 0),

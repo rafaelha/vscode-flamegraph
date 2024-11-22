@@ -16,8 +16,8 @@ function getModuleName(filePath: string | undefined): string | undefined {
 }
 
 export type ProfilingEntry = {
-    num_samples: number;
-    function_name: string;
+    numSamples: number;
+    functionName: string;
 };
 
 export type ProfilingResult = {
@@ -26,14 +26,14 @@ export type ProfilingResult = {
         [lineNumber: string]: {
             functionName: string;
             numSamples: {
-                [callStack: string]: number; // num_samples
+                [callStack: string]: number; // numSamples
             };
         };
     };
     functionProfile: {
         [functionName: string]: {
-            total_samples: number;
-            max_samples: number;
+            totalSamples: number;
+            maxSamples: number;
         };
     };
 };
@@ -210,11 +210,11 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
             profile[lineNumber].numSamples[accumulatedCallStack] += numSamples;
 
             functionProfile[functionName] ??= {
-                total_samples: 0,
-                max_samples: 0,
+                totalSamples: 0,
+                maxSamples: 0,
             };
-            functionProfile[functionName].total_samples += numSamples;
-            functionProfile[functionName].max_samples = Math.max(functionProfile[functionName].max_samples, numSamples);
+            functionProfile[functionName].totalSamples += numSamples;
+            functionProfile[functionName].maxSamples = Math.max(functionProfile[functionName].maxSamples, numSamples);
 
             // Update the accumulated call stack for the next frame
             accumulatedCallStack = accumulatedCallStack
