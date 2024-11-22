@@ -153,19 +153,12 @@ export class FlamegraphPanel {
                 const command = message.command;
 
                 switch (command) {
-                    case 'hello':
-                        window.showInformationMessage(message.text);
-                        return;
-
                     case 'open-file':
                         try {
                             // Find the file in the workspace
                             const files = await workspace.findFiles(`**/${message.file}`);
 
-                            if (files.length === 0) {
-                                window.showErrorMessage(`File not found: ${message.file}`);
-                                return;
-                            }
+                            if (files.length === 0) return;
 
                             // Open the first matching file
                             const document = await workspace.openTextDocument(files[0]);
@@ -182,6 +175,10 @@ export class FlamegraphPanel {
                         } catch (error) {
                             window.showErrorMessage(`Error opening file: ${error}`);
                         }
+                        return;
+
+                    case 'set-focus-node':
+                        window.showInformationMessage(message.text);
                         return;
                 }
             },

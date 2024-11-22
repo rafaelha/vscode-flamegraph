@@ -4,12 +4,8 @@ import { vscode } from '../utilities/vscode';
 import { Legend } from './Legend';
 import { TreeNode } from './types';
 
-interface FlameGraphProps {
-    data: TreeNode;
-    height?: number;
-}
 
-export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
+export function FlameGraph({ data, height = 23 }: {data: TreeNode, height?: number}) {
     const [focusNode, setFocusNode] = useState<TreeNode>(data);
     const [hoveredLineId, setHoveredLineId] = useState<number | null>(null);
     const [isCommandPressed, setIsCommandPressed] = useState(false);
