@@ -215,14 +215,14 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
                 : `${functionName} (${filePath}:${lineNumber})`;
 
             let childNode = currentNode.children?.find(
-                (child) => child.name === fileName && child.file === filePath && child.line === lineNumber
+                (child) => child.name === functionName && child.file === filePath && child.line === lineNumber
             );
             currentDepth++;
             uid++;
             if (!childNode) {
                 childNode = {
                     uid: uid,
-                    name: fileName,
+                    name: functionName,
                     file: filePath,
                     line: lineNumber,
                     value: 0,

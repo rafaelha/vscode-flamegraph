@@ -35,6 +35,7 @@ export function toggleProfileCommand(context: vscode.ExtensionContext) {
             }
             registerProfile(context, profileUri);
             context.workspaceState.update('profileVisible', true);
+            vscode.commands.executeCommand('flamegraph.showFlamegraph');
         }
     });
 }
