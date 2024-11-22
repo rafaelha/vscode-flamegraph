@@ -26,6 +26,7 @@
     text-decoration: underline;
     cursor: pointer;
 }
+
 .node-label {
     padding: 0 4px;
     font-size: 12px;

@@ -172,7 +172,7 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
                         whiteSpace: 'nowrap',
                     }}
                 >
-                    {node.functionName}
+                    {node.fileLineId}
                 </span>
                 {node.filePath && node.lineNumber && (
                     <span

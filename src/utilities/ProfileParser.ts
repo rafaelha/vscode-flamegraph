@@ -122,8 +122,8 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
         const processedLocations = new Set<string>();
 
         frames.forEach((frame, frameIndex) => {
+            // Extract node info
             // Match the function name and file:line using regex
-            // const regex = /\s*(\w+)\s+\(([^:]+):(\d+)\)/;
             const regex = /\s*(<\w+>|\w+)\s+\(([^:]+):(\d+)\)/;
             const matches = frame.match(regex);
             if (!matches) {
@@ -137,11 +137,40 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
             const locationKey = `${filePath}:${lineNumber}`;
             const moduleName = getModuleName(filePath);
 
-            const fileLineKey = `${filePath}:${line}`;
+            const fileLineKey = `${filePath}:${lineNumber}`;
             if (!fileLineToInt[fileLineKey]) {
                 fileLineToInt[fileLineKey] = uid;
             }
 
+            // construct the FlameTree node
+            let childNode = currentNode.children?.find(
+                (child) =>
+                    child.functionName === functionName &&
+                    child.filePath === filePath &&
+                    child.lineNumber === lineNumber
+            );
+            currentDepth++;
+            uid++;
+            if (!childNode) {
+                childNode = {
+                    uid: uid,
+                    functionName: functionName,
+                    filePath: filePath,
+                    lineNumber: lineNumber,
+                    numSamples: 0,
+                    color: getNodeColor(filePath, lineNumber, fileName),
+                    children: [],
+                    parent: undefined, // avoid circular ref for serialization
+                    depth: currentDepth,
+                    fileLineId: fileLineToInt[fileLineKey],
+                    moduleName: moduleName,
+                };
+                currentNode.children?.push(childNode);
+            }
+            childNode.numSamples += numSamples;
+            currentNode = childNode;
+
+            // Construct the decoration tree node
             // Skip if the location has already been processed in the current stack trace. This happens for recursive calls
             if (processedLocations.has(locationKey)) {
                 return;
@@ -150,7 +179,6 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
 
             // Initialize the file entry if it doesn't exist
             decorationData[fileName] ??= [];
-
             let profilingResults = decorationData[fileName];
 
             // get index of filePath in the list of filePaths
@@ -186,34 +214,6 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
             accumulatedCallStack = accumulatedCallStack
                 ? `${accumulatedCallStack};${functionName} (${filePath}:${lineNumber})`
                 : `${functionName} (${filePath}:${lineNumber})`;
-
-            let childNode = currentNode.children?.find(
-                (child) =>
-                    child.functionName === functionName &&
-                    child.filePath === filePath &&
-                    child.lineNumber === lineNumber
-            );
-            currentDepth++;
-            uid++;
-            if (!childNode) {
-                childNode = {
-                    uid: uid,
-                    functionName: functionName,
-                    filePath: filePath,
-                    lineNumber: lineNumber,
-                    numSamples: 0,
-                    color: getNodeColor(filePath, lineNumber, fileName),
-                    children: [],
-                    parent: undefined, // avoid circular ref for serialization
-                    depth: currentDepth,
-                    fileLineId: fileLineToInt[fileLineKey],
-                    moduleName: moduleName,
-                };
-                currentNode.children?.push(childNode);
-            }
-
-            childNode.numSamples += numSamples;
-            currentNode = childNode;
         });
         root.numSamples += numSamples;
     });
