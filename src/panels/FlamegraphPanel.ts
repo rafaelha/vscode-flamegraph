@@ -11,6 +11,7 @@ import {
 } from 'vscode';
 import { getUri } from '../utilities/getUri';
 import { getNonce } from '../utilities/getNonce';
+import { TreeNode } from '../utilities/ProfileParser';
 
 /**
  * This class manages the state and behavior of HelloWorld webview panels.
@@ -54,7 +55,7 @@ export class FlamegraphPanel {
      * @param extensionUri The URI of the directory containing the extension.
      * @param profileData The profile data to be passed to the React app.
      */
-    public static render(extensionUri: Uri, profileData: string) {
+    public static render(extensionUri: Uri, profileData: TreeNode) {
         if (FlamegraphPanel.currentPanel) {
             // Reveal the panel and update the profile data
             FlamegraphPanel.currentPanel._panel.reveal(ViewColumn.Beside);

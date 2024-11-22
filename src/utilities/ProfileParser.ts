@@ -37,17 +37,83 @@ export type ProfilingResults = {
     [fileName: string]: ProfilingResult[];
 };
 
+export interface TreeNode {
+    uid: number;
+    name: string;
+    value: number;
+    depth: number;
+    color: string;
+    fileLineId: number;
+    file?: string;
+    line?: number;
+    children?: TreeNode[];
+    parent?: TreeNode;
+}
+
+function hashString(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = (hash << 5) - hash + char;
+        hash = hash & hash;
+    }
+    return Math.abs(hash);
+}
+
+function getNodeColor(file?: string, line?: number, functionName?: string): string {
+    if (!file || !line || !functionName) return '#808080';
+
+    const moduleName = file.replace(/\//g, '\\').split('\\')[0];
+
+    const hue = (hashString(moduleName ?? '') + 50) % 360;
+    const saturation = 50 + (hashString(functionName) % 50);
+    const lightness = 25 + (line % 10);
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}
+
+function sortTreeNodeChildren(node: TreeNode): TreeNode {
+    // Sort current node's children
+    if (node.children) {
+        node.children.sort((a, b) => {
+            // First compare by file
+            const fileCompare = (a.file || '').localeCompare(b.file || '');
+            if (fileCompare !== 0) return fileCompare;
+            // Then by line number
+            return (a.line || 0) - (b.line || 0);
+        });
+
+        // Recursively sort children's children
+        node.children.forEach(sortTreeNodeChildren);
+    }
+
+    return node;
+}
+
 /**
  * Parses profiling data and structures it into a nested object.
  *
  * @param data - The raw profiling data as a string.
  * @returns A structured ProfilingResults object.
  */
-export function parseProfilingData(data: string): ProfilingResults {
-    const result: ProfilingResults = {};
+export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
+    const decorationData: ProfilingResults = {};
 
     // Split the input data into lines
     const lines = data.trim().split('\n');
+    let uid = 0;
+
+    const root: TreeNode = {
+        uid: uid,
+        name: 'all',
+        value: 0,
+        file: '',
+        line: 0,
+        depth: 0,
+        fileLineId: -1,
+        color: '#808080',
+        children: [],
+    };
+    const fileLineToInt: Record<string, number> = {};
 
     lines.forEach((originalLine, lineIndex) => {
         const line = originalLine.trim();
@@ -60,6 +126,9 @@ export function parseProfilingData(data: string): ProfilingResults {
         if (lastSpaceIndex === -1) {
             return;
         }
+
+        let currentNode = root;
+        let currentDepth = 0;
 
         const callStackStr = line.substring(0, lastSpaceIndex);
         const numSamplesStr = line.substring(lastSpaceIndex + 1);
@@ -92,8 +161,13 @@ export function parseProfilingData(data: string): ProfilingResults {
             const functionName = matches[1].trim();
             const filePath = matches[2].trim();
             const fileName = basename(filePath);
-            const lineNumber = matches[3].trim();
+            const lineNumber = parseInt(matches[3].trim());
             const locationKey = `${filePath}:${lineNumber}`;
+
+            const fileLineKey = `${filePath}:${line}`;
+            if (!fileLineToInt[fileLineKey]) {
+                fileLineToInt[fileLineKey] = uid;
+            }
 
             // Skip if the location has already been processed in the current stack trace. This happens for recursive calls
             if (processedLocations.has(locationKey)) {
@@ -102,9 +176,9 @@ export function parseProfilingData(data: string): ProfilingResults {
             processedLocations.add(locationKey);
 
             // Initialize the file entry if it doesn't exist
-            result[fileName] ??= [];
+            decorationData[fileName] ??= [];
 
-            let profilingResults = result[fileName];
+            let profilingResults = decorationData[fileName];
 
             // get index of filePath in the list of filePaths
             let filePathIndex = profilingResults.findIndex((x) => x.filePath === filePath);
@@ -139,8 +213,33 @@ export function parseProfilingData(data: string): ProfilingResults {
             accumulatedCallStack = accumulatedCallStack
                 ? `${accumulatedCallStack};${functionName} (${filePath}:${lineNumber})`
                 : `${functionName} (${filePath}:${lineNumber})`;
+
+            let childNode = currentNode.children?.find(
+                (child) => child.name === fileName && child.file === filePath && child.line === lineNumber
+            );
+            currentDepth++;
+            uid++;
+            if (!childNode) {
+                childNode = {
+                    uid: uid,
+                    name: fileName,
+                    file: filePath,
+                    line: lineNumber,
+                    value: 0,
+                    color: getNodeColor(filePath, lineNumber, fileName),
+                    children: [],
+                    parent: undefined, // avoid circular ref for serialization
+                    depth: currentDepth,
+                    fileLineId: fileLineToInt[fileLineKey],
+                };
+                currentNode.children?.push(childNode);
+            }
+
+            childNode.value += numSamples;
+            currentNode = childNode;
         });
+        root.value += numSamples;
     });
 
-    return result;
+    return [decorationData, sortTreeNodeChildren(root)];
 }

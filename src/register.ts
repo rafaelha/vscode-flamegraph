@@ -10,8 +10,11 @@ export async function registerProfile(context: vscode.ExtensionContext, profileU
 
     const profileString = await readTextFile(profileUri);
     context.workspaceState.update('profileData', profileString);
-    const result = parseProfilingData(profileString);
+    const [result, flameTree] = parseProfilingData(profileString);
 
+    context.workspaceState.update('flameTree', flameTree);
+
+    // Store disposables for later cleanup
     const disposables = [
         vscode.window.onDidChangeActiveTextEditor((editor) => {
             updateDecorations(editor, result);
@@ -41,6 +44,7 @@ export function unregisterProfile(context: vscode.ExtensionContext) {
     const disposables = context.workspaceState.get('decorationDisposables') as vscode.Disposable[] | undefined;
     if (disposables) {
         disposables.forEach((d) => d.dispose());
+        context.workspaceState.update('decorationDisposables', undefined);
         context.workspaceState.update('decorationDisposables', undefined);
     }
 }
