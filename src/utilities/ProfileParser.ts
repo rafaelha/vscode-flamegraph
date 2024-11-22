@@ -1,11 +1,13 @@
 import { basename } from 'path';
 
+/**
+ * Normalizes a file path to use forward slashes. This is important for comparing file paths on different platforms.
+ *
+ * @param filePath - The file path to normalize.
+ * @returns The normalized file path.
+ */
 export function normalizePath(filePath: string) {
     return filePath.replace(/\\/g, '/');
-}
-
-export function getFileName(filePath: string) {
-    return basename(filePath);
 }
 
 export type ProfilingEntry = {
@@ -39,7 +41,7 @@ export type ProfilingResults = {
  * Parses profiling data and structures it into a nested object.
  *
  * @param data - The raw profiling data as a string.
- * @returns A structured ProfilingResult object.
+ * @returns A structured ProfilingResults object.
  */
 export function parseProfilingData(data: string): ProfilingResults {
     const result: ProfilingResults = {};
@@ -89,7 +91,7 @@ export function parseProfilingData(data: string): ProfilingResults {
             }
             const functionName = matches[1].trim();
             const filePath = matches[2].trim();
-            const fileName = getFileName(filePath);
+            const fileName = basename(filePath);
             const lineNumber = matches[3].trim();
             const locationKey = `${filePath}:${lineNumber}`;
 

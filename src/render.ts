@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
-import { normalizePath, getFileName, ProfilingResult, ProfilingResults } from './utilities/ProfileParser';
+import { normalizePath, ProfilingResult, ProfilingResults } from './utilities/ProfileParser';
 import { getColorByIndex } from './utilities/colors';
+import { basename } from 'path';
 
 const DECORATION_WIDTH = 100; // Width in pixels for the decoration area
 
@@ -18,7 +19,7 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined, r
     const decorations: vscode.DecorationOptions[] = [];
     const documentLines = activeEditor.document.lineCount;
     let filePath = normalizePath(activeEditor.document.fileName);
-    let fileName = getFileName(filePath);
+    let fileName = basename(filePath);
     console.log(fileName);
 
     if (!(fileName in result)) {
@@ -49,7 +50,6 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined, r
         let samples = 0;
         let width = 0;
         let sample_normalized = 0;
-        let sample_max_normalized = 0;
         let toolTip = '';
         if (line in profilingResult.profile) {
             const lineProfile = profilingResult.profile[line];
@@ -81,7 +81,6 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined, r
                 }
             }
             sample_normalized = samples / stats.total_samples;
-            sample_max_normalized = samples / stats.max_samples;
             width = Math.round(sample_normalized * DECORATION_WIDTH);
         }
         decorations.push({
