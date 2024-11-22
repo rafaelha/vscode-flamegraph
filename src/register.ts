@@ -6,17 +6,12 @@ import { lineColorDecorationType } from './render';
 
 export async function registerProfile(context: vscode.ExtensionContext, profileUri: vscode.Uri) {
     // Unregister any existing profile
-    try {
-        unregisterProfile(context);
-    } catch {
-        console.log('Profile could not be unregistered; likely none was registered.');
-    }
+    unregisterProfile(context);
 
     const profileString = await readTextFile(profileUri);
     context.workspaceState.update('profileData', profileString);
     const result = parseProfilingData(profileString);
 
-    // Store disposables for later cleanup
     const disposables = [
         vscode.window.onDidChangeActiveTextEditor((editor) => {
             updateDecorations(editor, result);

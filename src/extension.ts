@@ -5,7 +5,6 @@ import { loadProfileCommand, runProfilerCommand, toggleProfileCommand } from './
 import { unregisterProfile } from './register';
 
 export function activate(context: ExtensionContext) {
-
     const showFlamegraphCommand = commands.registerCommand('flamegraph.showFlamegraph', () => {
         const profileData: string | undefined = context.workspaceState.get('profileData');
         if (profileData) {
@@ -13,8 +12,8 @@ export function activate(context: ExtensionContext) {
         }
     });
 
-    console.log('Activated');
     context.workspaceState.update('profileVisible', false);
+    context.workspaceState.update('decorationDisposables', undefined);
 
     // Register all commands
     context.subscriptions.push(
