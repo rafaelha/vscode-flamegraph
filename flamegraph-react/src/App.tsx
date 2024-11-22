@@ -1,16 +1,7 @@
-import { FlameGraph, TreeNode } from './components/flame-graph';
-import React, { useState, useEffect, useMemo } from 'react';
+import { FlameGraph } from './components/flame-graph';
+import { TreeNode } from './components/types';
+import { useState, useEffect } from 'react';
 import './tailwind.css';
-
-function hashString(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = (hash << 5) - hash + char;
-        hash = hash & hash;
-    }
-    return Math.abs(hash);
-}
 
 declare global {
     interface Window {

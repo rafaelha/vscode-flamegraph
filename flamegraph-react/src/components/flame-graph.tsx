@@ -1,27 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import './flame-graph.css';
 import { vscode } from '../utilities/vscode';
-import { Legend } from './Legend'
-
-export interface TreeNode {
-    uid: number;
-    name: string;
-    value: number;
-    depth: number;
-    color: string;
-    fileLineId: number;
-    file?: string;
-    line?: number;
-    children?: TreeNode[];
-    parent?: TreeNode;
-}
-
-
-
-function getModuleName(node: TreeNode): string {
-    const moduleName = node.file?.replace(/\//g, '\\').split('\\')[0] || '';
-    return moduleName.startsWith('<') ? '' : moduleName
-}
+import { Legend } from './Legend';
+import { TreeNode } from './types';
 
 interface FlameGraphProps {
     data: TreeNode;
@@ -33,7 +14,7 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
     const [hoveredLineId, setHoveredLineId] = useState<number | null>(null);
     const [isCommandPressed, setIsCommandPressed] = useState(false);
 
-    const rootValue = data.value;
+    const rootValue = data.numSamples;
 
     React.useEffect(() => {
         setFocusNode(data);
@@ -63,19 +44,17 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
         };
     }, []);
 
-    const moduleMap = new Map<string, { color: string; totalValue: number }>()
+    const moduleMap = new Map<string, { color: string; totalValue: number }>();
 
     function renderNode(node: TreeNode, x: number, width: number) {
         // Update module map for legend
-        const moduleName = getModuleName(node);
-        if (moduleName !== '') {
-            const existing = moduleMap.get(moduleName)
-            moduleMap.set(moduleName, {
-                color: node.color,
-                totalValue: (existing?.totalValue || 0) + node.value
-            })
+        if (node.moduleName) {
+            const existing = moduleMap.get(node.moduleName);
+            moduleMap.set(node.moduleName, {
+                color: existing?.color || node.color,
+                totalValue: (existing?.totalValue || 0) + node.numSamples,
+            });
         }
-
 
         const isHovered = hoveredLineId === node.fileLineId;
         const style = {
@@ -93,12 +72,12 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
         };
 
         const handleClick = (e: React.MouseEvent) => {
-            if ((e.metaKey || e.ctrlKey) && node.file && node.line) {
+            if ((e.metaKey || e.ctrlKey) && node.filePath && node.lineNumber) {
                 // Send message to extension
                 vscode.postMessage({
                     command: 'open-file',
-                    file: node.file,
-                    line: node.line,
+                    file: node.filePath,
+                    line: node.lineNumber,
                 });
             } else {
                 setFocusNode(node);
@@ -108,12 +87,12 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
         const className = `graph-node ${isHovered && isCommandPressed ? 'same-line-id command-pressed' : ''}`;
 
         // Add tooltip content
-        const percentageOfTotal = ((node.value / rootValue) * 100).toFixed(1);
-        const percentageOfFocus = ((node.value / focusNode.value) * 100).toFixed(1);
+        const percentageOfTotal = ((node.numSamples / rootValue) * 100).toFixed(1);
+        const percentageOfFocus = ((node.numSamples / focusNode.numSamples) * 100).toFixed(1);
         const tooltipContent = [
-            `${node.name}`,
-            node.file && node.line ? `${node.file}:${node.line}` : null,
-            `${node.value / 100}s / ${percentageOfTotal}% / ${percentageOfFocus}%`,
+            `${node.functionName}`,
+            node.filePath && node.lineNumber ? `${node.filePath}:${node.lineNumber}` : null,
+            `${node.numSamples / 100}s / ${percentageOfTotal}% / ${percentageOfFocus}%`,
         ]
             .filter(Boolean)
             .join('\n');
@@ -133,7 +112,6 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
         );
     }
 
-
     function renderNodes(): React.ReactNode[] {
         const nodes: React.ReactNode[] = [];
 
@@ -152,7 +130,7 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
             let currentX = startX;
 
             node.children?.forEach((child) => {
-                const childWidth = child.value / focusNode.value;
+                const childWidth = child.numSamples / focusNode.numSamples;
                 nodes.push(renderNode(child, currentX, childWidth));
                 if (childWidth >= 0.009) {
                     // Only process children if parent is large enough to be visible
@@ -168,8 +146,8 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
     }
 
     function renderNodeContent(node: TreeNode) {
-        const fileName = node.file ? node.file.split('/').pop() : 'unknown.js';
-        const lineNumber = node.line || 1;
+        const fileName = node.filePath ? node.filePath.split('/').pop() : 'unknown.js';
+        const lineNumber = node.lineNumber || 1;
         const fileInfo = `${fileName}:${lineNumber}`;
 
         return (
@@ -194,9 +172,9 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
                         whiteSpace: 'nowrap',
                     }}
                 >
-                    {node.name}
+                    {node.functionName}
                 </span>
-                {node.file && node.line && (
+                {node.filePath && node.lineNumber && (
                     <span
                         style={{
                             flexShrink: 0,
@@ -211,10 +189,14 @@ export function FlameGraph({ data, height = 23 }: FlameGraphProps) {
 
     const renderedNodes = renderNodes();
 
-
     const legendItems = Array.from(moduleMap.entries())
         .map(([name, { color, totalValue }]) => ({ name, color, totalValue }))
-        .sort((a, b) => b.totalValue - a.totalValue)
+        .sort((a, b) => b.totalValue - a.totalValue);
 
-    return <div className="flamegraph relative">{renderedNodes}<Legend items={legendItems} /></div>;
+    return (
+        <div className="flamegraph relative">
+            {renderedNodes}
+            <Legend items={legendItems} />
+        </div>
+    );
 }

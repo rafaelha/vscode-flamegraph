@@ -10,6 +10,11 @@ export function normalizePath(filePath: string) {
     return filePath.replace(/\\/g, '/');
 }
 
+function getModuleName(filePath: string | undefined): string | undefined {
+    const moduleName = filePath?.replace(/\//g, '\\').split('\\')[0] || undefined;
+    return moduleName && moduleName.startsWith('<') ? undefined : moduleName;
+}
+
 export type ProfilingEntry = {
     num_samples: number;
     function_name: string;
@@ -39,15 +44,16 @@ export type ProfilingResults = {
 
 export interface TreeNode {
     uid: number;
-    name: string;
-    value: number;
+    functionName: string;
+    numSamples: number;
     depth: number;
     color: string;
     fileLineId: number;
-    file?: string;
-    line?: number;
+    filePath?: string;
+    lineNumber?: number;
     children?: TreeNode[];
     parent?: TreeNode;
+    moduleName?: string;
 }
 
 function hashString(str: string): number {
@@ -63,7 +69,7 @@ function hashString(str: string): number {
 function getNodeColor(file?: string, line?: number, functionName?: string): string {
     if (!file || !line || !functionName) return '#808080';
 
-    const moduleName = file.replace(/\//g, '\\').split('\\')[0];
+    const moduleName = getModuleName(file);
 
     const hue = (hashString(moduleName ?? '') + 50) % 360;
     const saturation = 50 + (hashString(functionName) % 50);
@@ -76,10 +82,10 @@ function sortTreeNodeChildren(node: TreeNode): TreeNode {
     if (node.children) {
         node.children.sort((a, b) => {
             // First compare by file
-            const fileCompare = (a.file || '').localeCompare(b.file || '');
+            const fileCompare = (a.filePath || '').localeCompare(b.filePath || '');
             if (fileCompare !== 0) return fileCompare;
             // Then by line number
-            return (a.line || 0) - (b.line || 0);
+            return (a.lineNumber || 0) - (b.lineNumber || 0);
         });
 
         // Recursively sort children's children
@@ -104,10 +110,10 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
 
     const root: TreeNode = {
         uid: uid,
-        name: 'all',
-        value: 0,
-        file: '',
-        line: 0,
+        functionName: 'all',
+        numSamples: 0,
+        filePath: '',
+        lineNumber: 0,
         depth: 0,
         fileLineId: -1,
         color: '#808080',
@@ -163,6 +169,7 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
             const fileName = basename(filePath);
             const lineNumber = parseInt(matches[3].trim());
             const locationKey = `${filePath}:${lineNumber}`;
+            const moduleName = getModuleName(filePath);
 
             const fileLineKey = `${filePath}:${line}`;
             if (!fileLineToInt[fileLineKey]) {
@@ -215,30 +222,34 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
                 : `${functionName} (${filePath}:${lineNumber})`;
 
             let childNode = currentNode.children?.find(
-                (child) => child.name === functionName && child.file === filePath && child.line === lineNumber
+                (child) =>
+                    child.functionName === functionName &&
+                    child.filePath === filePath &&
+                    child.lineNumber === lineNumber
             );
             currentDepth++;
             uid++;
             if (!childNode) {
                 childNode = {
                     uid: uid,
-                    name: functionName,
-                    file: filePath,
-                    line: lineNumber,
-                    value: 0,
+                    functionName: functionName,
+                    filePath: filePath,
+                    lineNumber: lineNumber,
+                    numSamples: 0,
                     color: getNodeColor(filePath, lineNumber, fileName),
                     children: [],
                     parent: undefined, // avoid circular ref for serialization
                     depth: currentDepth,
                     fileLineId: fileLineToInt[fileLineKey],
+                    moduleName: moduleName,
                 };
                 currentNode.children?.push(childNode);
             }
 
-            childNode.value += numSamples;
+            childNode.numSamples += numSamples;
             currentNode = childNode;
         });
-        root.value += numSamples;
+        root.numSamples += numSamples;
     });
 
     return [decorationData, sortTreeNodeChildren(root)];
