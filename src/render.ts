@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
-import { normalizePath, ProfilingResult, ProfilingResults } from './utilities/ProfileParser';
+import { ProfilingResult, ProfilingResults } from './utilities/ProfileParser';
 import { getColorByIndex } from './utilities/colors';
 import { basename } from 'path';
+import { normalizePath } from './utilities/getUri';
 
 const DECORATION_WIDTH = 100; // Width in pixels for the decoration area
 

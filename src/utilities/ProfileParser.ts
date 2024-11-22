@@ -1,19 +1,6 @@
 import { basename } from 'path';
-
-/**
- * Normalizes a file path to use forward slashes. This is important for comparing file paths on different platforms.
- *
- * @param filePath - The file path to normalize.
- * @returns The normalized file path.
- */
-export function normalizePath(filePath: string) {
-    return filePath.replace(/\\/g, '/');
-}
-
-function getModuleName(filePath: string | undefined): string | undefined {
-    const moduleName = filePath?.replace(/\//g, '\\').split('\\')[0] || undefined;
-    return moduleName && moduleName.startsWith('<') ? undefined : moduleName;
-}
+import { getModuleName } from './getUri';
+import { getNodeColor } from './colors';
 
 export type ProfilingEntry = {
     numSamples: number;
@@ -54,27 +41,6 @@ export interface TreeNode {
     children?: TreeNode[];
     parent?: TreeNode;
     moduleName?: string;
-}
-
-function hashString(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = (hash << 5) - hash + char;
-        hash = hash & hash;
-    }
-    return Math.abs(hash);
-}
-
-function getNodeColor(file?: string, line?: number, functionName?: string): string {
-    if (!file || !line || !functionName) return '#808080';
-
-    const moduleName = getModuleName(file);
-
-    const hue = (hashString(moduleName ?? '') + 50) % 360;
-    const saturation = 50 + (hashString(functionName) % 50);
-    const lightness = 25 + (line % 10);
-    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 
 function sortTreeNodeChildren(node: TreeNode): TreeNode {
