@@ -73,6 +73,16 @@ export function FlameGraph({ data, height = 23 }: {data: TreeNode, height?: numb
                 });
             } else {
                 setFocusNode(node);
+                // get the stack of all parents uid
+                let callStack: number[] = [];
+                for (let current = node; current.parent; current = current.parent)
+                    callStack.push(current.parent.uid);
+                vscode.postMessage({
+                    command: 'set-focus-node',
+                    uid: node.uid,
+                    focusFunctionName: node.functionName,
+                    callStack: callStack,
+                })
             }
         };
 

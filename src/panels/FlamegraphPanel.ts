@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 import {
     Disposable,
     Webview,
@@ -8,10 +9,12 @@ import {
     workspace,
     Selection,
     TextEditorRevealType,
+    ExtensionContext,
 } from 'vscode';
 import { getUri } from '../utilities/getUri';
 import { getNonce } from '../utilities/getNonce';
-import { TreeNode } from '../utilities/ProfileParser';
+import { ProfilingResults, TreeNode } from '../utilities/ProfileParser';
+import { updateDecorations } from '../render';
 
 /**
  * This class manages the state and behavior of HelloWorld webview panels.
@@ -34,7 +37,7 @@ export class FlamegraphPanel {
      * @param panel A reference to the webview panel
      * @param extensionUri The URI of the directory containing the extension
      */
-    private constructor(panel: WebviewPanel, extensionUri: Uri) {
+    private constructor(panel: WebviewPanel, context: ExtensionContext, extensionUri: Uri) {
         this._panel = panel;
 
         // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
@@ -45,7 +48,7 @@ export class FlamegraphPanel {
         this._panel.webview.html = this._getWebviewContent(this._panel.webview, extensionUri);
 
         // Set an event listener to listen for messages passed from the webview context
-        this._setWebviewMessageListener(this._panel.webview);
+        this._setWebviewMessageListener(this._panel.webview, context);
     }
 
     /**
@@ -55,7 +58,7 @@ export class FlamegraphPanel {
      * @param extensionUri The URI of the directory containing the extension.
      * @param profileData The profile data to be passed to the React app.
      */
-    public static render(extensionUri: Uri, profileData: TreeNode) {
+    public static render(context: ExtensionContext, extensionUri: Uri, profileData: TreeNode) {
         if (FlamegraphPanel.currentPanel) {
             // Reveal the panel and update the profile data
             FlamegraphPanel.currentPanel._panel.reveal(ViewColumn.Beside);
@@ -73,7 +76,7 @@ export class FlamegraphPanel {
                 ],
             });
 
-            FlamegraphPanel.currentPanel = new FlamegraphPanel(panel, extensionUri);
+            FlamegraphPanel.currentPanel = new FlamegraphPanel(panel, context, extensionUri);
 
             panel.webview.postMessage({
                 type: 'profile-data',
@@ -147,7 +150,7 @@ export class FlamegraphPanel {
      * @param webview A reference to the extension webview
      * @param context A reference to the extension context
      */
-    private _setWebviewMessageListener(webview: Webview) {
+    private _setWebviewMessageListener(webview: Webview, context: ExtensionContext) {
         webview.onDidReceiveMessage(
             async (message: any) => {
                 const command = message.command;
@@ -178,7 +181,14 @@ export class FlamegraphPanel {
                         return;
 
                     case 'set-focus-node':
-                        window.showInformationMessage(message.text);
+                        const uid: number = message.uid;
+                        context.workspaceState.update('focusNode', uid);
+                        context.workspaceState.update('focusNodeCallStack', new Set<number>(message.callStack));
+                        context.workspaceState.update('focusFunctionName', message.focusFunctionName);
+                        const decorationTree = context.workspaceState.get('decorationTree') as ProfilingResults;
+                        vscode.window.visibleTextEditors.forEach((editor) => {
+                            updateDecorations(editor, decorationTree, context.workspaceState);
+                        });
                         return;
                 }
             },

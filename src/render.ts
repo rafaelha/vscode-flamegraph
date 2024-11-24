@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ProfilingResult, ProfilingResults } from './utilities/ProfileParser';
+import { ProfilingEntry, ProfilingResult, ProfilingResults } from './utilities/ProfileParser';
 import { getColorByIndex } from './utilities/colors';
 import { basename } from 'path';
 import { normalizePath } from './utilities/getUri';
@@ -11,15 +11,38 @@ export const lineColorDecorationType = vscode.window.createTextEditorDecorationT
     before: {},
 });
 
+function makeToolTip(samples: ProfilingEntry[]) {
+    if (samples.length <= 1) return '';
+    let toolTip = `### Call Stack\n| | | | |\n|---|---|---|---|\n`;
+    let totalSamples = samples.reduce((acc, sample) => acc + sample.numSamples, 0);
+
+    for (const sample of samples) {
+        const percentage = ((sample.numSamples / totalSamples) * 100).toFixed(1);
+        const barElements = 15;
+        const barLength = Math.round((sample.numSamples / totalSamples) * barElements);
+        const bar = '█'.repeat(barLength) + ' '.repeat(barElements - barLength);
+        toolTip += `| ${sample.numSamples / 100}s | ${bar} | ${percentage}% | ${sample.callStackString} ${Array.from(
+            sample.callStackUids
+        ).join(',')}|\n`;
+    }
+    return toolTip;
+}
+
 // Function to update decorations
-export function updateDecorations(activeEditor: vscode.TextEditor | undefined, result: ProfilingResults) {
+export function updateDecorations(
+    activeEditor: vscode.TextEditor | undefined,
+    result: ProfilingResults,
+    workspaceState: vscode.Memento
+) {
     if (!activeEditor || activeEditor.document.languageId !== 'python') return;
+
+    const focusNode: number = workspaceState.get('focusNode') || 0;
+    const focusFunctionName: string = workspaceState.get('focusFunctionName') || 'all';
 
     const decorations: vscode.DecorationOptions[] = [];
     const documentLines = activeEditor.document.lineCount;
     let filePath = normalizePath(activeEditor.document.fileName);
     let fileName = basename(filePath);
-    console.log(fileName);
 
     if (!(fileName in result)) return;
 
@@ -42,42 +65,47 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined, r
     let lastFunctionName = '';
     let color = getColorByIndex(0);
 
+    let focusNodeCallStack = workspaceState.get('focusNodeCallStack') as Set<number>;
+
     for (let line = 1; line < documentLines + 1; line++) {
-        let samples = 0;
         let width = 0;
-        let numSamplesNormalized = 0;
         let toolTip = '';
+        let samples = 0;
+
         if (line in profilingResult.profile) {
             const lineProfile = profilingResult.profile[line];
-            const callStacks = lineProfile.numSamples;
             const functionName = lineProfile.functionName;
+            // const callStacks = lineProfile.samples[0].numSamples;
+
             if (functionName !== lastFunctionName) {
                 color = getColorByIndex(++colorIndex);
                 lastFunctionName = functionName;
             }
             const stats = profilingResult.functionProfile[functionName];
-            for (const [callStack, numSamples] of Object.entries(callStacks)) {
-                samples += numSamples;
-            }
+            let totalSamples = 0;
 
-            const multipleCallers = Object.keys(callStacks).length > 1;
-            if (multipleCallers) {
-                toolTip += `### Call Stack\n`;
-                toolTip += `| | | | |\n`;
-                toolTip += `|---|---|---|---|\n`;
-            }
+            for (const stat of stats) if (stat.callStackUids.has(focusNode)) totalSamples += stat.totalSamples;
 
-            for (const [callStack, numSamples] of Object.entries(callStacks)) {
-                if (multipleCallers) {
-                    const percentage = ((numSamples / samples) * 100).toFixed(1);
-                    const barElements = 20;
-                    const barLength = Math.round((numSamples / stats.totalSamples) * barElements);
-                    const bar = '█'.repeat(barLength) + ' '.repeat(barElements - barLength);
-                    toolTip += `| ${numSamples / 100}s | ${bar} | ${percentage}% | ${callStack} |\n`;
+            let contr: ProfilingEntry[] = [];
+
+            for (const sample of lineProfile.samples) {
+                if (sample.callStackUids.has(focusNode)) {
+                    samples += sample.numSamples;
+                    contr.push(sample);
+                }
+
+                // If the sample is in the call stack of the focus node, process it
+                // This tracks profiling info for all parent nodes of the focus node.
+                // There is a caveat for recursive calls: we must ensure that the parent node is not part of the same
+                // function as the focus node.
+                if (focusNodeCallStack.has(sample.uid) && focusFunctionName !== sample.functionName) {
+                    samples += sample.numSamples;
+                    totalSamples += sample.numSamples;
                 }
             }
-            numSamplesNormalized = samples / stats.totalSamples;
-            width = Math.round(numSamplesNormalized * DECORATION_WIDTH);
+
+            toolTip = makeToolTip(contr);
+            width = samples == 0 ? 0 : Math.round((samples / totalSamples) * DECORATION_WIDTH);
         }
         decorations.push({
             range: new vscode.Range(line - 1, 0, line - 1, 0),

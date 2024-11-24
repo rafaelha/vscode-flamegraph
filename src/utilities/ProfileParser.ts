@@ -4,7 +4,10 @@ import { getNodeColor } from './colors';
 
 export type ProfilingEntry = {
     numSamples: number;
+    callStackUids: Set<number>;
+    callStackString: string;
     functionName: string;
+    uid: number;
 };
 
 export type ProfilingResult = {
@@ -12,16 +15,14 @@ export type ProfilingResult = {
     profile: {
         [lineNumber: string]: {
             functionName: string;
-            numSamples: {
-                [callStack: string]: number; // numSamples
-            };
+            samples: ProfilingEntry[];
         };
     };
     functionProfile: {
         [functionName: string]: {
             totalSamples: number;
-            maxSamples: number;
-        };
+            callStackUids: Set<number>;
+        }[];
     };
 };
 
@@ -61,6 +62,47 @@ function sortTreeNodeChildren(node: TreeNode): TreeNode {
     return node;
 }
 
+interface Frame {
+    functionName: string;
+    filePath: string;
+    fileName: string;
+    lineNumber: number;
+    moduleName?: string;
+    fileLineKey: string;
+    uid?: number;
+    parentIds?: Set<number>;
+    callStackStr?: string;
+}
+
+function parseStackTrace(stackString: string): Frame[] {
+    const frames = stackString
+        .split(';')
+        .map((frameStr) => frameStr.trim())
+        .filter((f) => f !== '');
+
+    let result: Frame[] = [];
+
+    for (const frame of frames) {
+        const regex = /\s*(<\w+>|\w+)\s+\(([^:]+):(\d+)\)/;
+        const matches = frame.match(regex);
+        if (!matches) continue;
+
+        const filePath = matches[2].trim();
+        const lineNumber = parseInt(matches[3].trim());
+
+        result.push({
+            functionName: matches[1].trim(),
+            filePath: filePath,
+            fileName: basename(filePath),
+            lineNumber: lineNumber,
+            moduleName: getModuleName(filePath),
+            fileLineKey: `${filePath}:${lineNumber}`,
+        });
+    }
+
+    return result;
+}
+
 /**
  * Parses profiling data and structures it into a nested object.
  *
@@ -95,9 +137,6 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
         const lastSpaceIndex = line.lastIndexOf(' ');
         if (lastSpaceIndex === -1) return;
 
-        let currentNode = root;
-        let currentDepth = 0;
-
         const callStackStr = line.substring(0, lastSpaceIndex);
         const numSamplesStr = line.substring(lastSpaceIndex + 1);
         const numSamples = parseInt(numSamplesStr, 10);
@@ -107,77 +146,73 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
             return;
         }
 
-        // Split the call stack into individual frames
-        const frames = callStackStr
-            .split(';')
-            .map((frameStr) => frameStr.trim())
-            .filter((f) => f !== '');
-
+        let callStackSet = new Set<number>([0]);
         let accumulatedCallStack = '';
-        const processedLocations = new Set<string>();
 
-        frames.forEach((frame, frameIndex) => {
-            // Extract node info
-            // Match the function name and file:line using regex
-            const regex = /\s*(<\w+>|\w+)\s+\(([^:]+):(\d+)\)/;
-            const matches = frame.match(regex);
-            if (!matches) {
-                console.warn(`Invalid frame format at line ${lineIndex + 1}, frame ${frameIndex + 1}: "${frame}"`);
-                return;
-            }
-            const functionName = matches[1].trim();
-            const filePath = matches[2].trim();
-            const fileName = basename(filePath);
-            const lineNumber = parseInt(matches[3].trim());
-            const moduleName = getModuleName(filePath);
-            const fileLineKey = `${filePath}:${lineNumber}`;
-
-            if (!fileLineToInt[fileLineKey]) fileLineToInt[fileLineKey] = uid;
-
-            // construct the FlameTree node
-            let childNode = currentNode.children?.find(
-                (child) =>
-                    child.functionName === functionName &&
-                    child.filePath === filePath &&
-                    child.lineNumber === lineNumber
-            );
+        const frames = parseStackTrace(callStackStr);
+        root.numSamples += numSamples;
+        let currentNode = root;
+        let currentDepth = 0;
+        let parentIds = new Set<number>([root.uid]);
+        let currentCallStackStr = '';
+        for (let frame of frames) {
+            if (!fileLineToInt[frame.fileLineKey]) fileLineToInt[frame.fileLineKey] = uid;
             currentDepth++;
-            uid++;
-            if (!childNode) {
-                childNode = {
-                    uid: uid,
-                    functionName: functionName,
-                    filePath: filePath,
-                    lineNumber: lineNumber,
-                    numSamples: 0,
-                    color: getNodeColor(filePath, lineNumber, fileName),
-                    children: [],
-                    parent: undefined, // avoid circular ref for serialization
-                    depth: currentDepth,
-                    fileLineId: fileLineToInt[fileLineKey],
-                    moduleName: moduleName,
-                };
-                currentNode.children?.push(childNode);
-            }
-            childNode.numSamples += numSamples;
-            currentNode = childNode;
 
+            let node = currentNode.children?.find(
+                (child) =>
+                    child.functionName === frame.functionName &&
+                    child.filePath === frame.filePath &&
+                    child.lineNumber === frame.lineNumber
+            );
+            if (!node) {
+                uid++; // increase uid and create new node
+                node = {
+                    uid: uid,
+                    functionName: frame.functionName,
+                    filePath: frame.filePath,
+                    lineNumber: frame.lineNumber,
+                    numSamples: numSamples,
+                    color: getNodeColor(frame.filePath, frame.lineNumber, frame.fileName),
+                    children: [],
+                    depth: currentDepth,
+                    fileLineId: fileLineToInt[frame.fileLineKey],
+                    moduleName: frame.moduleName,
+                };
+                currentNode.children?.push(node);
+            } else {
+                node.numSamples += numSamples;
+            }
+            currentCallStackStr += `${frame.functionName}/`;
+            frame.callStackStr = currentCallStackStr;
+
+            parentIds.add(node.uid);
+            frame.parentIds = new Set<number>(parentIds);
+            frame.uid = node.uid;
+
+            currentNode = node;
+        }
+
+        const processedLocations = new Set<string>();
+        for (const frame of frames.reverse()) {
             // Construct the decoration tree node
             // Skip if the location has already been processed in the current stack trace. This happens for recursive calls
-            if (processedLocations.has(fileLineKey)) return;
-            processedLocations.add(fileLineKey);
+            if (processedLocations.has(frame.functionName + frame.filePath)) {
+                continue;
+            }
+            processedLocations.add(frame.functionName + frame.filePath);
 
             // Initialize the file entry if it doesn't exist
-            decorationData[fileName] ??= [];
-            let profilingResults = decorationData[fileName];
+            decorationData[frame.fileName] ??= [];
+            let profilingResults = decorationData[frame.fileName];
 
             // get index of filePath in the list of filePaths
-            let filePathIndex = profilingResults.findIndex((x) => x.filePath === filePath);
+            let filePathIndex = profilingResults.findIndex((x) => x.filePath === frame.filePath);
 
             let profilingResult: ProfilingResult;
             if (filePathIndex === -1) {
                 profilingResult = {
-                    filePath,
+                    filePath: frame.filePath,
                     profile: {},
                     functionProfile: {},
                 };
@@ -187,23 +222,35 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
             let profile = profilingResult.profile;
             let functionProfile = profilingResult.functionProfile;
 
-            profile[lineNumber] ??= { functionName: functionName, numSamples: {} };
-            profile[lineNumber].numSamples[accumulatedCallStack] ??= 0;
-            profile[lineNumber].numSamples[accumulatedCallStack] += numSamples;
-
-            functionProfile[functionName] ??= {
-                totalSamples: 0,
-                maxSamples: 0,
+            profile[frame.lineNumber] ??= {
+                functionName: frame.functionName,
+                samples: [],
             };
-            functionProfile[functionName].totalSamples += numSamples;
-            functionProfile[functionName].maxSamples = Math.max(functionProfile[functionName].maxSamples, numSamples);
+            let uid = frame.uid ? frame.uid : -1;
+            let i = profile[frame.lineNumber].samples.findIndex((x) => x.uid === uid);
+            if (i === -1) {
+                profile[frame.lineNumber].samples.push({
+                    callStackString: frame.callStackStr ? frame.callStackStr : '',
+                    callStackUids: frame.parentIds ? frame.parentIds : new Set<number>([0]),
+                    functionName: frame.functionName,
+                    uid: frame.uid ? frame.uid : -1,
+                    numSamples: numSamples,
+                });
+            } else {
+                profile[frame.lineNumber].samples[i].numSamples += numSamples;
+            }
 
-            // Update the accumulated call stack for the next frame
-            accumulatedCallStack = accumulatedCallStack
-                ? `${accumulatedCallStack};${functionName} (${filePath}:${lineNumber})`
-                : `${functionName} (${filePath}:${lineNumber})`;
-        });
-        root.numSamples += numSamples;
+            functionProfile[frame.functionName] ??= [];
+            i = functionProfile[frame.functionName].findIndex((x) => x.callStackUids === frame.parentIds);
+            if (i === -1) {
+                functionProfile[frame.functionName].push({
+                    totalSamples: numSamples,
+                    callStackUids: frame.parentIds ? frame.parentIds : new Set<number>([0]),
+                });
+            } else {
+                functionProfile[frame.functionName][i].totalSamples += numSamples;
+            }
+        }
     });
 
     return [decorationData, sortTreeNodeChildren(root)];
