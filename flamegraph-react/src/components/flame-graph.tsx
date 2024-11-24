@@ -80,7 +80,7 @@ export function FlameGraph({ data, height = 23 }: {data: TreeNode, height?: numb
                 vscode.postMessage({
                     command: 'set-focus-node',
                     uid: node.uid,
-                    focusFunctionName: node.functionName,
+                    focusFunctionId: node.functionName,
                     callStack: callStack,
                 })
             }

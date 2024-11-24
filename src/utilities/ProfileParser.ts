@@ -6,7 +6,7 @@ export type ProfilingEntry = {
     numSamples: number;
     callStackUids: Set<number>;
     callStackString: string;
-    functionName: string;
+    functionId: string;
     uid: number;
 };
 
@@ -69,6 +69,7 @@ interface Frame {
     lineNumber: number;
     moduleName?: string;
     fileLineKey: string;
+    functionId: string;
     uid?: number;
     parentIds?: Set<number>;
     callStackStr?: string;
@@ -89,14 +90,16 @@ function parseStackTrace(stackString: string): Frame[] {
 
         const filePath = matches[2].trim();
         const lineNumber = parseInt(matches[3].trim());
+        const functionName = matches[1].trim();
 
         result.push({
-            functionName: matches[1].trim(),
+            functionName: functionName,
             filePath: filePath,
             fileName: basename(filePath),
             lineNumber: lineNumber,
             moduleName: getModuleName(filePath),
             fileLineKey: `${filePath}:${lineNumber}`,
+            functionId: functionName + filePath,
         });
     }
 
@@ -232,7 +235,7 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
                 profile[frame.lineNumber].samples.push({
                     callStackString: frame.callStackStr ? frame.callStackStr : '',
                     callStackUids: frame.parentIds ? frame.parentIds : new Set<number>([0]),
-                    functionName: frame.functionName,
+                    functionId: frame.functionName + frame.filePath,
                     uid: frame.uid ? frame.uid : -1,
                     numSamples: numSamples,
                 });

@@ -184,7 +184,7 @@ export class FlamegraphPanel {
                         const uid: number = message.uid;
                         context.workspaceState.update('focusNode', uid);
                         context.workspaceState.update('focusNodeCallStack', new Set<number>(message.callStack));
-                        context.workspaceState.update('focusFunctionName', message.focusFunctionName);
+                        context.workspaceState.update('focusFunctionId', message.focusFunctionId);
                         const decorationTree = context.workspaceState.get('decorationTree') as ProfilingResults;
                         vscode.window.visibleTextEditors.forEach((editor) => {
                             updateDecorations(editor, decorationTree, context.workspaceState);

@@ -15,7 +15,7 @@ export function activate(context: ExtensionContext) {
     context.workspaceState.update('decorationDisposables', undefined);
     context.workspaceState.update('focusNode', 0);
     context.workspaceState.update('focusNodeCallStack', new Set<number>());
-    context.workspaceState.update('focusFunctionName', 'all');
+    context.workspaceState.update('focusFunctionId', 'all');
 
     // Register all commands
     context.subscriptions.push(

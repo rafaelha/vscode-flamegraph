@@ -37,7 +37,7 @@ export function updateDecorations(
     if (!activeEditor || activeEditor.document.languageId !== 'python') return;
 
     const focusNode: number = workspaceState.get('focusNode') || 0;
-    const focusFunctionName: string = workspaceState.get('focusFunctionName') || 'all';
+    const focusFunctionId: string = workspaceState.get('focusFunctionId') || 'all';
 
     const decorations: vscode.DecorationOptions[] = [];
     const documentLines = activeEditor.document.lineCount;
@@ -98,7 +98,7 @@ export function updateDecorations(
                 // This tracks profiling info for all parent nodes of the focus node.
                 // There is a caveat for recursive calls: we must ensure that the parent node is not part of the same
                 // function as the focus node.
-                if (focusNodeCallStack.has(sample.uid) && focusFunctionName !== sample.functionName) {
+                if (focusNodeCallStack.has(sample.uid) && focusFunctionId !== sample.functionId) {
                     samples += sample.numSamples;
                     totalSamples += sample.numSamples;
                 }
