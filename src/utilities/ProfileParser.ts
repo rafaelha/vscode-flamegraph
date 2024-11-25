@@ -82,7 +82,7 @@ function parseStackTrace(stackString: string): Frame[] {
         .map((frameStr) => frameStr.trim())
         .filter((f) => f !== '');
 
-    let result: Frame[] = [];
+    const result: Frame[] = [];
 
     for (const frame of frames) {
         const regex = /\s*(<\w+>|\w+)\s+\(([^:]+):(\d+)\)/;

@@ -71,7 +71,6 @@ export function updateDecorations(
         if (line in profilingResult.profile) {
             const lineProfile = profilingResult.profile[line];
             const functionName = lineProfile.functionName;
-            // const callStacks = lineProfile.samples[0].numSamples;
 
             color = getFunctionColor(functionName);
             const stats = profilingResult.functionProfile[functionName];
