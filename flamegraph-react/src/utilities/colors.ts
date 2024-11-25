@@ -1,6 +1,6 @@
 export function hashString(str: string): number {
     let hash = 0x9e3779b9; // Initial seed value for the hash function
-    for (let i = 0; i < str.length; i++) {
+    for (let i = 0; i < str.length; i += 1) {
         const char = str.charCodeAt(i);
         hash = ((hash << 5) + hash) ^ char;
     }

@@ -162,7 +162,7 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
         let currentCallStackStr = '';
         for (const frame of frames) {
             if (!fileLineToInt[frame.fileLineKey]) fileLineToInt[frame.fileLineKey] = uid;
-            currentDepth++;
+            currentDepth += 1;
 
             let node = currentNode.children?.find(
                 (child) =>
@@ -171,7 +171,7 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
                     child.lineNumber === frame.lineNumber
             );
             if (!node) {
-                uid++; // increase uid and create new node
+                uid += 1; // increase uid and create new node
                 node = {
                     uid,
                     functionName: frame.functionName,
