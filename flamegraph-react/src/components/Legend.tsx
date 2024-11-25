@@ -1,11 +1,11 @@
-import { type LegendItem } from './types'
+import { type LegendItem } from './types';
 
 interface LegendProps {
-    items: LegendItem[]
+    items: LegendItem[];
 }
 
 export function Legend({ items }: LegendProps) {
-    if (items.length === 0) return null
+    if (items.length === 0) return null;
 
     return (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-[90vw]">
@@ -20,5 +20,5 @@ export function Legend({ items }: LegendProps) {
                 </div>
             </div>
         </div>
-    )
-} 
+    );
+}
