@@ -3,11 +3,15 @@ import './flame-graph.css';
 import { vscode } from '../utilities/vscode';
 import { Legend } from './Legend';
 import { TreeNode } from './types';
+import { getFunctionColor } from '../utilities/colors';
+
+
 
 
 export function FlameGraph({ data, height = 23 }: {data: TreeNode, height?: number}) {
     const [focusNode, setFocusNode] = useState<TreeNode>(data);
     const [hoveredLineId, setHoveredLineId] = useState<number | null>(null);
+    const [hoveredFunctionId, setHoveredFunctionId] = useState<string | null>(null);
     const [isCommandPressed, setIsCommandPressed] = useState(false);
 
     const rootValue = data.numSamples;
@@ -49,12 +53,14 @@ export function FlameGraph({ data, height = 23 }: {data: TreeNode, height?: numb
         }
 
         const isHovered = hoveredLineId === node.fileLineId;
+        const isRelatedFunction = hoveredFunctionId === node.functionId;
+        
         const style = {
             left: `${x * 100}%`,
             width: `calc(${width * 100}% - 2px)`,
             top: `${node.depth * height}px`,
             height: `${height - 2}px`,
-            backgroundColor: node.color,
+            backgroundColor: isCommandPressed && isRelatedFunction ? getFunctionColor(node.functionName) : node.color,
             position: 'absolute' as const,
             borderRadius: '2px',
             color: 'white',
@@ -105,8 +111,14 @@ export function FlameGraph({ data, height = 23 }: {data: TreeNode, height?: numb
                 className={className}
                 style={style}
                 onClick={handleClick}
-                onMouseEnter={() => setHoveredLineId(node.fileLineId)}
-                onMouseLeave={() => setHoveredLineId(null)}
+                onMouseEnter={() => {
+                    setHoveredLineId(node.fileLineId)
+                    setHoveredFunctionId(node.functionId)
+                }}
+                onMouseLeave={() => {
+                    setHoveredLineId(null)
+                    setHoveredFunctionId(null)
+                }}
                 title={tooltipContent}
             >
                 {renderNodeContent(node)}

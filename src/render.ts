@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ProfilingEntry, ProfilingResult, ProfilingResults } from './utilities/ProfileParser';
-import { getColorByIndex } from './utilities/colors';
+import { getFunctionColor } from './utilities/colors';
 import { basename } from 'path';
 import { normalizePath } from './utilities/getUri';
 
@@ -21,9 +21,7 @@ function makeToolTip(samples: ProfilingEntry[]) {
         const barElements = 15;
         const barLength = Math.round((sample.numSamples / totalSamples) * barElements);
         const bar = '█'.repeat(barLength) + ' '.repeat(barElements - barLength);
-        toolTip += `| ${sample.numSamples / 100}s | ${bar} | ${percentage}% | ${sample.callStackString} ${Array.from(
-            sample.callStackUids
-        ).join(',')}|\n`;
+        toolTip += `| ${sample.numSamples / 100}s | ${bar} | ${percentage}% | ${sample.callStackString} |\n`;
     }
     return toolTip;
 }
@@ -61,26 +59,21 @@ export function updateDecorations(
     }
     if (!profilingResult) return;
 
-    let colorIndex = -1;
-    let lastFunctionName = '';
-    let color = getColorByIndex(0);
-
     let focusNodeCallStack = workspaceState.get('focusNodeCallStack') as Set<number>;
+    let nonZeroDecorations = false;
 
     for (let line = 1; line < documentLines + 1; line++) {
         let width = 0;
         let toolTip = '';
         let samples = 0;
+        let color = '';
 
         if (line in profilingResult.profile) {
             const lineProfile = profilingResult.profile[line];
             const functionName = lineProfile.functionName;
             // const callStacks = lineProfile.samples[0].numSamples;
 
-            if (functionName !== lastFunctionName) {
-                color = getColorByIndex(++colorIndex);
-                lastFunctionName = functionName;
-            }
+            color = getFunctionColor(functionName);
             const stats = profilingResult.functionProfile[functionName];
             let totalSamples = 0;
 
@@ -106,6 +99,7 @@ export function updateDecorations(
 
             toolTip = makeToolTip(contr);
             width = samples == 0 ? 0 : Math.round((samples / totalSamples) * DECORATION_WIDTH);
+            if (samples > 0) nonZeroDecorations = true;
         }
         decorations.push({
             range: new vscode.Range(line - 1, 0, line - 1, 0),
@@ -123,5 +117,6 @@ export function updateDecorations(
         });
     }
 
-    activeEditor.setDecorations(lineColorDecorationType, decorations);
+    if (nonZeroDecorations) activeEditor.setDecorations(lineColorDecorationType, decorations);
+    else activeEditor.setDecorations(lineColorDecorationType, []);
 }

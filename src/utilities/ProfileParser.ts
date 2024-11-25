@@ -37,6 +37,7 @@ export interface TreeNode {
     depth: number;
     color: string;
     fileLineId: number;
+    functionId: string;
     filePath?: string;
     lineNumber?: number;
     children?: TreeNode[];
@@ -122,6 +123,7 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
     const root: TreeNode = {
         uid: uid,
         functionName: 'all',
+        functionId: 'all',
         numSamples: 0,
         filePath: '',
         lineNumber: 0,
@@ -180,6 +182,7 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
                     children: [],
                     depth: currentDepth,
                     fileLineId: fileLineToInt[frame.fileLineKey],
+                    functionId: frame.functionId,
                     moduleName: frame.moduleName,
                 };
                 currentNode.children?.push(node);

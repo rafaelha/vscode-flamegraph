@@ -43,3 +43,8 @@ export function getNodeColor(file?: string, line?: number, functionName?: string
     const lightness = 25 + (line % 10);
     return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
+
+export function getFunctionColor(functionName: string): string {
+    const hue = (hashString(functionName ?? '') + 50) % 360;
+    return `hsl(${hue}, 50%, 40%)`;
+}

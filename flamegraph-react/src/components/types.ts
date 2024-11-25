@@ -16,4 +16,5 @@ export interface TreeNode {
     children?: TreeNode[];
     parent?: TreeNode;
     moduleName?: string;
+    functionId: string;
 }
