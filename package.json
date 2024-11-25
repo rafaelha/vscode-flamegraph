@@ -47,7 +47,8 @@
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
         "pretest": "npm run compile && npm run lint",
-        "lint": "eslint src --ext ts"
+        "lint": "eslint src --ext ts",
+        "format": "npx prettier --write ."
     },
     "devDependencies": {
         "@types/glob": "^7.1.3",

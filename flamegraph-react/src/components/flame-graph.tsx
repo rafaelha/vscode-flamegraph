@@ -5,10 +5,7 @@ import { Legend } from './Legend';
 import { TreeNode } from './types';
 import { getFunctionColor } from '../utilities/colors';
 
-
-
-
-export function FlameGraph({ data, height = 23 }: {data: TreeNode, height?: number}) {
+export function FlameGraph({ data, height = 23 }: { data: TreeNode; height?: number }) {
     const [focusNode, setFocusNode] = useState<TreeNode>(data);
     const [hoveredLineId, setHoveredLineId] = useState<number | null>(null);
     const [hoveredFunctionId, setHoveredFunctionId] = useState<string | null>(null);
@@ -54,7 +51,7 @@ export function FlameGraph({ data, height = 23 }: {data: TreeNode, height?: numb
 
         const isHovered = hoveredLineId === node.fileLineId;
         const isRelatedFunction = hoveredFunctionId === node.functionId;
-        
+
         const style = {
             left: `${x * 100}%`,
             width: `calc(${width * 100}% - 2px)`,
@@ -81,14 +78,13 @@ export function FlameGraph({ data, height = 23 }: {data: TreeNode, height?: numb
                 setFocusNode(node);
                 // get the stack of all parents uid
                 let callStack: number[] = [];
-                for (let current = node; current.parent; current = current.parent)
-                    callStack.push(current.parent.uid);
+                for (let current = node; current.parent; current = current.parent) callStack.push(current.parent.uid);
                 vscode.postMessage({
                     command: 'set-focus-node',
                     uid: node.uid,
                     focusFunctionId: node.functionName,
                     callStack: callStack,
-                })
+                });
             }
         };
 
@@ -112,12 +108,12 @@ export function FlameGraph({ data, height = 23 }: {data: TreeNode, height?: numb
                 style={style}
                 onClick={handleClick}
                 onMouseEnter={() => {
-                    setHoveredLineId(node.fileLineId)
-                    setHoveredFunctionId(node.functionId)
+                    setHoveredLineId(node.fileLineId);
+                    setHoveredFunctionId(node.functionId);
                 }}
                 onMouseLeave={() => {
-                    setHoveredLineId(null)
-                    setHoveredFunctionId(null)
+                    setHoveredLineId(null);
+                    setHoveredFunctionId(null);
                 }}
                 title={tooltipContent}
             >
@@ -161,7 +157,7 @@ export function FlameGraph({ data, height = 23 }: {data: TreeNode, height?: numb
 
     function renderNodeContent(node: TreeNode) {
         const fileName = node.filePath ? node.filePath.split('/').pop() : 'unknown';
-        const fileInfo = node.lineNumber ? `${fileName}:${node.lineNumber}`: `${fileName}`;
+        const fileInfo = node.lineNumber ? `${fileName}:${node.lineNumber}` : `${fileName}`;
 
         return (
             <div
