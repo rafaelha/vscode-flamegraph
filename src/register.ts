@@ -3,6 +3,21 @@ import { parseProfilingData } from './utilities/ProfileParser';
 import { updateDecorations, lineColorDecorationType } from './render';
 import { readTextFile } from './utilities/io';
 
+export function unregisterProfile(context: vscode.ExtensionContext) {
+    // Remove decorations
+    vscode.window.visibleTextEditors.forEach((editor) => {
+        editor.setDecorations(lineColorDecorationType, []);
+    });
+
+    // Dispose of existing listeners
+    const disposables = context.workspaceState.get('decorationDisposables') as vscode.Disposable[] | undefined;
+    if (disposables) {
+        disposables.forEach((d) => d.dispose());
+        context.workspaceState.update('decorationDisposables', undefined);
+        context.workspaceState.update('decorationDisposables', undefined);
+    }
+}
+
 export async function registerProfile(context: vscode.ExtensionContext, profileUri: vscode.Uri) {
     // Unregister any existing profile
     unregisterProfile(context);
@@ -32,19 +47,4 @@ export async function registerProfile(context: vscode.ExtensionContext, profileU
     vscode.window.visibleTextEditors.forEach((editor) => {
         updateDecorations(editor, result, context.workspaceState);
     });
-}
-
-export function unregisterProfile(context: vscode.ExtensionContext) {
-    // Remove decorations
-    vscode.window.visibleTextEditors.forEach((editor) => {
-        editor.setDecorations(lineColorDecorationType, []);
-    });
-
-    // Dispose of existing listeners
-    const disposables = context.workspaceState.get('decorationDisposables') as vscode.Disposable[] | undefined;
-    if (disposables) {
-        disposables.forEach((d) => d.dispose());
-        context.workspaceState.update('decorationDisposables', undefined);
-        context.workspaceState.update('decorationDisposables', undefined);
-    }
 }

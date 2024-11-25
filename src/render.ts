@@ -48,7 +48,7 @@ export function updateDecorations(
     let profilingResult: ProfilingResult | undefined;
 
     // check if the file path is in the profiling results
-    for (let i = 0; i < profilingResults.length; i++) {
+    for (let i = 0; i < profilingResults.length; i += 1) {
         // the file path need not match exactly, but one should be the end of the other.
         // This ensures that relative paths are also matched.
         const resultFilePath = normalizePath(profilingResults[i].filePath);
@@ -62,7 +62,7 @@ export function updateDecorations(
     const focusNodeCallStack = workspaceState.get('focusNodeCallStack') as Set<number>;
     let nonZeroDecorations = false;
 
-    for (let line = 1; line < documentLines + 1; line++) {
+    for (let line = 1; line < documentLines + 1; line += 1) {
         let width = 0;
         let toolTip = '';
         let samples = 0;
