@@ -225,14 +225,14 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
                 profilingResults.push(profilingResult);
             } else profilingResult = profilingResults[filePathIndex];
 
-            let profile = profilingResult.profile;
+            const profile = profilingResult.profile;
             let functionProfile = profilingResult.functionProfile;
 
             profile[frame.lineNumber] ??= {
                 functionName: frame.functionName,
                 samples: [],
             };
-            let uid = frame.uid ? frame.uid : -1;
+            const uid = frame.uid ? frame.uid : -1;
             let i = profile[frame.lineNumber].samples.findIndex((x) => x.uid === uid);
             if (i === -1) {
                 profile[frame.lineNumber].samples.push({
