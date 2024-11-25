@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
 import { parseProfilingData } from './utilities/ProfileParser';
-import { updateDecorations } from './render';
+import { updateDecorations, lineColorDecorationType } from './render';
 import { readTextFile } from './utilities/io';
-import { lineColorDecorationType } from './render';
 
 export async function registerProfile(context: vscode.ExtensionContext, profileUri: vscode.Uri) {
     // Unregister any existing profile

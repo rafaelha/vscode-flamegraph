@@ -28,7 +28,9 @@ import { updateDecorations } from '../render';
  */
 export class FlamegraphPanel {
     public static currentPanel: FlamegraphPanel | undefined;
+
     private readonly _panel: WebviewPanel;
+
     private _disposables: Disposable[] = [];
 
     /**
@@ -123,7 +125,7 @@ export class FlamegraphPanel {
         const nonce = getNonce();
 
         // Tip: Install the es6-string-html VS Code extension to enable code highlighting below
-        return /*html*/ `
+        return /* html */ `
       <!DOCTYPE html>
       <html lang="en">
         <head>
@@ -153,7 +155,7 @@ export class FlamegraphPanel {
     private _setWebviewMessageListener(webview: Webview, context: ExtensionContext) {
         webview.onDidReceiveMessage(
             async (message: any) => {
-                const command = message.command;
+                const { command } = message;
 
                 switch (command) {
                     case 'open-file':
@@ -172,7 +174,7 @@ export class FlamegraphPanel {
 
                             // Move cursor to specified line
                             const line = Math.max(0, message.line - 1); // Convert to 0-based line number
-                            const range = document.lineAt(line).range;
+                            const { range } = document.lineAt(line);
                             editor.selection = new Selection(range.start, range.start);
                             editor.revealRange(range, TextEditorRevealType.InCenter);
                         } catch (error) {
@@ -181,7 +183,7 @@ export class FlamegraphPanel {
                         return;
 
                     case 'set-focus-node':
-                        const uid: number = message.uid;
+                        const { uid } = message;
                         context.workspaceState.update('focusNode', uid);
                         context.workspaceState.update('focusNodeCallStack', new Set<number>(message.callStack));
                         context.workspaceState.update('focusFunctionId', message.focusFunctionId);
@@ -189,7 +191,6 @@ export class FlamegraphPanel {
                         vscode.window.visibleTextEditors.forEach((editor) => {
                             updateDecorations(editor, decorationTree, context.workspaceState);
                         });
-                        return;
                 }
             },
             undefined,

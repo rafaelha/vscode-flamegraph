@@ -94,10 +94,10 @@ function parseStackTrace(stackString: string): Frame[] {
         const functionName = matches[1].trim();
 
         result.push({
-            functionName: functionName,
-            filePath: filePath,
+            functionName,
+            filePath,
             fileName: basename(filePath),
-            lineNumber: lineNumber,
+            lineNumber,
             moduleName: getModuleName(filePath),
             fileLineKey: `${filePath}:${lineNumber}`,
             functionId: functionName + filePath,
@@ -121,7 +121,7 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
     let uid = 0;
 
     const root: TreeNode = {
-        uid: uid,
+        uid,
         functionName: 'all',
         functionId: 'all',
         numSamples: 0,
@@ -151,16 +151,16 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
             return;
         }
 
-        let callStackSet = new Set<number>([0]);
-        let accumulatedCallStack = '';
+        const callStackSet = new Set<number>([0]);
+        const accumulatedCallStack = '';
 
         const frames = parseStackTrace(callStackStr);
         root.numSamples += numSamples;
         let currentNode = root;
         let currentDepth = 0;
-        let parentIds = new Set<number>([root.uid]);
+        const parentIds = new Set<number>([root.uid]);
         let currentCallStackStr = '';
-        for (let frame of frames) {
+        for (const frame of frames) {
             if (!fileLineToInt[frame.fileLineKey]) fileLineToInt[frame.fileLineKey] = uid;
             currentDepth++;
 
@@ -173,11 +173,11 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
             if (!node) {
                 uid++; // increase uid and create new node
                 node = {
-                    uid: uid,
+                    uid,
                     functionName: frame.functionName,
                     filePath: frame.filePath,
                     lineNumber: frame.lineNumber,
-                    numSamples: numSamples,
+                    numSamples,
                     color: getNodeColor(frame.filePath, frame.lineNumber, frame.fileName),
                     children: [],
                     depth: currentDepth,
@@ -210,10 +210,10 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
 
             // Initialize the file entry if it doesn't exist
             decorationData[frame.fileName] ??= [];
-            let profilingResults = decorationData[frame.fileName];
+            const profilingResults = decorationData[frame.fileName];
 
             // get index of filePath in the list of filePaths
-            let filePathIndex = profilingResults.findIndex((x) => x.filePath === frame.filePath);
+            const filePathIndex = profilingResults.findIndex((x) => x.filePath === frame.filePath);
 
             let profilingResult: ProfilingResult;
             if (filePathIndex === -1) {
@@ -225,8 +225,8 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
                 profilingResults.push(profilingResult);
             } else profilingResult = profilingResults[filePathIndex];
 
-            const profile = profilingResult.profile;
-            let functionProfile = profilingResult.functionProfile;
+            const { profile } = profilingResult;
+            const { functionProfile } = profilingResult;
 
             profile[frame.lineNumber] ??= {
                 functionName: frame.functionName,
@@ -240,7 +240,7 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
                     callStackUids: frame.parentIds ? frame.parentIds : new Set<number>([0]),
                     functionId: frame.functionName + frame.filePath,
                     uid: frame.uid ? frame.uid : -1,
-                    numSamples: numSamples,
+                    numSamples,
                 });
             } else {
                 profile[frame.lineNumber].samples[i].numSamples += numSamples;

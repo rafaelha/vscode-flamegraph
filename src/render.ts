@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
+import { basename } from 'path';
 import { ProfilingEntry, ProfilingResult, ProfilingResults } from './utilities/ProfileParser';
 import { getFunctionColor } from './utilities/colors';
-import { basename } from 'path';
 import { normalizePath } from './utilities/getUri';
 
 const DECORATION_WIDTH = 100; // Width in pixels for the decoration area
@@ -13,8 +13,8 @@ export const lineColorDecorationType = vscode.window.createTextEditorDecorationT
 
 function makeToolTip(samples: ProfilingEntry[]) {
     if (samples.length <= 1) return '';
-    let toolTip = `### Call Stack\n| | | | |\n|---|---|---|---|\n`;
-    let totalSamples = samples.reduce((acc, sample) => acc + sample.numSamples, 0);
+    let toolTip = '### Call Stack\n| | | | |\n|---|---|---|---|\n';
+    const totalSamples = samples.reduce((acc, sample) => acc + sample.numSamples, 0);
 
     for (const sample of samples) {
         const percentage = ((sample.numSamples / totalSamples) * 100).toFixed(1);
@@ -39,13 +39,13 @@ export function updateDecorations(
 
     const decorations: vscode.DecorationOptions[] = [];
     const documentLines = activeEditor.document.lineCount;
-    let filePath = normalizePath(activeEditor.document.fileName);
-    let fileName = basename(filePath);
+    const filePath = normalizePath(activeEditor.document.fileName);
+    const fileName = basename(filePath);
 
     if (!(fileName in result)) return;
 
-    let profilingResults = result[fileName];
-    let profilingResult: ProfilingResult | undefined = undefined;
+    const profilingResults = result[fileName];
+    let profilingResult: ProfilingResult | undefined;
 
     // check if the file path is in the profiling results
     for (let i = 0; i < profilingResults.length; i++) {
@@ -59,7 +59,7 @@ export function updateDecorations(
     }
     if (!profilingResult) return;
 
-    let focusNodeCallStack = workspaceState.get('focusNodeCallStack') as Set<number>;
+    const focusNodeCallStack = workspaceState.get('focusNodeCallStack') as Set<number>;
     let nonZeroDecorations = false;
 
     for (let line = 1; line < documentLines + 1; line++) {
@@ -70,7 +70,7 @@ export function updateDecorations(
 
         if (line in profilingResult.profile) {
             const lineProfile = profilingResult.profile[line];
-            const functionName = lineProfile.functionName;
+            const { functionName } = lineProfile;
 
             color = getFunctionColor(functionName);
             const stats = profilingResult.functionProfile[functionName];
@@ -78,7 +78,7 @@ export function updateDecorations(
 
             for (const stat of stats) if (stat.callStackUids.has(focusNode)) totalSamples += stat.totalSamples;
 
-            let contr: ProfilingEntry[] = [];
+            const contr: ProfilingEntry[] = [];
 
             for (const sample of lineProfile.samples) {
                 if (sample.callStackUids.has(focusNode)) {

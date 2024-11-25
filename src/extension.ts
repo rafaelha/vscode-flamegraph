@@ -1,6 +1,6 @@
 import { commands, ExtensionContext } from 'vscode';
-import { FlamegraphPanel } from './panels/FlamegraphPanel';
 import * as vscode from 'vscode';
+import { FlamegraphPanel } from './panels/FlamegraphPanel';
 import { loadProfileCommand, runProfilerCommand, toggleProfileCommand } from './commands';
 import { unregisterProfile } from './register';
 import { TreeNode } from './utilities/ProfileParser';
