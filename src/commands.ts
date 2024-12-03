@@ -90,7 +90,7 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
         } else if (platform === 'win32') {
             terminal = vscode.window.createTerminal('PySpy Profiler', 'cmd.exe');
             terminal.sendText(
-                `py-spy record -o .pyspy-profile --format raw -s "${pythonPath}" "${relativePath.replace(
+                `py-spy record -o .pyspy-profile --format raw --native -s "${pythonPath}" "${relativePath.replace(
                     /\\/g,
                     '/'
                 )}" && exit`

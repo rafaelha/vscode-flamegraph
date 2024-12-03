@@ -32,7 +32,7 @@ export function updateDecorations(
     result: ProfilingResults,
     workspaceState: vscode.Memento
 ) {
-    if (!activeEditor || activeEditor.document.languageId !== 'python') return;
+    if (!activeEditor) return;
 
     const focusNode: number = workspaceState.get('focusNode') || 0;
     const focusFunctionId: string = workspaceState.get('focusFunctionId') || 'all';
