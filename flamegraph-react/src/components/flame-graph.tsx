@@ -135,9 +135,12 @@ export function FlameGraph({ data, height = 23 }: { data: TreeNode; height?: num
         // Render focus node (full width)
         nodes.push(renderNode(focusNode, 0, 1));
 
+        let maxDepth = 0;
+
         // Render children at respective position and width
         function renderChildren(node: TreeNode, startX: number) {
             let currentX = startX;
+            maxDepth = Math.max(maxDepth, node.depth);
 
             node.children?.forEach((child) => {
                 const childWidth = child.numSamples / focusNode.numSamples;
@@ -151,6 +154,20 @@ export function FlameGraph({ data, height = 23 }: { data: TreeNode; height?: num
         }
 
         renderChildren(focusNode, 0);
+
+        // Add a single invisible placeholder node at the bottom, for some scroll padding
+        nodes.push(
+            <div
+                key="placeholder"
+                style={{
+                    position: 'absolute',
+                    height: `${height * 2}px`,
+                    opacity: 0,
+                    width: '100%',
+                    top: `${(maxDepth + 1) * height}px`,
+                }}
+            />
+        );
 
         return nodes;
     }
