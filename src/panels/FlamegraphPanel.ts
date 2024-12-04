@@ -27,6 +27,7 @@ import { updateDecorations } from '../render';
  * - Setting message listeners so data can be passed between the webview and extension
  */
 export class FlamegraphPanel {
+    // eslint-disable-next-line no-use-before-define
     public static currentPanel: FlamegraphPanel | undefined;
 
     private readonly _panel: WebviewPanel;
@@ -180,9 +181,9 @@ export class FlamegraphPanel {
                         } catch (error) {
                             window.showErrorMessage(`Error opening file: ${error}`);
                         }
-                        return;
+                        break;
 
-                    case 'set-focus-node':
+                    case 'set-focus-node': {
                         const { uid } = message;
                         context.workspaceState.update('focusNode', uid);
                         context.workspaceState.update('focusNodeCallStack', new Set<number>(message.callStack));
@@ -191,6 +192,11 @@ export class FlamegraphPanel {
                         vscode.window.visibleTextEditors.forEach((editor) => {
                             updateDecorations(editor, decorationTree, context.workspaceState);
                         });
+                        break;
+                    }
+
+                    default:
+                        break;
                 }
             },
             undefined,

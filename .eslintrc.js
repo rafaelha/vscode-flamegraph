@@ -26,10 +26,18 @@ module.exports = {
                 ignoreRegExpLiterals: true,
             },
         ],
+        'import/extensions': 'off',
+        'no-underscore-dangle': 'off',
+        'no-continue': 'off',
+        'no-bitwise': 'off',
+        'no-restricted-syntax': 'off',
+        'import/prefer-default-export': 'off',
+        'class-methods-use-this': 'off',
     },
     settings: {
         'import/resolver': {
             typescript: {},
         },
+        'import/core-modules': ['vscode'],
     },
 };

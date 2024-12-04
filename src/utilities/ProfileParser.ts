@@ -90,7 +90,7 @@ function parseStackTrace(stackString: string): Frame[] {
         if (!matches) continue;
 
         const filePath = matches[2].trim();
-        const lineNumber = parseInt(matches[3].trim());
+        const lineNumber = parseInt(matches[3].trim(), 10);
         const functionName = matches[1].trim();
 
         result.push({
@@ -134,7 +134,7 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
     };
     const fileLineToInt: Record<string, number> = {};
 
-    lines.forEach((originalLine, lineIndex) => {
+    lines.forEach((originalLine) => {
         const line = originalLine.trim();
         if (line === '') return; // Skip empty lines
 
@@ -146,13 +146,9 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
         const numSamplesStr = line.substring(lastSpaceIndex + 1);
         const numSamples = parseInt(numSamplesStr, 10);
 
-        if (isNaN(numSamples)) {
-            console.warn(`Invalid number of samples: "${numSamplesStr}" in line ${lineIndex + 1}: ${line}`);
+        if (Number.isNaN(numSamples)) {
             return;
         }
-
-        const callStackSet = new Set<number>([0]);
-        const accumulatedCallStack = '';
 
         const frames = parseStackTrace(callStackStr);
         root.numSamples += numSamples;
@@ -202,7 +198,7 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
         const processedLocations = new Set<string>();
         for (const frame of frames.reverse()) {
             // Construct the decoration tree node
-            // Skip if the location has already been processed in the current stack trace. This happens for recursive calls
+            // Skip if the location has already been processed in the current stack trace. This happens for recursion
             if (processedLocations.has(frame.functionName + frame.filePath)) {
                 continue;
             }
@@ -232,14 +228,14 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
                 functionName: frame.functionName,
                 samples: [],
             };
-            const uid = frame.uid ? frame.uid : -1;
-            let i = profile[frame.lineNumber].samples.findIndex((x) => x.uid === uid);
+            const frameUid = frame.uid ? frame.uid : -1;
+            let i = profile[frame.lineNumber].samples.findIndex((x) => x.uid === frameUid);
             if (i === -1) {
                 profile[frame.lineNumber].samples.push({
                     callStackString: frame.callStackStr ? frame.callStackStr : '',
                     callStackUids: frame.parentIds ? frame.parentIds : new Set<number>([0]),
                     functionId: frame.functionName + frame.filePath,
-                    uid: frame.uid ? frame.uid : -1,
+                    uid: frameUid,
                     numSamples,
                 });
             } else {

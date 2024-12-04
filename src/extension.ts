@@ -1,5 +1,5 @@
-import { commands, ExtensionContext } from 'vscode';
 import * as vscode from 'vscode';
+import { commands, ExtensionContext } from 'vscode';
 import { FlamegraphPanel } from './panels/FlamegraphPanel';
 import { loadProfileCommand, runProfilerCommand, toggleProfileCommand } from './commands';
 import { unregisterProfile } from './register';

@@ -34,7 +34,7 @@ export async function registerProfile(context: vscode.ExtensionContext, profileU
         vscode.window.onDidChangeActiveTextEditor((editor) => {
             updateDecorations(editor, result, context.workspaceState);
         }),
-        vscode.workspace.onDidChangeTextDocument((event) => {
+        vscode.workspace.onDidChangeTextDocument(() => {
             updateDecorations(vscode.window.activeTextEditor, result, context.workspaceState);
         }),
     ];

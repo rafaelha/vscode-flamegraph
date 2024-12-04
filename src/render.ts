@@ -97,7 +97,7 @@ export function updateDecorations(
             }
 
             toolTip = makeToolTip(contr);
-            width = samples == 0 ? 0 : Math.round((samples / totalSamples) * DECORATION_WIDTH);
+            width = samples === 0 ? 0 : Math.round((samples / totalSamples) * DECORATION_WIDTH);
             if (samples > 0) nonZeroDecorations = true;
         }
         decorations.push({
