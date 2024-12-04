@@ -1,8 +1,12 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
+import { promisify } from 'util';
+import { exec } from 'child_process';
 import { selectProfileFile } from './utilities/io';
 import { registerProfile, unregisterProfile } from './register';
+
+const execAsync = promisify(exec);
 
 export function loadProfileCommand(context: vscode.ExtensionContext) {
     return vscode.commands.registerCommand('flamegraph.loadProfile', async () => {
@@ -23,7 +27,6 @@ export function toggleProfileCommand(context: vscode.ExtensionContext) {
     return vscode.commands.registerCommand('flamegraph.toggleProfile', () => {
         const profileVisible = context.workspaceState.get('profileVisible') as boolean | undefined;
         const profileUri = context.workspaceState.get('profileUri') as vscode.Uri | undefined;
-        console.log('profileVisible', profileVisible);
 
         if (profileVisible) {
             unregisterProfile(context);
@@ -38,6 +41,54 @@ export function toggleProfileCommand(context: vscode.ExtensionContext) {
             vscode.commands.executeCommand('flamegraph.showFlamegraph');
         }
     });
+}
+
+async function getPythonPath(): Promise<string | undefined> {
+    // get the python path from the python extension
+    const pythonExtension = vscode.extensions.getExtension('ms-python.python');
+    if (pythonExtension) {
+        await pythonExtension.activate();
+        return pythonExtension.exports.settings.getExecutionDetails().execCommand.join(' ');
+    }
+    // otherwise fallback to the python path from the python config
+    const pythonConfig = vscode.workspace.getConfiguration('python');
+    return pythonConfig.get<string>('pythonPath');
+}
+
+async function checkPySpyInstallation(): Promise<boolean> {
+    try {
+        await execAsync(`py-spy --version`);
+        return true;
+    } catch {
+        const installPySpy = await vscode.window.showInformationMessage(
+            'py-spy is not installed. Would you like to install it?',
+            'Yes',
+            'No'
+        );
+        if (installPySpy === 'Yes') {
+            return vscode.window.withProgress(
+                {
+                    location: vscode.ProgressLocation.Notification,
+                    title: 'Installing py-spy...',
+                    cancellable: true,
+                },
+                async (progress) => {
+                    try {
+                        progress.report({ increment: 0 });
+                        await execAsync(`pip install py-spy`);
+                        progress.report({ increment: 100 });
+                        return true;
+                    } catch (error) {
+                        vscode.window.showErrorMessage(
+                            'Failed to install py-spy. Please install it manually using pip.'
+                        );
+                        return false;
+                    }
+                }
+            );
+        }
+        return false;
+    }
 }
 
 export function runProfilerCommand(context: vscode.ExtensionContext) {
@@ -55,27 +106,19 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('File is not part of a workspace.');
             return;
         }
-
         const relativePath = path.relative(workspaceFolder.uri.fsPath, filePath);
 
         // Get the Python path from VSCode settings
-        const pythonConfig = vscode.workspace.getConfiguration('python');
-        // const pythonPath = pythonConfig.get<string>("defaultInterpreterPath");
-        let pythonPath = pythonConfig.get<string>('pythonPath');
-
-        const pythonExtension = vscode.extensions.getExtension('ms-python.python');
-        if (pythonExtension) {
-            await pythonExtension.activate();
-            pythonPath = pythonExtension.exports.settings.getExecutionDetails().execCommand.join(' ');
-            console.log('Python Path:', pythonPath);
-        }
-
+        const pythonPath = await getPythonPath();
         if (!pythonPath) {
             vscode.window.showErrorMessage(
                 'No Python interpreter selected. Please select a Python interpreter in VSCode.'
             );
             return;
         }
+
+        const pySpyInstalled = await checkPySpyInstallation();
+        if (!pySpyInstalled) return;
 
         let terminal: vscode.Terminal;
         const platform = os.platform();
@@ -101,8 +144,6 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
         }
         terminal.show();
 
-        vscode.window.showInformationMessage('Profiler started. The profile will be shown when finished.');
-
         // Wait for the terminal to finish
         const disposable = vscode.window.onDidCloseTerminal(async (closedTerminal) => {
             if (closedTerminal === terminal) {
@@ -120,7 +161,7 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
                     // open the flamegraph
                     vscode.commands.executeCommand('flamegraph.showFlamegraph');
                 } catch {
-                    vscode.window.showErrorMessage('Profile file not found after profiling.');
+                    vscode.window.showErrorMessage('Profile file not found.');
                 }
             }
         });
