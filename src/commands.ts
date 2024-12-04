@@ -128,7 +128,7 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
                 `sudo py-spy record -o .pyspy-profile --format raw -- "${pythonPath}" ${relativePath.replace(
                     / /g,
                     '\\ '
-                )} && exit`
+                )}`
             );
         } else if (platform === 'win32') {
             terminal = vscode.window.createTerminal('PySpy Profiler', 'cmd.exe');
@@ -136,7 +136,7 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
                 `py-spy record -o .pyspy-profile --format raw --native -s "${pythonPath}" "${relativePath.replace(
                     /\\/g,
                     '/'
-                )}" && exit`
+                )}"`
             );
         } else {
             vscode.window.showErrorMessage('Unsupported platform');
@@ -144,25 +144,27 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
         }
         terminal.show();
 
-        // Wait for the terminal to finish
-        const disposable = vscode.window.onDidCloseTerminal(async (closedTerminal) => {
-            if (closedTerminal === terminal) {
-                disposable.dispose();
+        const disp = vscode.window.onDidEndTerminalShellExecution(async (event) => {
+            if (event.terminal === terminal) {
+                if (event.exitCode === 0) {
+                    disp.dispose();
+                    // Check if .pyspy-profile exists
+                    const profileUri = vscode.Uri.file(path.join(workspaceFolder.uri.fsPath, '.pyspy-profile'));
+                    try {
+                        await vscode.workspace.fs.stat(profileUri);
+                        // File exists, register the profile
+                        await registerProfile(context, profileUri);
+                        context.workspaceState.update('profileUri', profileUri);
+                        context.workspaceState.update('profileVisible', true);
 
-                // Check if .pyspy-profile exists
-                const profileUri = vscode.Uri.file(path.join(workspaceFolder.uri.fsPath, '.pyspy-profile'));
-                try {
-                    await vscode.workspace.fs.stat(profileUri);
-                    // File exists, register the profile
-                    await registerProfile(context, profileUri);
-                    context.workspaceState.update('profileUri', profileUri);
-                    context.workspaceState.update('profileVisible', true);
-
-                    // open the flamegraph
-                    vscode.commands.executeCommand('flamegraph.showFlamegraph');
-                } catch {
-                    vscode.window.showErrorMessage('Profile file not found.');
+                        // open the flamegraph
+                        vscode.commands.executeCommand('flamegraph.showFlamegraph');
+                    } catch {
+                        vscode.window.showErrorMessage('Profile file not found.');
+                    }
                 }
+                terminal.sendText('echo "Press Enter to close terminal" && read && exit');
+                terminal.show();
             }
         });
     });
