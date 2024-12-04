@@ -119,11 +119,10 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
         const pySpyInstalled = await checkPySpyInstallation();
         if (!pySpyInstalled) return;
 
-        let terminal: vscode.Terminal;
         const platform = os.platform();
         const escapedPath = platform === 'win32' ? relativePath.replace(/\\/g, '/') : relativePath.replace(/ /g, '\\ ');
 
-        terminal = vscode.window.createTerminal('PySpy Profiler', platform === 'win32' ? 'cmd.exe' : undefined);
+        const terminal = vscode.window.createTerminal('PySpy Profiler', platform === 'win32' ? 'cmd.exe' : undefined);
         const flags = '--format raw -s';
         const sudo = platform === 'darwin' ? 'sudo ' : '';
         terminal.sendText(`${sudo}py-spy record -o .pyspy-profile ${flags} "${pythonPath}" ${escapedPath}`);
