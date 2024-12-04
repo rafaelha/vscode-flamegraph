@@ -108,7 +108,6 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
         }
         const relativePath = path.relative(workspaceFolder.uri.fsPath, filePath);
 
-        // Get the Python path from VSCode settings
         const pythonPath = await getPythonPath();
         if (!pythonPath) {
             vscode.window.showErrorMessage(
@@ -122,26 +121,12 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
 
         let terminal: vscode.Terminal;
         const platform = os.platform();
-        if (platform === 'darwin' || platform === 'linux') {
-            terminal = vscode.window.createTerminal('PySpy Profiler');
-            terminal.sendText(
-                `sudo py-spy record -o .pyspy-profile --format raw -- "${pythonPath}" ${relativePath.replace(
-                    / /g,
-                    '\\ '
-                )}`
-            );
-        } else if (platform === 'win32') {
-            terminal = vscode.window.createTerminal('PySpy Profiler', 'cmd.exe');
-            terminal.sendText(
-                `py-spy record -o .pyspy-profile --format raw --native -s "${pythonPath}" "${relativePath.replace(
-                    /\\/g,
-                    '/'
-                )}"`
-            );
-        } else {
-            vscode.window.showErrorMessage('Unsupported platform');
-            return;
-        }
+        const escapedPath = platform === 'win32' ? relativePath.replace(/\\/g, '/') : relativePath.replace(/ /g, '\\ ');
+
+        terminal = vscode.window.createTerminal('PySpy Profiler', platform === 'win32' ? 'cmd.exe' : undefined);
+        const flags = '--format raw -s';
+        const sudo = platform === 'darwin' ? 'sudo ' : '';
+        terminal.sendText(`${sudo}py-spy record -o .pyspy-profile ${flags} "${pythonPath}" ${escapedPath}`);
         terminal.show();
 
         const disp = vscode.window.onDidEndTerminalShellExecution(async (event) => {
