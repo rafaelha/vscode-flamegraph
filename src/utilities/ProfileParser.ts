@@ -198,6 +198,13 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
         const processedLocations = new Set<string>();
         for (const frame of frames.reverse()) {
             // Construct the decoration tree node
+            if (
+                frame.functionName.startsWith('<') &&
+                frame.functionName.endsWith('>') &&
+                frame.functionName !== '<module>'
+            )
+                // Skip inline functions, such is <listcomp> since they cannot be resolved to a file/function
+                continue;
             // Skip if the location has already been processed in the current stack trace. This happens for recursion
             if (processedLocations.has(frame.functionName + frame.filePath)) {
                 continue;
