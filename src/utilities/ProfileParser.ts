@@ -67,7 +67,7 @@ interface Frame {
     functionName: string;
     filePath: string;
     fileName: string;
-    lineNumber: number;
+    lineNumber?: number;
     moduleName?: string;
     fileLineKey: string;
     functionId: string;
@@ -85,23 +85,37 @@ function parseStackTrace(stackString: string): Frame[] {
     const result: Frame[] = [];
 
     for (const frame of frames) {
-        const regex = /\s*(<\w+>|\w+)\s+\(([^:]+):(\d+)\)/;
-        const matches = frame.match(regex);
-        if (!matches) continue;
+        // Add new regex for process frames
+        const processRegex = /process\s+(\d+):"([^"]+)"/;
+        const standardRegex = /\s*(<\w+>|\w+)\s+\(([^:]+):(\d+)\)/;
 
-        const filePath = matches[2].trim();
-        const lineNumber = parseInt(matches[3].trim(), 10);
-        const functionName = matches[1].trim();
+        const processMatches = frame.match(processRegex);
+        const standardMatches = frame.match(standardRegex);
 
-        result.push({
-            functionName,
-            filePath,
-            fileName: basename(filePath),
-            lineNumber,
-            moduleName: getModuleName(filePath),
-            fileLineKey: `${filePath}:${lineNumber}`,
-            functionId: functionName + filePath,
-        });
+        if (processMatches) {
+            const filePath = processMatches[2].trim();
+            result.push({
+                functionName: `process ${processMatches[1]}`,
+                filePath,
+                fileName: basename(filePath),
+                fileLineKey: `${filePath}`,
+                functionId: `process_${processMatches[1]}_${filePath}`,
+            });
+        } else if (standardMatches) {
+            const filePath = standardMatches[2].trim();
+            const lineNumber = parseInt(standardMatches[3].trim(), 10);
+            const functionName = standardMatches[1].trim();
+
+            result.push({
+                functionName,
+                filePath,
+                fileName: basename(filePath),
+                lineNumber,
+                moduleName: getModuleName(filePath),
+                fileLineKey: `${filePath}:${lineNumber}`,
+                functionId: functionName + filePath,
+            });
+        }
     }
 
     return result;
@@ -206,9 +220,7 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
                 // Skip inline functions, such is <listcomp> since they cannot be resolved to a file/function
                 continue;
             // Skip if the location has already been processed in the current stack trace. This happens for recursion
-            if (processedLocations.has(frame.functionName + frame.filePath)) {
-                continue;
-            }
+            if (processedLocations.has(frame.functionName + frame.filePath)) continue;
             processedLocations.add(frame.functionName + frame.filePath);
 
             // Initialize the file entry if it doesn't exist
@@ -231,14 +243,15 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
             const { profile } = profilingResult;
             const { functionProfile } = profilingResult;
 
-            profile[frame.lineNumber] ??= {
+            const frameLineNumber = frame.lineNumber ?? -1;
+            profile[frameLineNumber] ??= {
                 functionName: frame.functionName,
                 samples: [],
             };
             const frameUid = frame.uid ? frame.uid : -1;
-            let i = profile[frame.lineNumber].samples.findIndex((x) => x.uid === frameUid);
+            let i = profile[frameLineNumber].samples.findIndex((x) => x.uid === frameUid);
             if (i === -1) {
-                profile[frame.lineNumber].samples.push({
+                profile[frameLineNumber].samples.push({
                     callStackString: frame.callStackStr ? frame.callStackStr : '',
                     callStackUids: frame.parentIds ? frame.parentIds : new Set<number>([0]),
                     functionId: frame.functionName + frame.filePath,
@@ -246,7 +259,7 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
                     numSamples,
                 });
             } else {
-                profile[frame.lineNumber].samples[i].numSamples += numSamples;
+                profile[frameLineNumber].samples[i].numSamples += numSamples;
             }
 
             functionProfile[frame.functionName] ??= [];
