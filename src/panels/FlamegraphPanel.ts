@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import {
     Disposable,
     Webview,
@@ -162,12 +163,15 @@ export class FlamegraphPanel {
                     case 'open-file':
                         try {
                             // Find the file in the workspace
-                            const files = await workspace.findFiles(`**/${message.file}`);
-
-                            if (files.length === 0) return;
+                            let fileUri: Uri = Uri.file(message.file);
+                            if (!path.isAbsolute(message.file)) {
+                                const files = await workspace.findFiles(`**/${message.file}`);
+                                if (files.length === 0) return;
+                                [fileUri] = files;
+                            }
 
                             // Open the first matching file
-                            const document = await workspace.openTextDocument(files[0]);
+                            const document = await workspace.openTextDocument(fileUri);
                             const editor = await window.showTextDocument(document, {
                                 viewColumn: ViewColumn.One,
                                 preserveFocus: false,
