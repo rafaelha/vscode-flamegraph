@@ -21,9 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Interactive inline profile: The flame graph and the inline profile are now linked visualizations. Clicking on a specific entry in the flame graph will filter the inline profile display to show only the profiling info visible in the flamegraph. This is useful when a function is invoked from multiple locations. Previously, the inline profile aggregated all calls to the function. Now, aggregation can be filtered using the flame graph.
 - Responsive flame graph legend: The items of the flame graph legend are now scrollable and will be adjust based on the currently visible modules in the flame graph.
 
-### Fixed
-- 
-
 ## [0.0.4] - 2023-11-20
 ### Fixed
 - Fixed a bug where inline profile decorations were not shown after VS Code update.
