@@ -39,6 +39,7 @@ export interface TreeNode {
     fileLineId: number;
     functionId: string;
     filePath?: string;
+    fileName: string;
     lineNumber?: number;
     children?: TreeNode[];
     parent?: TreeNode;
@@ -97,8 +98,8 @@ function parseStackTrace(stackString: string): Frame[] {
             result.push({
                 functionName: `process ${processMatches[1]}`,
                 filePath,
-                fileName: basename(filePath),
-                fileLineKey: `${filePath}`,
+                fileName: '',
+                fileLineKey: filePath,
                 functionId: `process_${processMatches[1]}_${filePath}`,
             });
         } else if (standardMatches) {
@@ -140,6 +141,7 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
         functionId: 'all',
         numSamples: 0,
         filePath: '',
+        fileName: '',
         lineNumber: 0,
         depth: 0,
         fileLineId: -1,
@@ -186,6 +188,7 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
                     uid,
                     functionName: frame.functionName,
                     filePath: frame.filePath,
+                    fileName: frame.fileName,
                     lineNumber: frame.lineNumber,
                     numSamples,
                     color: getNodeColor(frame.filePath, frame.lineNumber, frame.fileName),

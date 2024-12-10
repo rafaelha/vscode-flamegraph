@@ -95,7 +95,7 @@ export function FlameGraph({ data, height = 23 }: { data: TreeNode; height?: num
         const percentageOfFocus = ((node.numSamples / focusNode.numSamples) * 100).toFixed(1);
         const tooltipContent = [
             `${node.functionName}`,
-            node.filePath && node.lineNumber ? `${node.filePath}:${node.lineNumber}` : null,
+            node.filePath && node.lineNumber ? `${node.filePath}:${node.lineNumber}` : node.filePath ? node.filePath : null,
             `${node.numSamples / 100}s / ${percentageOfTotal}% / ${percentageOfFocus}%`,
         ]
             .filter(Boolean)
@@ -145,7 +145,7 @@ export function FlameGraph({ data, height = 23 }: { data: TreeNode; height?: num
             node.children?.forEach((child) => {
                 const childWidth = child.numSamples / focusNode.numSamples;
                 nodes.push(renderNode(child, currentX, childWidth));
-                if (childWidth >= 0.009) {
+                if (childWidth >= 0.005) {
                     // Only process children if parent is large enough to be visible
                     renderChildren(child, currentX);
                 }
@@ -173,8 +173,8 @@ export function FlameGraph({ data, height = 23 }: { data: TreeNode; height?: num
     }
 
     function renderNodeContent(node: TreeNode) {
-        const fileName = node.filePath ? node.filePath.split('/').pop() : 'unknown';
-        const fileInfo = node.lineNumber ? `${fileName}:${node.lineNumber}` : `${fileName}`;
+        const fileName = node.fileName;
+        const fileInfo = node.lineNumber ? `${fileName}:${node.lineNumber}` : fileName;
 
         return (
             <div

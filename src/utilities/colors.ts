@@ -10,7 +10,8 @@ export function hashString(str: string): number {
 }
 
 export function getNodeColor(file?: string, line?: number, functionName?: string): string {
-    if (!file || !line || !functionName) return '#808080';
+    if (!line) return '#008b8b';
+    if (!file || !functionName) return '#808080';
 
     const moduleName = getModuleName(file);
 

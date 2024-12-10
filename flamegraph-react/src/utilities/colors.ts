@@ -8,6 +8,6 @@ export function hashString(str: string): number {
 }
 
 export function getFunctionColor(functionName: string): string {
-    const hue = (hashString(functionName ?? '') + 50) % 360;
+    const hue = (hashString(functionName ?? 'all') + 50) % 360;
     return `hsl(${hue}, 50%, 40%)`;
 }

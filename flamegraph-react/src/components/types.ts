@@ -12,6 +12,7 @@ export interface TreeNode {
     color: string;
     fileLineId: number;
     filePath?: string;
+    fileName: string;
     lineNumber?: number;
     children?: TreeNode[];
     parent?: TreeNode;
