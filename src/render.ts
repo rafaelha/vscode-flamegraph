@@ -12,17 +12,26 @@ export const lineColorDecorationType = vscode.window.createTextEditorDecorationT
 });
 
 function makeToolTip(samples: ProfilingEntry[]) {
-    if (samples.length <= 1) return '';
+    if (samples.length === 0) return '';
+    if (samples.length <= 1) return samples[0].callStackString.replace(/</g, '&lt;').replace(/>/g, '&gt;');
     let toolTip = '### Call Stack\n| | | | |\n|---|---|---|---|\n';
     const totalSamples = samples.reduce((acc, sample) => acc + sample.numSamples, 0);
 
-    for (const sample of samples) {
+    const maxEntries = 5; // Maximum number of call stack strings to show
+    for (let i = 0; i < Math.min(samples.length, maxEntries); i += 1) {
+        const sample = samples[i];
         const percentage = ((sample.numSamples / totalSamples) * 100).toFixed(1);
         const barElements = 15;
         const barLength = Math.round((sample.numSamples / totalSamples) * barElements);
         const bar = '█'.repeat(barLength) + ' '.repeat(barElements - barLength);
-        toolTip += `| ${sample.numSamples / 100}s | ${bar} | ${percentage}% | ${sample.callStackString} |\n`;
+        const escapedCallStackString = sample.callStackString.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        toolTip += `| ${sample.numSamples / 100}s | ${bar} | ${percentage}% | ${escapedCallStackString} |\n`;
     }
+
+    if (samples.length > maxEntries) {
+        toolTip += `| +${samples.length - maxEntries} other caller(s) | | | |\n`;
+    }
+
     return toolTip;
 }
 
@@ -78,12 +87,12 @@ export function updateDecorations(
 
             for (const stat of stats) if (stat.callStackUids.has(focusNode)) totalSamples += stat.totalSamples;
 
-            const contr: ProfilingEntry[] = [];
+            const callStackSamples: ProfilingEntry[] = [];
 
             for (const sample of lineProfile.samples) {
                 if (sample.callStackUids.has(focusNode)) {
                     samples += sample.numSamples;
-                    contr.push(sample);
+                    callStackSamples.push(sample);
                 }
 
                 // If the sample is in the call stack of the focus node, process it
@@ -96,7 +105,7 @@ export function updateDecorations(
                 }
             }
 
-            toolTip = makeToolTip(contr);
+            toolTip = makeToolTip(callStackSamples);
             width = samples === 0 ? 0 : Math.round((samples / totalSamples) * DECORATION_WIDTH);
             if (samples > 0) nonZeroDecorations = true;
         }

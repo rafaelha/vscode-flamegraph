@@ -183,8 +183,9 @@ export class FlamegraphPanel {
                             editor.selection = new Selection(range.start, range.start);
                             editor.revealRange(range, TextEditorRevealType.InCenter);
                         } catch (error) {
-                            window.showErrorMessage(`Error opening file: ${error}`);
+                            // do nothing
                         }
+
                         break;
 
                     case 'set-focus-node': {

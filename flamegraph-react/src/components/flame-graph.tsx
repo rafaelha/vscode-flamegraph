@@ -67,12 +67,13 @@ export function FlameGraph({ data, height = 23 }: { data: TreeNode; height?: num
         };
 
         const handleClick = (e: React.MouseEvent) => {
-            if ((e.metaKey || e.ctrlKey) && node.filePath && node.lineNumber) {
+            if (e.metaKey || e.ctrlKey) {
+                if (!node.filePath) return;
                 // Send message to extension
                 vscode.postMessage({
                     command: 'open-file',
                     file: node.filePath,
-                    line: node.lineNumber,
+                    line: node.lineNumber || 1,
                 });
             } else {
                 setFocusNode(node);
@@ -95,7 +96,11 @@ export function FlameGraph({ data, height = 23 }: { data: TreeNode; height?: num
         const percentageOfFocus = ((node.numSamples / focusNode.numSamples) * 100).toFixed(1);
         const tooltipContent = [
             `${node.functionName}`,
-            node.filePath && node.lineNumber ? `${node.filePath}:${node.lineNumber}` : node.filePath ? node.filePath : null,
+            node.filePath && node.lineNumber
+                ? `${node.filePath}:${node.lineNumber}`
+                : node.filePath
+                  ? node.filePath
+                  : null,
             `${node.numSamples / 100}s / ${percentageOfTotal}% / ${percentageOfFocus}%`,
         ]
             .filter(Boolean)
