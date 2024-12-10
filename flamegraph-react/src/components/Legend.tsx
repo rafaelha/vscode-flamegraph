@@ -14,7 +14,7 @@ export function Legend({ items }: LegendProps) {
                     {items.map(({ name, color }) => (
                         <div key={name} className="flex items-center gap-1.5">
                             <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
-                            <span className="text-xs text-white/80">{name}</span>
+                            <span className="text-xs text-white/80 whitespace-nowrap">{name}</span>
                         </div>
                     ))}
                 </div>
