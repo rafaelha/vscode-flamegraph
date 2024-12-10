@@ -18,13 +18,22 @@ export function getUri(webview: Webview, extensionUri: Uri, pathList: string[]) 
 }
 
 /**
- * Normalizes a file path to use forward slashes. This is important for comparing file paths on different platforms.
+ * Normalizes a file path to use forward slashes and lower case drive letters.
+ * This is important for comparing file paths on different platforms.
  *
  * @param filePath - The file path to normalize.
  * @returns The normalized file path.
  */
 export function normalizePath(filePath: string) {
-    return filePath.replace(/\\/g, '/');
+    // Normalize slashes
+    let normalizedPath = filePath.replace(/\\/g, '/');
+
+    // Handle Windows absolute paths with drive letters
+    normalizedPath = normalizedPath.replace(/^([A-Z]):/, (match, driveLetter) => {
+        return driveLetter.toLowerCase() + ':';
+    });
+
+    return normalizedPath;
 }
 
 const filenameCache = new Map<string, string>();

@@ -88,7 +88,7 @@ function parseStackTrace(stackString: string): Frame[] {
     for (const frame of frames) {
         // Add new regex for process frames
         const processRegex = /process\s+(\d+):"([^"]+)"/;
-        const standardRegex = /\s*(<\w+>|\w+)\s+\(([^:]+):(\d+)\)/;
+        const standardRegex = /\s*(<[^>]+>|\w+)\s*\((.+):(\d+)\)/;
 
         const processMatches = frame.match(processRegex);
         const standardMatches = frame.match(standardRegex);
