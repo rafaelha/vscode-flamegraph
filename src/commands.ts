@@ -10,6 +10,7 @@ const execAsync = promisify(exec);
 
 export function loadProfileCommand(context: vscode.ExtensionContext) {
     return vscode.commands.registerCommand('flamegraph.loadProfile', async () => {
+        context.workspaceState.update('focusNode', 0);
         const profileUri = await selectProfileFile();
         context.workspaceState.update('profileUri', profileUri);
         context.workspaceState.update('profileVisible', true);
@@ -38,7 +39,6 @@ export function toggleProfileCommand(context: vscode.ExtensionContext) {
             }
             registerProfile(context, profileUri);
             context.workspaceState.update('profileVisible', true);
-            vscode.commands.executeCommand('flamegraph.showFlamegraph');
         }
     });
 }
@@ -122,7 +122,10 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
         const platform = os.platform();
         const escapedPath = platform === 'win32' ? relativePath.replace(/\\/g, '/') : relativePath.replace(/ /g, '\\ ');
 
-        const terminal = vscode.window.createTerminal('PySpy Profiler', platform === 'win32' ? 'cmd.exe' : undefined);
+        const terminal = vscode.window.createTerminal(
+            'PySpy Profiler',
+            platform === 'win32' ? 'powershell.exe' : undefined
+        );
         const flags = '--format raw --full-filenames -s';
         const sudo = platform === 'darwin' ? 'sudo ' : '';
         terminal.sendText(`${sudo}py-spy record -o .pyspy-profile ${flags} "${pythonPath}" ${escapedPath}`);
@@ -140,6 +143,7 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
                         await registerProfile(context, profileUri);
                         context.workspaceState.update('profileUri', profileUri);
                         context.workspaceState.update('profileVisible', true);
+                        context.workspaceState.update('focusNode', 0);
 
                         // open the flamegraph
                         vscode.commands.executeCommand('flamegraph.showFlamegraph');
@@ -147,7 +151,8 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
                         vscode.window.showErrorMessage('Profile file not found.');
                     }
                 }
-                terminal.sendText('echo "Press Enter to close terminal" && read && exit');
+                if (platform === 'win32') terminal.sendText('echo "Press Enter to close terminal"; Read-Host; exit');
+                else terminal.sendText('echo "Press Enter to close terminal" && read && exit');
                 terminal.show();
             }
         });
