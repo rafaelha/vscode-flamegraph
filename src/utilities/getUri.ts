@@ -30,7 +30,7 @@ export function normalizePath(filePath: string) {
 
     // Handle Windows absolute paths with drive letters
     normalizedPath = normalizedPath.replace(/^([A-Z]):/, (match, driveLetter) => {
-        return driveLetter.toLowerCase() + ':';
+        return `${driveLetter.toLowerCase()}:`;
     });
 
     return normalizedPath;
