@@ -1,6 +1,6 @@
 # Flamegraphs in VS Code
 
-Flamegraphs with hyperlinks and inline profiling results in VS Code.
+####  Flamegraphs with hyperlinks and inline profiling results in VS Code
 
 This is an early version of the extension and is still under active development. Currently only py-spy generated profiles are supported but support for other formats is planned.
 
@@ -18,11 +18,13 @@ This is an early version of the extension and is still under active development.
 
 ## Usage
 
-1. Install py-spy: `pip install py-spy`
-
 1. Profile your code by running the `Flamegraph: Profile active file with py-spy` command.
 
 1. A new tab will open with the flamegraph and profiled timing info will be shown inline in the editor for all files where samples were recorded. Cmd + Click (or Ctrl + Click on Windows/Linux) on any element in the flamegraph to navigate to the corresponding file and line in the editor.
+
+1. Clicking on an element in the flamegraphs will zoom horizontally to that element. To zoom out, click on one of the parent elements. The flamegraph zoom will also affect the inline profile. The inline profile will show only the profiled timing info for the visible part of the flamegraph.
+
+![Interactive flamegraph demo](https://github.com/rafaelha/vscode-flamegraph/blob/main/assets/demo-interactive-flame-graph.gif?raw=true)
 
 ## Contributing
 
