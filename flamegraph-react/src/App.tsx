@@ -10,6 +10,7 @@ declare global {
         };
     }
 }
+
 function addParents(node: TreeNode, parent?: TreeNode) {
     if (parent) {
         node.parent = parent;
@@ -20,6 +21,17 @@ function addParents(node: TreeNode, parent?: TreeNode) {
     }
 }
 
+function getNodeWithUid(node: TreeNode, uid: number): TreeNode | null {
+    if (node.uid === uid) return node;
+    if (!node.children) return null;
+
+    for (const child of node.children) {
+        const result = getNodeWithUid(child, uid);
+        if (result) return result;
+    }
+    return null;
+}
+
 export default function Home() {
     const [parsedData, setParsedData] = useState<TreeNode | null>(null);
 
@@ -28,8 +40,10 @@ export default function Home() {
             const message = event.data;
             if (message.type === 'profile-data') {
                 const root = message.data as TreeNode;
+                const focusUid = message.focusUid as number;
+
                 addParents(root);
-                setParsedData(root);
+                setParsedData(getNodeWithUid(root, focusUid) || root);
             }
         };
 

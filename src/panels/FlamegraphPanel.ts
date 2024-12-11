@@ -85,6 +85,7 @@ export class FlamegraphPanel {
             panel.webview.postMessage({
                 type: 'profile-data',
                 data: profileData,
+                focusUid: context.workspaceState.get('focusNode') || 0,
             });
         }
     }
