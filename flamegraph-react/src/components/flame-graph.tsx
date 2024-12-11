@@ -150,7 +150,7 @@ export function FlameGraph({ data, height = 23 }: { data: TreeNode; height?: num
             node.children?.forEach((child) => {
                 const childWidth = child.numSamples / focusNode.numSamples;
                 nodes.push(renderNode(child, currentX, childWidth));
-                if (childWidth >= 0.005) {
+                if (childWidth >= 0.008) {
                     // Only process children if parent is large enough to be visible
                     renderChildren(child, currentX);
                 }
