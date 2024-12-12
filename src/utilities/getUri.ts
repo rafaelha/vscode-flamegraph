@@ -26,13 +26,7 @@ export function getUri(webview: Webview, extensionUri: Uri, pathList: string[]) 
  */
 export function normalizePath(filePath: string) {
     // Normalize slashes
-    let normalizedPath = filePath.replace(/\\/g, '/');
-
-    // Handle Windows absolute paths with drive letters
-    normalizedPath = normalizedPath.replace(/^([A-Z]):/, (match, driveLetter) => {
-        return `${driveLetter.toLowerCase()}:`;
-    });
-
+    let normalizedPath = filePath.replace(/\\/g, '/').toLowerCase();
     return normalizedPath;
 }
 
