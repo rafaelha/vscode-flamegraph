@@ -1,5 +1,5 @@
 import { basename } from 'path';
-import { getModuleName, normalizePath } from './getUri';
+import { getModuleName, toUnixPath } from './getUri';
 import { getNodeColor } from './colors';
 
 export type ProfilingEntry = {
@@ -94,7 +94,7 @@ function parseStackTrace(stackString: string): Frame[] {
         const standardMatches = frame.match(standardRegex);
 
         if (processMatches) {
-            const filePath = normalizePath(processMatches[2].trim());
+            const filePath = toUnixPath(processMatches[2].trim());
             result.push({
                 functionName: `process ${processMatches[1]}`,
                 filePath,
@@ -103,7 +103,7 @@ function parseStackTrace(stackString: string): Frame[] {
                 functionId: `process_${processMatches[1]}_${filePath}`,
             });
         } else if (standardMatches) {
-            const filePath = normalizePath(standardMatches[2].trim());
+            const filePath = toUnixPath(standardMatches[2].trim());
             const lineNumber = parseInt(standardMatches[3].trim(), 10);
             const functionName = standardMatches[1].trim();
 

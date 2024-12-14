@@ -1,5 +1,5 @@
 import { Uri, Webview } from 'vscode';
-import { isAbsolute } from 'path';
+import { isAbsolute, normalize } from 'path';
 import * as fs from 'fs';
 import * as path from 'path';
 /**
@@ -18,16 +18,14 @@ export function getUri(webview: Webview, extensionUri: Uri, pathList: string[]) 
 }
 
 /**
- * Normalizes a file path to use forward slashes and lower case drive letters.
+ * Normalizes a file path to use forward slashes and lower case.
  * This is important for comparing file paths on different platforms.
  *
  * @param filePath - The file path to normalize.
  * @returns The normalized file path.
  */
-export function normalizePath(filePath: string) {
-    // Normalize slashes
-    let normalizedPath = filePath.replace(/\\/g, '/').toLowerCase();
-    return normalizedPath;
+export function toUnixPath(filePath: string) {
+    return normalize(filePath).replace(/\\/g, '/').toLowerCase();
 }
 
 const filenameCache = new Map<string, string>();

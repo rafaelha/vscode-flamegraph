@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { basename } from 'path';
 import { ProfilingEntry, ProfilingResult, ProfilingResults } from './utilities/ProfileParser';
 import { getFunctionColor } from './utilities/colors';
-import { normalizePath } from './utilities/getUri';
+import { toUnixPath } from './utilities/getUri';
 
 const DECORATION_WIDTH = 100; // Width in pixels for the decoration area
 
@@ -48,7 +48,7 @@ export function updateDecorations(
 
     const decorations: vscode.DecorationOptions[] = [];
     const documentLines = activeEditor.document.lineCount;
-    const filePath = normalizePath(activeEditor.document.fileName);
+    const filePath = toUnixPath(activeEditor.document.fileName);
     const fileName = basename(filePath);
 
     if (!(fileName in result)) return;
@@ -60,7 +60,7 @@ export function updateDecorations(
     for (let i = 0; i < profilingResults.length; i += 1) {
         // the file path need not match exactly, but one should be the end of the other.
         // This ensures that relative paths are also matched.
-        const resultFilePath = normalizePath(profilingResults[i].filePath);
+        const resultFilePath = toUnixPath(profilingResults[i].filePath);
         if (resultFilePath.endsWith(filePath) || filePath.endsWith(resultFilePath)) {
             profilingResult = profilingResults[i];
             break;
