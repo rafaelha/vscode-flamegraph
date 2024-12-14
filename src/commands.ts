@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
+import { ProgressLocation } from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
 import { promisify } from 'util';
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { selectProfileFile } from './utilities/io';
 import { registerProfile, unregisterProfile } from './register';
 
@@ -75,7 +76,7 @@ async function getPythonPath(): Promise<string | undefined> {
 
 async function checkPySpyInstallation(): Promise<boolean> {
     try {
-        await execAsync(`py-spy --version`);
+        await execAsync('py-spy --version');
         return true;
     } catch {
         const installPySpy = await vscode.window.showInformationMessage(
@@ -83,29 +84,45 @@ async function checkPySpyInstallation(): Promise<boolean> {
             'Yes',
             'No'
         );
-        if (installPySpy === 'Yes') {
-            return vscode.window.withProgress(
-                {
-                    location: vscode.ProgressLocation.Notification,
-                    title: 'Installing py-spy...',
-                    cancellable: true,
-                },
-                async (progress) => {
-                    try {
-                        progress.report({ increment: 0 });
-                        await execAsync(`pip install py-spy`);
-                        progress.report({ increment: 100 });
-                        return true;
-                    } catch (error) {
-                        vscode.window.showErrorMessage(
-                            'Failed to install py-spy. Please install it manually using pip.'
-                        );
-                        return false;
-                    }
-                }
-            );
-        }
-        return false;
+
+        if (installPySpy !== 'Yes') return false;
+
+        return vscode.window.withProgress(
+            {
+                location: ProgressLocation.Notification,
+                title: 'Installing py-spy...',
+                cancellable: false,
+            },
+            async (progress) => {
+                return new Promise<boolean>((resolve) => {
+                    const install = spawn('pip', ['install', 'py-spy']);
+                    let errorOutput = '';
+
+                    install.stdout.on('data', (data: Buffer) => {
+                        const message = data.toString().trim();
+                        progress.report({ message });
+                    });
+
+                    install.stderr.on('data', (data: Buffer) => {
+                        const error = data.toString().trim();
+                        errorOutput += error;
+                        progress.report({ message: error });
+                    });
+
+                    install.on('close', (code: number) => {
+                        if (code === 0) {
+                            vscode.window.showInformationMessage('py-spy installed successfully');
+                            resolve(true);
+                        } else {
+                            vscode.window.showErrorMessage(
+                                `Failed to install py-spy: ${errorOutput || 'Unknown error'}`
+                            );
+                            resolve(false);
+                        }
+                    });
+                });
+            }
+        );
     }
 }
 
