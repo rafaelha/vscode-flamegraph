@@ -121,7 +121,7 @@ function parseStackTrace(stackString: string): Frame[] {
         const standardMatches = frame.match(standardRegex);
 
         if (processMatches) {
-            const filePath = toUnixPath(processMatches[2].trim());
+            const filePath = processMatches[2].trim();
             result.push({
                 functionName: `process ${processMatches[1]}`,
                 filePath,
@@ -130,7 +130,7 @@ function parseStackTrace(stackString: string): Frame[] {
                 functionId: `process_${processMatches[1]}_${filePath}`,
             });
         } else if (standardMatches) {
-            const filePath = toUnixPath(standardMatches[2].trim());
+            const filePath = standardMatches[2].trim();
             const lineNumber = parseInt(standardMatches[3].trim(), 10);
             const functionName = standardMatches[1].trim();
 
@@ -244,6 +244,8 @@ export function parseProfilingData(data: string): [ProfilesByFile, FlamegraphNod
         }
 
         const processedLocations = new Set<string>();
+        // Process frames in reverse order to populate the decoration data. For recursive calls, only inner frames
+        // of the same function will be processed to avoid double counting.
         for (const frame of frames.reverse()) {
             // Construct the decoration tree node
             if (
@@ -253,21 +255,25 @@ export function parseProfilingData(data: string): [ProfilesByFile, FlamegraphNod
             )
                 // Skip inline functions, such is <listcomp> since they cannot be resolved to a file/function
                 continue;
+
+            const filePath = toUnixPath(frame.filePath);
+            const fileName = frame.fileName.toLowerCase();
+
             // Skip if the location has already been processed in the current stack trace. This happens for recursion
-            if (processedLocations.has(frame.functionName + frame.filePath)) continue;
-            processedLocations.add(frame.functionName + frame.filePath);
+            if (processedLocations.has(frame.functionName + filePath)) continue;
+            processedLocations.add(frame.functionName + filePath);
 
             // Initialize the file entry if it doesn't exist
-            decorationData[frame.fileName] ??= [];
-            const profilingResults = decorationData[frame.fileName];
+            decorationData[fileName] ??= [];
+            const profilingResults = decorationData[fileName];
 
             // get index of filePath in the list of filePaths
-            const filePathIndex = profilingResults.findIndex((x) => x.filePath === frame.filePath);
+            const filePathIndex = profilingResults.findIndex((x) => x.filePath === filePath);
 
             let profilingResult: FileProfileData;
             if (filePathIndex === -1) {
                 profilingResult = {
-                    filePath: frame.filePath,
+                    filePath,
                     lineProfiles: {},
                     functionProfiles: {},
                 };
@@ -288,7 +294,7 @@ export function parseProfilingData(data: string): [ProfilesByFile, FlamegraphNod
                 profile[frameLineNumber].samples.push({
                     callStackString: frame.callStackStr ? frame.callStackStr : '',
                     callStackUids: frame.parentIds ? frame.parentIds : new Set<number>([0]),
-                    functionId: frame.functionName + frame.filePath,
+                    functionId: frame.functionName + filePath,
                     uid: frameUid,
                     numSamples,
                 });

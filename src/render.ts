@@ -62,7 +62,7 @@ export function updateDecorations(
     const decorations: vscode.DecorationOptions[] = [];
     const documentLines = activeEditor.document.lineCount;
     const filePath = toUnixPath(activeEditor.document.fileName);
-    const fileName = basename(filePath);
+    const fileName = basename(filePath).toLowerCase();
 
     if (!(fileName in result)) return;
 
@@ -73,7 +73,7 @@ export function updateDecorations(
     for (let i = 0; i < profilingResults.length; i += 1) {
         // the file path need not match exactly, but one should be the end of the other.
         // This ensures that relative paths are also matched.
-        const resultFilePath = toUnixPath(profilingResults[i].filePath);
+        const resultFilePath = profilingResults[i].filePath;
         if (resultFilePath.endsWith(filePath) || filePath.endsWith(resultFilePath)) {
             profilingResult = profilingResults[i];
             break;
