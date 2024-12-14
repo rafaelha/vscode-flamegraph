@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { basename } from 'path';
 import { StackProfileSample, FileProfileData, ProfilesByFile } from './utilities/flamegraphParser';
-import { getFunctionColor } from './utilities/colors';
+import { getFunctionColor, ColorTheme } from './utilities/colors';
 import { toUnixPath } from './utilities/pathUtils';
 
 const DECORATION_WIDTH = 100; // Width in pixels for the decoration area
@@ -10,6 +10,10 @@ const DECORATION_WIDTH = 100; // Width in pixels for the decoration area
 export const lineColorDecorationType = vscode.window.createTextEditorDecorationType({
     before: {},
 });
+
+function getCurrentTheme(): ColorTheme {
+    return vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ? 'dark' : 'light';
+}
 
 /**
  * Creates a markdown tooltip displaying the call stack of a profiling entry. This tooltip is used for the line
@@ -56,6 +60,7 @@ export function updateDecorations(
 ) {
     if (!activeEditor) return;
 
+    const theme = getCurrentTheme();
     const focusNode: number = workspaceState.get('focusNode') || 0;
     const focusFunctionId: string = workspaceState.get('focusFunctionId') || 'all';
 
@@ -94,7 +99,7 @@ export function updateDecorations(
             const lineProfile = profilingResult.lineProfiles[line];
             const { functionName } = lineProfile;
 
-            color = getFunctionColor(functionName);
+            color = getFunctionColor(functionName, theme);
             const stats = profilingResult.functionProfiles[functionName];
             let totalSamples = 0;
 
@@ -128,7 +133,7 @@ export function updateDecorations(
                 before: {
                     backgroundColor: color,
                     contentText: samples > 0 ? `${(samples / 100).toFixed(2)}s` : '',
-                    color: 'white',
+                    color: theme === 'dark' ? 'white' : 'black',
                     width: `${width}px`,
                     margin: `0px ${DECORATION_WIDTH - width}px 0px 0px`,
                     fontWeight: 'bold',
