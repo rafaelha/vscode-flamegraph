@@ -45,6 +45,7 @@
         "test:webview": "cd flamegraph-react && npm run test",
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
+        "test": "vscode-test",
         "watch": "tsc -watch -p ./",
         "pretest": "npm run compile && npm run lint",
         "lint": "eslint src --ext ts",
@@ -69,8 +70,12 @@
         "eslint-plugin-react": "^7.37.2",
         "eslint-plugin-react-hooks": "^4.6.2",
         "glob": "^11.0.0",
+        "mocha": "^11.0.1",
         "prettier": "^3.3.3",
-        "typescript": "^4.1.3",
+        "typescript": "^5.7.2",
         "vscode-test": "^1.5.0"
+    },
+    "dependencies": {
+        "@types/mocha": "^10.0.10"
     }
 }
