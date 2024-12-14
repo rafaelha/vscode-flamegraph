@@ -74,7 +74,7 @@ async function getPythonPath(): Promise<string | undefined> {
     return pythonConfig.get<string>('pythonPath');
 }
 
-async function checkPySpyInstallation(): Promise<boolean> {
+async function checkAndInstallProfiler(): Promise<boolean> {
     try {
         await execAsync('py-spy --version');
         return true;
@@ -152,7 +152,7 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
             return;
         }
 
-        const pySpyInstalled = await checkPySpyInstallation();
+        const pySpyInstalled = await checkAndInstallProfiler();
         if (!pySpyInstalled) return;
 
         // Cleanup any existing watcher
