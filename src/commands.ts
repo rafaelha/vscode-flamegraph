@@ -8,17 +8,35 @@ import { registerProfile, unregisterProfile } from './register';
 
 const execAsync = promisify(exec);
 
-export function loadProfileCommand(context: vscode.ExtensionContext) {
-    return vscode.commands.registerCommand('flamegraph.loadProfile', async () => {
-        context.workspaceState.update('focusNode', 0);
-        const profileUri = await selectProfileFile();
+let activeProfileWatcher: vscode.FileSystemWatcher | undefined;
+const handleProfileUpdate = async (context: vscode.ExtensionContext, profileUri: vscode.Uri) => {
+    try {
+        await registerProfile(context, profileUri);
         context.workspaceState.update('profileUri', profileUri);
         context.workspaceState.update('profileVisible', true);
+        context.workspaceState.update('focusNode', 0);
+        vscode.commands.executeCommand('flamegraph.showFlamegraph');
+    } catch (error) {
+        vscode.window.showErrorMessage('Failed to open performance profile.');
+    }
+    // Cleanup watcher after profile is loaded
+    if (activeProfileWatcher) {
+        activeProfileWatcher.dispose();
+        activeProfileWatcher = undefined;
+    }
+};
+
+export function loadProfileCommand(context: vscode.ExtensionContext) {
+    return vscode.commands.registerCommand('flamegraph.loadProfile', async () => {
+        const profileUri = await selectProfileFile();
+        context.workspaceState.update('profileUri', profileUri);
 
         if (!profileUri) {
             vscode.window.showErrorMessage('No profile file selected.');
             return;
         }
+        context.workspaceState.update('focusNode', 0);
+        context.workspaceState.update('profileVisible', true);
         registerProfile(context, profileUri);
         vscode.commands.executeCommand('flamegraph.showFlamegraph');
     });
@@ -106,51 +124,46 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('File is not part of a workspace.');
             return;
         }
-        const relativePath = path.relative(workspaceFolder.uri.fsPath, filePath);
+
+        // Setup file watcher before running profiler
+        const profilePath = path.join(workspaceFolder.uri.fsPath, '.pyspy-profile');
+        const profileUri = vscode.Uri.file(profilePath);
 
         const pythonPath = await getPythonPath();
         if (!pythonPath) {
-            vscode.window.showErrorMessage(
-                'No Python interpreter selected. Please select a Python interpreter in VSCode.'
-            );
+            vscode.window.showErrorMessage('No Python interpreter selected. Please select a Python interpreter.');
             return;
         }
 
         const pySpyInstalled = await checkPySpyInstallation();
         if (!pySpyInstalled) return;
 
-        const platform = os.platform();
-        const escapedPath = platform === 'win32' ? relativePath.replace(/\\/g, '/') : relativePath.replace(/ /g, '\\ ');
+        // Cleanup any existing watcher
+        if (!activeProfileWatcher) {
+            activeProfileWatcher = vscode.workspace.createFileSystemWatcher(
+                new vscode.RelativePattern(workspaceFolder, '.pyspy-profile')
+            );
+            // Ensure watcher cleanup on extension deactivation
+            context.subscriptions.push(activeProfileWatcher);
+        }
+
+        activeProfileWatcher.onDidCreate(() => handleProfileUpdate(context, profileUri));
+        activeProfileWatcher.onDidChange(() => handleProfileUpdate(context, profileUri));
 
         const terminal = vscode.window.createTerminal('PySpy Profiler');
         const flags = '--format raw --full-filenames --subprocesses';
-        const sudo = platform === 'darwin' ? 'sudo ' : '';
+        const sudo = os.platform() === 'darwin' ? 'sudo ' : '';
+        const relativePath = path.relative(workspaceFolder.uri.fsPath, filePath);
         terminal.sendText(`${sudo}py-spy record --output .pyspy-profile ${flags} "${pythonPath}" "${relativePath}"`);
         terminal.show();
 
-        const disp = vscode.window.onDidEndTerminalShellExecution(async (event) => {
+        const disp = vscode.window.onDidEndTerminalShellExecution((event) => {
             if (event.terminal === terminal) {
-                if (event.exitCode === 0) {
-                    disp.dispose();
-                    // Check if .pyspy-profile exists
-                    const profileUri = vscode.Uri.file(path.join(workspaceFolder.uri.fsPath, '.pyspy-profile'));
-                    try {
-                        await vscode.workspace.fs.stat(profileUri);
-                        // File exists, register the profile
-                        await registerProfile(context, profileUri);
-                        context.workspaceState.update('profileUri', profileUri);
-                        context.workspaceState.update('profileVisible', true);
-                        context.workspaceState.update('focusNode', 0);
-
-                        // open the flamegraph
-                        vscode.commands.executeCommand('flamegraph.showFlamegraph');
-                    } catch {
-                        vscode.window.showErrorMessage('Profile file not found.');
-                    }
-                }
-                if (platform === 'win32') terminal.sendText('echo "Press Enter to close terminal"; Read-Host; exit');
+                if (os.platform() === 'win32')
+                    terminal.sendText('echo "Press Enter to close terminal"; Read-Host; exit');
                 else terminal.sendText('echo "Press Enter to close terminal" && read && exit');
                 terminal.show();
+                disp.dispose();
             }
         });
     });
