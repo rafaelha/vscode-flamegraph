@@ -22,7 +22,7 @@ const handleProfileUpdate = async (context: vscode.ExtensionContext, profileUri:
         context.workspaceState.update('focusNode', 0);
         vscode.commands.executeCommand('flamegraph.showFlamegraph');
     } catch (error) {
-        vscode.window.showErrorMessage('Failed to open performance profile.');
+        vscode.window.showErrorMessage(`Failed to open profile: ${error}`);
     }
     // Cleanup watcher after profile is loaded
     if (activeProfileWatcher) {
