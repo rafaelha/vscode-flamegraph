@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { parseProfilingData } from './utilities/profileParser';
+import { parseProfilingData } from './utilities/flamegraphParser';
 import { updateDecorations, lineColorDecorationType } from './render';
 import { readTextFile } from './utilities/fsUtils';
 

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { basename } from 'path';
-import { StackProfileSample, FileProfileData, ProfilesByFile } from './utilities/profileParser';
+import { StackProfileSample, FileProfileData, ProfilesByFile } from './utilities/flamegraphParser';
 import { getFunctionColor } from './utilities/colors';
 import { toUnixPath } from './utilities/pathUtils';
 

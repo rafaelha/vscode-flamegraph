@@ -14,7 +14,7 @@ import {
 } from 'vscode';
 import { getUri } from '../utilities/pathUtils';
 import { getNonce } from '../utilities/nonceUtils';
-import { ProfilesByFile, FlamegraphNode } from '../utilities/profileParser';
+import { ProfilesByFile, FlamegraphNode } from '../utilities/flamegraphParser';
 import { updateDecorations } from '../render';
 
 /**
