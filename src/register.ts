@@ -1,8 +1,13 @@
 import * as vscode from 'vscode';
-import { parseProfilingData } from './utilities/ProfileParser';
+import { parseProfilingData } from './utilities/profileParser';
 import { updateDecorations, lineColorDecorationType } from './render';
-import { readTextFile } from './utilities/io';
+import { readTextFile } from './utilities/fsUtils';
 
+/**
+ * Disposes of the profiling data from the workspace state.
+ *
+ * @param context - The extension context.
+ */
 export function unregisterProfile(context: vscode.ExtensionContext) {
     // Remove decorations
     vscode.window.visibleTextEditors.forEach((editor) => {
@@ -18,7 +23,13 @@ export function unregisterProfile(context: vscode.ExtensionContext) {
     }
 }
 
-export async function registerProfile(context: vscode.ExtensionContext, profileUri: vscode.Uri) {
+/**
+ * Loads a profile file and registers it with the extension and the workspace state.
+ *
+ * @param context - The extension context.
+ * @param profileUri - The URI of the profile file.
+ */
+export async function loadAndRegisterProfile(context: vscode.ExtensionContext, profileUri: vscode.Uri) {
     // Unregister any existing profile
     unregisterProfile(context);
 

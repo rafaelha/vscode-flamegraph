@@ -12,9 +12,9 @@ import {
     TextEditorRevealType,
     ExtensionContext,
 } from 'vscode';
-import { getUri } from '../utilities/getUri';
-import { getNonce } from '../utilities/getNonce';
-import { ProfilingResults, TreeNode } from '../utilities/ProfileParser';
+import { getUri } from '../utilities/pathUtils';
+import { getNonce } from '../utilities/nonceUtils';
+import { ProfilingResults, TreeNode } from '../utilities/profileParser';
 import { updateDecorations } from '../render';
 
 /**

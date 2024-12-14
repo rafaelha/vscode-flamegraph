@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { basename } from 'path';
-import { ProfilingEntry, ProfilingResult, ProfilingResults } from './utilities/ProfileParser';
+import { ProfilingEntry, ProfilingResult, ProfilingResults } from './utilities/profileParser';
 import { getFunctionColor } from './utilities/colors';
-import { toUnixPath } from './utilities/getUri';
+import { toUnixPath } from './utilities/pathUtils';
 
 const DECORATION_WIDTH = 100; // Width in pixels for the decoration area
 
@@ -11,7 +11,14 @@ export const lineColorDecorationType = vscode.window.createTextEditorDecorationT
     before: {},
 });
 
-function makeToolTip(samples: ProfilingEntry[]) {
+/**
+ * Creates a markdown tooltip displaying the call stack of a profiling entry. This tooltip is used for the line
+ * decorations.
+ *
+ * @param samples - The profiling entries to create the tooltip for.
+ * @returns The tooltip.
+ */
+function makeToolTip(samples: ProfilingEntry[]): string {
     if (samples.length === 0) return '';
     if (samples.length <= 1) return samples[0].callStackString.replace(/</g, '&lt;').replace(/>/g, '&gt;');
     let toolTip = '### Call Stack\n| | | | |\n|---|---|---|---|\n';
@@ -35,7 +42,13 @@ function makeToolTip(samples: ProfilingEntry[]) {
     return toolTip;
 }
 
-// Function to update decorations
+/**
+ * Updates the line decorations for the active editor.
+ *
+ * @param activeEditor - The active editor.
+ * @param result - The profiling results.
+ * @param workspaceState - The workspace state.
+ */
 export function updateDecorations(
     activeEditor: vscode.TextEditor | undefined,
     result: ProfilingResults,

@@ -3,7 +3,7 @@ import { commands, ExtensionContext } from 'vscode';
 import { FlamegraphPanel } from './panels/FlamegraphPanel';
 import { loadProfileCommand, runProfilerCommand, toggleProfileCommand } from './commands';
 import { unregisterProfile } from './register';
-import { TreeNode } from './utilities/ProfileParser';
+import { TreeNode } from './utilities/profileParser';
 
 export function activate(context: ExtensionContext) {
     const showFlamegraphCommand = commands.registerCommand('flamegraph.showFlamegraph', () => {

@@ -1,4 +1,4 @@
-import { getModuleName } from './getUri';
+import { getModuleName } from './pathUtils';
 
 export function hashString(str: string): number {
     let hash = 0x9e3779b9; // Initial seed value for the hash function

@@ -1,5 +1,5 @@
 import { basename } from 'path';
-import { getModuleName, toUnixPath } from './getUri';
+import { getModuleName, toUnixPath } from './pathUtils';
 import { getNodeColor } from './colors';
 
 export type ProfilingEntry = {

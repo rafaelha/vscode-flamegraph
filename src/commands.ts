@@ -4,15 +4,15 @@ import * as path from 'path';
 import * as os from 'os';
 import { promisify } from 'util';
 import { exec, spawn } from 'child_process';
-import { selectProfileFile } from './utilities/io';
-import { registerProfile, unregisterProfile } from './register';
+import { selectProfileFile } from './utilities/fsUtils';
+import { loadAndRegisterProfile, unregisterProfile } from './register';
 
 const execAsync = promisify(exec);
 
 let activeProfileWatcher: vscode.FileSystemWatcher | undefined;
 const handleProfileUpdate = async (context: vscode.ExtensionContext, profileUri: vscode.Uri) => {
     try {
-        await registerProfile(context, profileUri);
+        await loadAndRegisterProfile(context, profileUri);
         context.workspaceState.update('profileUri', profileUri);
         context.workspaceState.update('profileVisible', true);
         context.workspaceState.update('focusNode', 0);
@@ -38,7 +38,7 @@ export function loadProfileCommand(context: vscode.ExtensionContext) {
         }
         context.workspaceState.update('focusNode', 0);
         context.workspaceState.update('profileVisible', true);
-        registerProfile(context, profileUri);
+        loadAndRegisterProfile(context, profileUri);
         vscode.commands.executeCommand('flamegraph.showFlamegraph');
     });
 }
@@ -56,7 +56,7 @@ export function toggleProfileCommand(context: vscode.ExtensionContext) {
                 vscode.window.showErrorMessage('No profile loaded. Please load a profile first.');
                 return;
             }
-            registerProfile(context, profileUri);
+            loadAndRegisterProfile(context, profileUri);
             context.workspaceState.update('profileVisible', true);
         }
     });
