@@ -5,14 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2024-12-13
+### Fixed
+- Fixed a bug on Windows where inline profile bars where not shown for all files even though profile data was available.
+
+### Changed
+- The command `Profile active file with py-spy` now launches a VS Code task instead of a terminal.
+
 ## [0.2.0] - 2024-12-10
 ### Added
 - Auto-install `py-spy`. If `py-spy` is not installed, the extension will ask to install it.
 - The flame graph will now remember the selected element after it is closed and reopened.
 
 ### Changed
-- Better file path resolution when Cmd/Ctrl-clicking on an entry in the flame graph. Specifically, the `--full-filenames` option of `py-spy` is not used by default.
-- Inline profile bars can now be shown for non-python files. This is useful for loading profiles that include sample from native code (like C-libraries). Use the `--native` flag of `py-spy` and make sure binaries are compiled with debug symbols.
+- Better file path resolution when Cmd/Ctrl-clicking on an entry in the flame graph. Specifically, the `--full-filenames` option of `py-spy` is now used by default.
+- Inline profile bars can now be shown for non-python files. This is useful for loading profiles that include samples from native code (like C-libraries). Use the `--native` flag of `py-spy` and make sure binaries are compiled with debug symbols.
 
 ### Fixed
 - Fixed an issue where recursive function calls lead to incorrect inline profile information.
