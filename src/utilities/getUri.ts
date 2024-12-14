@@ -30,6 +30,12 @@ export function toUnixPath(filePath: string) {
 
 const filenameCache = new Map<string, string>();
 
+/**
+ * Shortens a filename to the nearest parent directory without `__init__.py`.
+ *
+ * @param filename - The filename to shorten.
+ * @returns The shortened filename.
+ */
 function shortenFilename(filename: string): string {
     // If full filenames are requested, return the original filename.
     // Check if the shortened version is already cached.
@@ -53,6 +59,13 @@ function shortenFilename(filename: string): string {
     return shortened;
 }
 
+/**
+ * Gets the module name from a file path. The module name is the highest directory whose parent directory does not
+ * contain `__init__.py`.
+ *
+ * @param filePath - The file path to get the module name from.
+ * @returns The module name.
+ */
 export function getModuleName(filePath: string | undefined): string | undefined {
     // check if the file path is absolute
     if (!filePath) return undefined;
