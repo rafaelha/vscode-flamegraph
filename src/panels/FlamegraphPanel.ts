@@ -14,7 +14,7 @@ import {
 } from 'vscode';
 import { getUri } from '../utilities/pathUtils';
 import { getNonce } from '../utilities/nonceUtils';
-import { ProfilingResults, TreeNode } from '../utilities/profileParser';
+import { ProfilesByFile, FlamegraphNode } from '../utilities/profileParser';
 import { updateDecorations } from '../render';
 
 /**
@@ -62,7 +62,7 @@ export class FlamegraphPanel {
      * @param extensionUri The URI of the directory containing the extension.
      * @param profileData The profile data to be passed to the React app.
      */
-    public static render(context: ExtensionContext, extensionUri: Uri, profileData: TreeNode) {
+    public static render(context: ExtensionContext, extensionUri: Uri, profileData: FlamegraphNode) {
         if (FlamegraphPanel.currentPanel) {
             // Reveal the panel and update the profile data
             FlamegraphPanel.currentPanel._panel.reveal(ViewColumn.Beside);
@@ -194,7 +194,7 @@ export class FlamegraphPanel {
                         context.workspaceState.update('focusNode', uid);
                         context.workspaceState.update('focusNodeCallStack', new Set<number>(message.callStack));
                         context.workspaceState.update('focusFunctionId', message.focusFunctionId);
-                        const decorationTree = context.workspaceState.get('decorationTree') as ProfilingResults;
+                        const decorationTree = context.workspaceState.get('decorationTree') as ProfilesByFile;
                         vscode.window.visibleTextEditors.forEach((editor) => {
                             updateDecorations(editor, decorationTree, context.workspaceState);
                         });

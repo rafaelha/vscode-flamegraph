@@ -1,15 +1,17 @@
 import * as vscode from 'vscode';
-import { ProgressLocation } from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
-import { promisify } from 'util';
-import { exec, spawn } from 'child_process';
-import { selectProfileFile } from './utilities/fsUtils';
+import { checkAndInstallProfiler, getPythonPath, selectProfileFile } from './utilities/fsUtils';
 import { loadAndRegisterProfile, unregisterProfile } from './register';
 
-const execAsync = promisify(exec);
-
 let activeProfileWatcher: vscode.FileSystemWatcher | undefined;
+
+/**
+ * Handles the profile update event. This is called when a new profile is written to the file system.
+ *
+ * @param context - The extension context.
+ * @param profileUri - The URI of the profile file.
+ */
 const handleProfileUpdate = async (context: vscode.ExtensionContext, profileUri: vscode.Uri) => {
     try {
         await loadAndRegisterProfile(context, profileUri);
@@ -27,6 +29,12 @@ const handleProfileUpdate = async (context: vscode.ExtensionContext, profileUri:
     }
 };
 
+/**
+ * Loads a profile from a file specified by the user.
+ *
+ * @param context - The extension context.
+ * @returns The command registration.
+ */
 export function loadProfileCommand(context: vscode.ExtensionContext) {
     return vscode.commands.registerCommand('flamegraph.loadProfile', async () => {
         const profileUri = await selectProfileFile();
@@ -43,6 +51,12 @@ export function loadProfileCommand(context: vscode.ExtensionContext) {
     });
 }
 
+/**
+ * Toggles the inline profile visibility.
+ *
+ * @param context - The extension context.
+ * @returns The command registration.
+ */
 export function toggleProfileCommand(context: vscode.ExtensionContext) {
     return vscode.commands.registerCommand('flamegraph.toggleProfile', () => {
         const profileVisible = context.workspaceState.get('profileVisible') as boolean | undefined;
@@ -62,70 +76,12 @@ export function toggleProfileCommand(context: vscode.ExtensionContext) {
     });
 }
 
-async function getPythonPath(): Promise<string | undefined> {
-    // get the python path from the python extension
-    const pythonExtension = vscode.extensions.getExtension('ms-python.python');
-    if (pythonExtension) {
-        await pythonExtension.activate();
-        return pythonExtension.exports.settings.getExecutionDetails().execCommand.join(' ');
-    }
-    // otherwise fallback to the python path from the python config
-    const pythonConfig = vscode.workspace.getConfiguration('python');
-    return pythonConfig.get<string>('pythonPath');
-}
-
-async function checkAndInstallProfiler(): Promise<boolean> {
-    try {
-        await execAsync('py-spy --version');
-        return true;
-    } catch {
-        const installPySpy = await vscode.window.showInformationMessage(
-            'py-spy is not installed. Would you like to install it?',
-            'Yes',
-            'No'
-        );
-
-        if (installPySpy !== 'Yes') return false;
-
-        return vscode.window.withProgress(
-            {
-                location: ProgressLocation.Notification,
-                title: 'Installing py-spy...',
-                cancellable: false,
-            },
-            async (progress) => {
-                return new Promise<boolean>((resolve) => {
-                    const install = spawn('pip', ['install', 'py-spy']);
-                    let errorOutput = '';
-
-                    install.stdout.on('data', (data: Buffer) => {
-                        const message = data.toString().trim();
-                        progress.report({ message });
-                    });
-
-                    install.stderr.on('data', (data: Buffer) => {
-                        const error = data.toString().trim();
-                        errorOutput += error;
-                        progress.report({ message: error });
-                    });
-
-                    install.on('close', (code: number) => {
-                        if (code === 0) {
-                            vscode.window.showInformationMessage('py-spy installed successfully');
-                            resolve(true);
-                        } else {
-                            vscode.window.showErrorMessage(
-                                `Failed to install py-spy: ${errorOutput || 'Unknown error'}`
-                            );
-                            resolve(false);
-                        }
-                    });
-                });
-            }
-        );
-    }
-}
-
+/**
+ * Runs the profiler on the active file.
+ *
+ * @param context - The extension context.
+ * @returns The command registration.
+ */
 export function runProfilerCommand(context: vscode.ExtensionContext) {
     return vscode.commands.registerCommand('flamegraph.runProfiler', async () => {
         const editor = vscode.window.activeTextEditor;

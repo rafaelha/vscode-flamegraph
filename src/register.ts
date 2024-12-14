@@ -35,18 +35,18 @@ export async function loadAndRegisterProfile(context: vscode.ExtensionContext, p
 
     const profileString = await readTextFile(profileUri);
     context.workspaceState.update('profileData', profileString);
-    const [result, flameTree] = parseProfilingData(profileString);
+    const [decorationTree, flameTree] = parseProfilingData(profileString);
 
     context.workspaceState.update('flameTree', flameTree);
-    context.workspaceState.update('decorationTree', result);
+    context.workspaceState.update('decorationTree', decorationTree);
 
     // Store disposables for later cleanup
     const disposables = [
         vscode.window.onDidChangeActiveTextEditor((editor) => {
-            updateDecorations(editor, result, context.workspaceState);
+            updateDecorations(editor, decorationTree, context.workspaceState);
         }),
         vscode.workspace.onDidChangeTextDocument(() => {
-            updateDecorations(vscode.window.activeTextEditor, result, context.workspaceState);
+            updateDecorations(vscode.window.activeTextEditor, decorationTree, context.workspaceState);
         }),
     ];
 
@@ -56,6 +56,6 @@ export async function loadAndRegisterProfile(context: vscode.ExtensionContext, p
 
     // Initial update for all visible editors
     vscode.window.visibleTextEditors.forEach((editor) => {
-        updateDecorations(editor, result, context.workspaceState);
+        updateDecorations(editor, decorationTree, context.workspaceState);
     });
 }

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { basename } from 'path';
-import { ProfilingEntry, ProfilingResult, ProfilingResults } from './utilities/profileParser';
+import { StackProfileSample, FileProfileData, ProfilesByFile } from './utilities/profileParser';
 import { getFunctionColor } from './utilities/colors';
 import { toUnixPath } from './utilities/pathUtils';
 
@@ -18,7 +18,7 @@ export const lineColorDecorationType = vscode.window.createTextEditorDecorationT
  * @param samples - The profiling entries to create the tooltip for.
  * @returns The tooltip.
  */
-function makeToolTip(samples: ProfilingEntry[]): string {
+function makeToolTip(samples: StackProfileSample[]): string {
     if (samples.length === 0) return '';
     if (samples.length <= 1) return samples[0].callStackString.replace(/</g, '&lt;').replace(/>/g, '&gt;');
     let toolTip = '### Call Stack\n| | | | |\n|---|---|---|---|\n';
@@ -51,7 +51,7 @@ function makeToolTip(samples: ProfilingEntry[]): string {
  */
 export function updateDecorations(
     activeEditor: vscode.TextEditor | undefined,
-    result: ProfilingResults,
+    result: ProfilesByFile,
     workspaceState: vscode.Memento
 ) {
     if (!activeEditor) return;
@@ -67,7 +67,7 @@ export function updateDecorations(
     if (!(fileName in result)) return;
 
     const profilingResults = result[fileName];
-    let profilingResult: ProfilingResult | undefined;
+    let profilingResult: FileProfileData | undefined;
 
     // check if the file path is in the profiling results
     for (let i = 0; i < profilingResults.length; i += 1) {
@@ -90,17 +90,17 @@ export function updateDecorations(
         let samples = 0;
         let color = '';
 
-        if (line in profilingResult.profile) {
-            const lineProfile = profilingResult.profile[line];
+        if (line in profilingResult.lineProfiles) {
+            const lineProfile = profilingResult.lineProfiles[line];
             const { functionName } = lineProfile;
 
             color = getFunctionColor(functionName);
-            const stats = profilingResult.functionProfile[functionName];
+            const stats = profilingResult.functionProfiles[functionName];
             let totalSamples = 0;
 
             for (const stat of stats) if (stat.callStackUids.has(focusNode)) totalSamples += stat.totalSamples;
 
-            const callStackSamples: ProfilingEntry[] = [];
+            const callStackSamples: StackProfileSample[] = [];
 
             for (const sample of lineProfile.samples) {
                 if (sample.callStackUids.has(focusNode)) {

@@ -2,23 +2,29 @@ import { basename } from 'path';
 import { getModuleName, toUnixPath } from './pathUtils';
 import { getNodeColor } from './colors';
 
-export type ProfilingEntry = {
+/**
+ * A sample from a stack trace.
+ */
+export type StackProfileSample = {
     numSamples: number;
     callStackUids: Set<number>;
     callStackString: string;
     functionId: string;
-    uid: number;
+    uid: number; // uid of the corresponding node in the flamegraph
 };
 
-export type ProfilingResult = {
+/**
+ * A profile for a file.
+ */
+export type FileProfileData = {
     filePath: string;
-    profile: {
+    lineProfiles: {
         [lineNumber: string]: {
             functionName: string;
-            samples: ProfilingEntry[];
+            samples: StackProfileSample[];
         };
     };
-    functionProfile: {
+    functionProfiles: {
         [functionName: string]: {
             totalSamples: number;
             callStackUids: Set<number>;
@@ -26,11 +32,17 @@ export type ProfilingResult = {
     };
 };
 
-export type ProfilingResults = {
-    [fileName: string]: ProfilingResult[];
+/**
+ * A map of file names to their profile data.
+ */
+export type ProfilesByFile = {
+    [fileName: string]: FileProfileData[];
 };
 
-export interface TreeNode {
+/**
+ * A node in the flamegraph.
+ */
+export interface FlamegraphNode {
     uid: number;
     functionName: string;
     numSamples: number;
@@ -41,29 +53,14 @@ export interface TreeNode {
     filePath?: string;
     fileName: string;
     lineNumber?: number;
-    children?: TreeNode[];
-    parent?: TreeNode;
+    children?: FlamegraphNode[];
+    parent?: FlamegraphNode;
     moduleName?: string;
 }
 
-function sortTreeNodeChildren(node: TreeNode): TreeNode {
-    // Sort current node's children
-    if (node.children) {
-        node.children.sort((a, b) => {
-            // First compare by file
-            const fileCompare = (a.filePath || '').localeCompare(b.filePath || '');
-            if (fileCompare !== 0) return fileCompare;
-            // Then by line number
-            return (a.lineNumber || 0) - (b.lineNumber || 0);
-        });
-
-        // Recursively sort children's children
-        node.children.forEach(sortTreeNodeChildren);
-    }
-
-    return node;
-}
-
+/**
+ * Each profiling sample consists of multiple frames that form a complete call stack trace.
+ */
 interface Frame {
     functionName: string;
     filePath: string;
@@ -77,6 +74,36 @@ interface Frame {
     callStackStr?: string;
 }
 
+/**
+ * Sorts the children of a flamegraph node.
+ *
+ * @param node - The node to sort the children of. To sort the entire flamegraph, pass in the root node.
+ * @returns The sorted node.
+ */
+function sortChildren(node: FlamegraphNode): FlamegraphNode {
+    // Sort current node's children
+    if (node.children) {
+        node.children.sort((a, b) => {
+            // First compare by file
+            const fileCompare = (a.filePath || '').localeCompare(b.filePath || '');
+            if (fileCompare !== 0) return fileCompare;
+            // Then by line number
+            return (a.lineNumber || 0) - (b.lineNumber || 0);
+        });
+
+        // Recursively sort children's children
+        node.children.forEach(sortChildren);
+    }
+
+    return node;
+}
+
+/**
+ * Parses a stack trace string into a list of frames.
+ *
+ * @param stackString - The stack trace string to parse.
+ * @returns The list of frames.
+ */
 function parseStackTrace(stackString: string): Frame[] {
     const frames = stackString
         .split(';')
@@ -123,19 +150,23 @@ function parseStackTrace(stackString: string): Frame[] {
 }
 
 /**
- * Parses profiling data and structures it into a nested object.
+ * Parses profiling data and structures it into two data structures:
+ * - ProfilesByFile: A nested data structure optimized for efficient lookup when the file and line number is known. This
+ *   is used for line decorations. Note that line decorations will combine the data from multiple call stack samples if
+ *   these call stacks include the same file and line number.
+ * - FlamegraphNode: A tree structure resolving the call stack into a tree of nodes. This is used for the flamegraph.
  *
  * @param data - The raw profiling data as a string.
- * @returns A structured ProfilingResults object.
+ * @returns A tuple containing the decoration data and the root node of the flamegraph.
  */
-export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
-    const decorationData: ProfilingResults = {};
+export function parseProfilingData(data: string): [ProfilesByFile, FlamegraphNode] {
+    const decorationData: ProfilesByFile = {};
 
     // Split the input data into lines
     const lines = data.trim().split('\n');
     let uid = 0;
 
-    const root: TreeNode = {
+    const root: FlamegraphNode = {
         uid,
         functionName: 'all',
         functionId: 'all',
@@ -233,18 +264,18 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
             // get index of filePath in the list of filePaths
             const filePathIndex = profilingResults.findIndex((x) => x.filePath === frame.filePath);
 
-            let profilingResult: ProfilingResult;
+            let profilingResult: FileProfileData;
             if (filePathIndex === -1) {
                 profilingResult = {
                     filePath: frame.filePath,
-                    profile: {},
-                    functionProfile: {},
+                    lineProfiles: {},
+                    functionProfiles: {},
                 };
                 profilingResults.push(profilingResult);
             } else profilingResult = profilingResults[filePathIndex];
 
-            const { profile } = profilingResult;
-            const { functionProfile } = profilingResult;
+            const { lineProfiles: profile } = profilingResult;
+            const { functionProfiles: functionProfile } = profilingResult;
 
             const frameLineNumber = frame.lineNumber ?? -1;
             profile[frameLineNumber] ??= {
@@ -278,5 +309,5 @@ export function parseProfilingData(data: string): [ProfilingResults, TreeNode] {
         }
     });
 
-    return [decorationData, sortTreeNodeChildren(root)];
+    return [decorationData, sortChildren(root)];
 }
