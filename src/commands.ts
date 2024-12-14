@@ -100,7 +100,6 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
             return;
         }
 
-        // Setup file watcher before running profiler
         const profilePath = path.join(workspaceFolder.uri.fsPath, '.pyspy-profile');
         const profileUri = vscode.Uri.file(profilePath);
 
@@ -113,34 +112,39 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
         const pySpyInstalled = await checkAndInstallProfiler();
         if (!pySpyInstalled) return;
 
-        // Cleanup any existing watcher
+        // Setup file watcher
         if (!activeProfileWatcher) {
             activeProfileWatcher = vscode.workspace.createFileSystemWatcher(
                 new vscode.RelativePattern(workspaceFolder, '.pyspy-profile')
             );
-            // Ensure watcher cleanup on extension deactivation
             context.subscriptions.push(activeProfileWatcher);
         }
 
         activeProfileWatcher.onDidCreate(() => handleProfileUpdate(context, profileUri));
         activeProfileWatcher.onDidChange(() => handleProfileUpdate(context, profileUri));
 
-        const terminal = vscode.window.createTerminal();
+        const relativePath = path.relative(workspaceFolder.uri.fsPath, filePath);
         const flags = '--format raw --full-filenames --subprocesses';
         const sudo = os.platform() === 'darwin' ? 'sudo ' : '';
-        const relativePath = path.relative(workspaceFolder.uri.fsPath, filePath);
-        terminal.sendText(`${sudo}py-spy record --output .pyspy-profile ${flags} "${pythonPath}" "${relativePath}"`);
-        terminal.show();
 
-        const disp = vscode.window.onDidEndTerminalShellExecution((event) => {
-            if (event.terminal === terminal) {
-                terminal.sendText(
-                    `msg="Press Enter to close"; [ -n "$COMSPEC" ] && powershell -c "Write-Host '$msg'; Read-Host; exit" || { echo "$msg"; read; exit; }`
-                );
-                terminal.show();
-                disp.dispose();
-            }
-        });
+        // Create task definition
+        const taskDefinition: vscode.TaskDefinition = {
+            type: 'shell',
+            command: `${sudo}py-spy record --output .pyspy-profile ${flags} "${pythonPath}" "${relativePath}"`,
+        };
+
+        // Create the task
+        const task = new vscode.Task(
+            taskDefinition,
+            workspaceFolder,
+            'Profile Python Script',
+            'PySpy',
+            new vscode.ShellExecution(taskDefinition.command),
+            []
+        );
+
+        // Execute the task
+        await vscode.tasks.executeTask(task);
     });
 }
 
