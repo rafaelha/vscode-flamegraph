@@ -3,6 +3,8 @@ import * as path from 'path';
 import * as os from 'os';
 import { checkAndInstallProfiler, getPythonPath, selectProfileFile } from './utilities/fsUtils';
 import { loadAndRegisterProfile, unregisterProfile } from './register';
+import { FlamegraphPanel } from './panels/FlamegraphPanel';
+import { FlamegraphNode } from './utilities/profileParser';
 
 let activeProfileWatcher: vscode.FileSystemWatcher | undefined;
 
@@ -139,5 +141,18 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
                 disp.dispose();
             }
         });
+    });
+}
+
+/**
+ * Shows the flamegraph visualization panel.
+ *
+ * @param context - The extension context.
+ * @returns The command registration.
+ */
+export function showFlamegraphCommand(context: vscode.ExtensionContext) {
+    return vscode.commands.registerCommand('flamegraph.showFlamegraph', () => {
+        const profileData: FlamegraphNode | undefined = context.workspaceState.get('flameTree');
+        if (profileData) FlamegraphPanel.render(context, context.extensionUri, profileData);
     });
 }
