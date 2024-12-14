@@ -125,7 +125,7 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
         activeProfileWatcher.onDidCreate(() => handleProfileUpdate(context, profileUri));
         activeProfileWatcher.onDidChange(() => handleProfileUpdate(context, profileUri));
 
-        const terminal = vscode.window.createTerminal('PySpy Profiler');
+        const terminal = vscode.window.createTerminal();
         const flags = '--format raw --full-filenames --subprocesses';
         const sudo = os.platform() === 'darwin' ? 'sudo ' : '';
         const relativePath = path.relative(workspaceFolder.uri.fsPath, filePath);
@@ -134,9 +134,9 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
 
         const disp = vscode.window.onDidEndTerminalShellExecution((event) => {
             if (event.terminal === terminal) {
-                if (os.platform() === 'win32')
-                    terminal.sendText('echo "Press Enter to close terminal"; Read-Host; exit');
-                else terminal.sendText('echo "Press Enter to close terminal" && read && exit');
+                terminal.sendText(
+                    `msg="Press Enter to close"; [ -n "$COMSPEC" ] && powershell -c "Write-Host '$msg'; Read-Host; exit" || { echo "$msg"; read; exit; }`
+                );
                 terminal.show();
                 disp.dispose();
             }
