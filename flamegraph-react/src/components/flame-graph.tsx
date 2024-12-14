@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import './flame-graph.css';
 import { vscode } from '../utilities/vscode';
 import { Legend } from './Legend';
-import { TreeNode } from './types';
+import { FlamegraphNode } from './types';
 import { getFunctionColor } from '../utilities/colors';
 
-export function FlameGraph({ data, height = 23 }: { data: TreeNode; height?: number }) {
-    const [focusNode, setFocusNode] = useState<TreeNode>(data);
+export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height?: number }) {
+    const [focusNode, setFocusNode] = useState<FlamegraphNode>(data);
     const [hoveredLineId, setHoveredLineId] = useState<number | null>(null);
     const [hoveredFunctionId, setHoveredFunctionId] = useState<string | null>(null);
     const [isCommandPressed, setIsCommandPressed] = useState(false);
@@ -39,7 +39,7 @@ export function FlameGraph({ data, height = 23 }: { data: TreeNode; height?: num
 
     const moduleMap = new Map<string, { color: string; totalValue: number }>();
 
-    function renderNode(node: TreeNode, x: number, width: number) {
+    function renderNode(node: FlamegraphNode, x: number, width: number) {
         // Update module map for legend
         if (node.moduleName) {
             const existing = moduleMap.get(node.moduleName);
@@ -143,7 +143,7 @@ export function FlameGraph({ data, height = 23 }: { data: TreeNode; height?: num
         let maxDepth = 0;
 
         // Render children at respective position and width
-        function renderChildren(node: TreeNode, startX: number) {
+        function renderChildren(node: FlamegraphNode, startX: number) {
             let currentX = startX;
             maxDepth = Math.max(maxDepth, node.depth);
 
@@ -177,7 +177,7 @@ export function FlameGraph({ data, height = 23 }: { data: TreeNode; height?: num
         return nodes;
     }
 
-    function renderNodeContent(node: TreeNode) {
+    function renderNodeContent(node: FlamegraphNode) {
         const fileName = node.fileName;
         const fileInfo = node.lineNumber ? `${fileName}:${node.lineNumber}` : fileName;
 

@@ -1,5 +1,5 @@
 import { FlameGraph } from './components/flame-graph';
-import { TreeNode } from './components/types';
+import { FlamegraphNode } from './components/types';
 import { useState, useEffect } from 'react';
 import './tailwind.css';
 
@@ -11,17 +11,25 @@ declare global {
     }
 }
 
-function addParents(node: TreeNode, parent?: TreeNode) {
-    if (parent) {
-        node.parent = parent;
-    }
-
-    if (node.children) {
-        node.children.forEach((child) => addParents(child, node));
-    }
+/**
+ * Adds parents to the tree nodes.
+ *
+ * @param node - The node to add parents to.
+ * @param parent - The parent node.
+ */
+function addParents(node: FlamegraphNode, parent?: FlamegraphNode) {
+    if (parent) node.parent = parent;
+    if (node.children) node.children.forEach((child) => addParents(child, node));
 }
 
-function getNodeWithUid(node: TreeNode, uid: number): TreeNode | null {
+/**
+ * Traverses the tree starting from `node` and returns the node with the given UID.
+ *
+ * @param node - The node to search.
+ * @param uid - The UID to search for.
+ * @returns The node with the given UID or null if not found.
+ */
+function getNodeWithUid(node: FlamegraphNode, uid: number): FlamegraphNode | null {
     if (node.uid === uid) return node;
     if (!node.children) return null;
 
@@ -33,13 +41,13 @@ function getNodeWithUid(node: TreeNode, uid: number): TreeNode | null {
 }
 
 export default function Home() {
-    const [parsedData, setParsedData] = useState<TreeNode | null>(null);
+    const [parsedData, setParsedData] = useState<FlamegraphNode | null>(null);
 
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
             const message = event.data;
             if (message.type === 'profile-data') {
-                const root = message.data as TreeNode;
+                const root = message.data as FlamegraphNode;
                 const focusUid = message.focusUid as number;
 
                 addParents(root);
