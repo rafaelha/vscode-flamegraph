@@ -1,3 +1,23 @@
+/* Base theme variables */
+:root {
+    --node-saturation: 70%;
+    --node-lightness: 45%;
+    --node-saturation-offset: 0%;
+    --node-lightness-offset: 0%;
+}
+
+/* Light theme adjustments */
+body.vscode-light {
+    --node-lightness: 75%;
+    --node-saturation: 85%;
+}
+
+/* Dark theme adjustments */
+body.vscode-dark {
+    --node-lightness: 45%;
+    --node-saturation: 70%;
+}
+
 .flamegraph {
     position: relative;
     width: 100%;
@@ -23,6 +43,11 @@
     transition: filter 0.15s ease-in-out;
     border-radius: 2px;
     overflow: hidden;
+    background-color: hsl(
+        var(--node-hue),
+        calc(var(--node-saturation) + var(--node-saturation-offset)),
+        calc(var(--node-lightness) + var(--node-lightness-offset))
+    );
 }
 
 .graph-node.same-line-id {
@@ -41,30 +66,69 @@
 .node-label {
     padding: 0 4px;
     font-size: 12px;
-    color: white;
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     height: 100%;
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    gap: 2px;
+    width: 100%;
 }
 
-.node-label span {
-    margin-right: 4px;
+.node-label span:first-child {
+    flex-shrink: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.node-label a {
-    color: inherit;
-    text-decoration: none;
-    opacity: 0.8;
-    transition: opacity 0.2s ease;
+.node-label span:last-child {
+    flex-shrink: 0;
 }
 
-.node-label a:hover {
-    text-decoration: underline;
-    opacity: 1;
+/* Theme-specific styles */
+body.vscode-light .node-label {
+    color: var(--vscode-editor-foreground);
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+body.vscode-dark .node-label {
+    color: white;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+body.vscode-high-contrast .node-label {
+    color: var(--vscode-editor-foreground);
+    text-shadow: none;
+}
+
+/* High contrast mode adjustments */
+body.vscode-high-contrast .graph-node {
+    border: 1px solid var(--vscode-contrastBorder);
+}
+
+body.vscode-high-contrast .graph-node:hover {
+    filter: none !important;
+    border-color: var(--vscode-contrastActiveBorder);
+}
+
+body.vscode-high-contrast .graph-node.same-line-id {
+    filter: none;
+    border-width: 2px;
+}
+
+/* Ensure text remains readable in light theme */
+body.vscode-light .graph-node {
+    --node-text-color: var(--vscode-editor-foreground);
+}
+
+body.vscode-dark .graph-node {
+    --node-text-color: white;
+}
+
+.node-label {
+    color: var(--node-text-color);
 }

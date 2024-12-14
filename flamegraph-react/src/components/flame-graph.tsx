@@ -3,7 +3,18 @@ import './flame-graph.css';
 import { vscode } from '../utilities/vscode';
 import { Legend } from './Legend';
 import { FlamegraphNode } from './types';
-import { getFunctionColor } from '../utilities/colors';
+import { getFunctionHue } from '../utilities/colors';
+
+// Function to generate a seeded random number between -range and +range
+function seededRandom(seed: string, range: number): number {
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+        hash = (hash << 5) - hash + seed.charCodeAt(i);
+        hash = hash & hash;
+    }
+    // Convert hash to a number between -range and +range
+    return ((hash % (range * 200)) - range * 100) / 100;
+}
 
 export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height?: number }) {
     const [focusNode, setFocusNode] = useState<FlamegraphNode>(data);
@@ -52,17 +63,20 @@ export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height
         const isHovered = hoveredLineId === node.fileLineId;
         const isRelatedFunction = hoveredFunctionId === node.functionId;
 
+        // Generate consistent random variations based on node properties
+        const saturationOffset = seededRandom(node.functionName + node.uid, 5); // ±5%
+        const lightnessOffset = seededRandom(node.functionName + node.uid + 'l', 5); // ±5%
+
         const style = {
             left: `${x * 100}%`,
             width: `calc(${width * 100}% - 2px)`,
             top: `${node.depth * height}px`,
             height: `${height - 2}px`,
-            backgroundColor: isCommandPressed && isRelatedFunction ? getFunctionColor(node.functionName) : node.color,
+            '--node-hue':
+                isCommandPressed && isRelatedFunction ? getFunctionHue(node.functionName) : node.color.match(/\d+/)![0],
+            '--node-saturation-offset': `${saturationOffset}%`,
+            '--node-lightness-offset': `${lightnessOffset}%`,
             position: 'absolute' as const,
-            borderRadius: '2px',
-            color: 'white',
-            textShadow: '0 0 2px rgba(0,0,0,0.5)',
-            overflow: 'hidden',
             opacity: node.depth < focusNode.depth ? 0.35 : 1,
         };
 
@@ -182,38 +196,9 @@ export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height
         const fileInfo = node.lineNumber ? `${fileName}:${node.lineNumber}` : fileName;
 
         return (
-            <div
-                className="node-label"
-                style={{
-                    display: 'flex',
-                    width: '100%',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0 4px',
-                    overflow: 'hidden',
-                    gap: '2px',
-                }}
-            >
-                <span
-                    style={{
-                        flexShrink: 1,
-                        minWidth: 0,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                    }}
-                >
-                    {node.functionName}
-                </span>
-                {node.filePath && node.lineNumber && (
-                    <span
-                        style={{
-                            flexShrink: 0,
-                        }}
-                    >
-                        {fileInfo}
-                    </span>
-                )}
+            <div className="node-label">
+                <span>{node.functionName}</span>
+                {node.filePath && node.lineNumber && <span>{fileInfo}</span>}
             </div>
         );
     }
