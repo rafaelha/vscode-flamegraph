@@ -2,8 +2,6 @@
 :root {
     --node-saturation: 70%;
     --node-lightness: 45%;
-    --node-saturation-offset: 0%;
-    --node-lightness-offset: 0%;
     --node-text-shadow: none;
 }
 
@@ -46,8 +44,8 @@ body.vscode-high-contrast-dark {
     overflow: hidden;
     background-color: hsl(
         var(--node-hue),
-        calc(var(--node-saturation) + var(--node-saturation-offset)),
-        calc(var(--node-lightness) + var(--node-lightness-offset))
+        var(--node-saturation),
+        var(--node-lightness)
     );
 }
 

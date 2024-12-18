@@ -4,17 +4,6 @@ import { vscode } from '../utilities/vscode';
 import { Legend } from './Legend';
 import { FlamegraphNode } from './types';
 
-// Function to generate a seeded random number between -range and +range
-function seededRandom(seed: string, range: number): number {
-    let hash = 0;
-    for (let i = 0; i < seed.length; i++) {
-        hash = (hash << 5) - hash + seed.charCodeAt(i);
-        hash = hash & hash;
-    }
-    // Convert hash to a number between -range and +range
-    return ((hash % (range * 200)) - range * 100) / 100;
-}
-
 export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height?: number }) {
     const [focusNode, setFocusNode] = useState<FlamegraphNode>(data);
     const [hoveredLineId, setHoveredLineId] = useState<number | null>(null);
@@ -62,19 +51,12 @@ export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height
         const isHovered = hoveredLineId === node.fileLineId;
         const isRelatedFunction = hoveredFunctionId === node.functionId;
 
-        // Generate consistent random variations based on node properties
-        const saturationOffset = seededRandom(node.functionName + node.uid, 3); // ±3%
-        const lightnessOffset = seededRandom(node.functionName + node.uid + 'l', 3); // ±3%
-
         const style = {
             left: `${x * 100}%`,
             width: `calc(${width * 100}% - 2px)`,
             top: `${node.depth * height}px`,
             height: `${height - 2}px`,
-            '--node-hue':
-                isCommandPressed && isRelatedFunction ? node.cmdHue : node.hue,
-            '--node-saturation-offset': `${saturationOffset}%`,
-            '--node-lightness-offset': `${lightnessOffset}%`,
+            '--node-hue': isCommandPressed && isRelatedFunction ? node.cmdHue : node.hue,
             position: 'absolute' as const,
             opacity: node.depth < focusNode.depth ? 0.35 : 1,
         };
