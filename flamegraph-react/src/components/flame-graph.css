@@ -4,46 +4,37 @@
     --node-lightness: 45%;
     --node-saturation-offset: 0%;
     --node-lightness-offset: 0%;
+    --node-text-shadow: none;
 }
 
 /* Light theme adjustments */
-body.vscode-light {
-    --node-lightness: 75%;
-    --node-saturation: 85%;
-}
-
+body.vscode-light,
 body.vscode-high-contrast-light {
     --node-lightness: 75%;
     --node-saturation: 85%;
+    --node-text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+    --node-text-color: var(--vscode-editor-foreground);
 }
 
 /* Dark theme adjustments */
-body.vscode-dark {
-    --node-lightness: 45%;
-    --node-saturation: 70%;
-}
-
+body.vscode-dark,
 body.vscode-high-contrast-dark {
     --node-lightness: 45%;
     --node-saturation: 70%;
+    --node-text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+    --node-text-color: white;
+}
+
+/* High contrast overrides */
+body.vscode-high-contrast-light,
+body.vscode-high-contrast-dark {
+    --node-text-shadow: none;
 }
 
 .flamegraph {
     position: relative;
     width: 100%;
-    font-family:
-        'Inter',
-        -apple-system,
-        BlinkMacSystemFont,
-        'Segoe UI',
-        'Roboto',
-        'Oxygen',
-        'Ubuntu',
-        'Cantarell',
-        'Fira Sans',
-        'Droid Sans',
-        'Helvetica Neue',
-        sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
     padding: 16px;
     box-sizing: border-box;
 }
@@ -85,6 +76,8 @@ body.vscode-high-contrast-dark {
     justify-content: space-between;
     gap: 2px;
     width: 100%;
+    color: var(--node-text-color);
+    text-shadow: var(--node-text-shadow);
 }
 
 .node-label span:first-child {
@@ -99,50 +92,7 @@ body.vscode-high-contrast-dark {
     flex-shrink: 0;
 }
 
-body.vscode-light .node-label {
-    color: var(--vscode-editor-foreground);
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
-}
-
-body.vscode-dark .node-label {
-    color: white;
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
-}
-
-body.vscode-high-contrast-light .node-label {
-    color: var(--vscode-editor-foreground);
-    text-shadow: none;
-}
-
-body.vscode-high-contrast-dark .node-label {
-    color: white;
-    text-shadow: none;
-}
-
 /* High contrast mode adjustments */
 body.vscode-high-contrast .graph-node {
     border: 1px solid var(--vscode-contrastBorder);
-}
-
-body.vscode-high-contrast .graph-node:hover {
-    filter: none !important;
-    border-color: var(--vscode-contrastActiveBorder);
-}
-
-body.vscode-high-contrast .graph-node.same-line-id {
-    filter: none;
-    border-width: 2px;
-}
-
-/* Ensure text remains readable in light theme */
-body.vscode-light .graph-node {
-    --node-text-color: var(--vscode-editor-foreground);
-}
-
-body.vscode-dark .graph-node {
-    --node-text-color: white;
-}
-
-.node-label {
-    color: var(--node-text-color);
 }
