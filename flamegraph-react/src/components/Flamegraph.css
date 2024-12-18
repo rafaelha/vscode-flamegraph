@@ -1,0 +1,98 @@
+/* Base theme variables */
+:root {
+    --node-saturation: 70%;
+    --node-lightness: 45%;
+    --node-saturation-offset: 0%;
+    --node-lightness-offset: 0%;
+    --node-text-shadow: none;
+}
+
+/* Light theme adjustments */
+body.vscode-light,
+body.vscode-high-contrast-light {
+    --node-lightness: 75%;
+    --node-saturation: 85%;
+    --node-text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+    --node-text-color: var(--vscode-editor-foreground);
+}
+
+/* Dark theme adjustments */
+body.vscode-dark,
+body.vscode-high-contrast-dark {
+    --node-lightness: 45%;
+    --node-saturation: 70%;
+    --node-text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+    --node-text-color: white;
+}
+
+/* High contrast overrides */
+body.vscode-high-contrast-light,
+body.vscode-high-contrast-dark {
+    --node-text-shadow: none;
+}
+
+.flamegraph {
+    position: relative;
+    width: 100%;
+    font-family: 'Inter', system-ui, sans-serif;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.graph-node {
+    cursor: default;
+    transition: filter 0.15s ease-in-out;
+    border-radius: 2px;
+    overflow: hidden;
+    background-color: hsl(
+        var(--node-hue),
+        calc(var(--node-saturation) + var(--node-saturation-offset)),
+        calc(var(--node-lightness) + var(--node-lightness-offset))
+    );
+}
+
+.graph-node.same-line-id {
+    filter: brightness(1.3);
+}
+
+.graph-node:hover {
+    filter: brightness(1.6) !important;
+}
+
+.graph-node.command-pressed .node-label {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.node-label {
+    padding: 0 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2px;
+    width: 100%;
+    color: var(--node-text-color);
+    text-shadow: var(--node-text-shadow);
+}
+
+.node-label span:first-child {
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.node-label span:last-child {
+    flex-shrink: 0;
+}
+
+/* High contrast mode adjustments */
+body.vscode-high-contrast .graph-node {
+    border: 1px solid var(--vscode-contrastBorder);
+}
