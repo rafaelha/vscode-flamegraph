@@ -3,7 +3,6 @@ import './Flamegraph.css';
 import { vscode } from '../utilities/vscode';
 import { Legend } from './Legend';
 import { FlamegraphNode } from './types';
-import { getFunctionHue } from '../utilities/colors';
 
 // Function to generate a seeded random number between -range and +range
 function seededRandom(seed: string, range: number): number {
@@ -48,14 +47,14 @@ export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height
         };
     }, []);
 
-    const moduleMap = new Map<string, { color: string; totalValue: number }>();
+    const moduleMap = new Map<string, { hue: number; totalValue: number }>();
 
     function renderNode(node: FlamegraphNode, x: number, width: number) {
         // Update module map for legend
         if (node.moduleName) {
             const existing = moduleMap.get(node.moduleName);
             moduleMap.set(node.moduleName, {
-                color: existing?.color || node.color,
+                hue: existing?.hue || node.hue,
                 totalValue: (existing?.totalValue || 0) + node.numSamples,
             });
         }
@@ -73,7 +72,7 @@ export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height
             top: `${node.depth * height}px`,
             height: `${height - 2}px`,
             '--node-hue':
-                isCommandPressed && isRelatedFunction ? getFunctionHue(node.functionName) : node.color.match(/\d+/)![0],
+                isCommandPressed && isRelatedFunction ? node.cmdHue : node.hue,
             '--node-saturation-offset': `${saturationOffset}%`,
             '--node-lightness-offset': `${lightnessOffset}%`,
             position: 'absolute' as const,
@@ -206,7 +205,7 @@ export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height
     const renderedNodes = renderNodes();
 
     const legendItems = Array.from(moduleMap.entries())
-        .map(([name, { color, totalValue }]) => ({ name, color, totalValue }))
+        .map(([name, { hue, totalValue }]) => ({ name, hue, totalValue }))
         .sort((a, b) => b.totalValue - a.totalValue);
 
     return (

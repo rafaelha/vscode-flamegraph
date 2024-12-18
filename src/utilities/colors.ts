@@ -11,25 +11,21 @@ export function hashString(str: string): number {
     return Math.abs(hash); // Ensure the result is non-negative
 }
 
-export function getNodeColor(file?: string, line?: number, functionName?: string, theme: ColorTheme = 'dark'): string {
-    if (!line) return theme === 'dark' ? '#008b8b' : '#006666';
-    if (!file || !functionName) return theme === 'dark' ? '#808080' : '#a0a0a0';
+export function getNodeHue(file?: string, line?: number, functionName?: string): number {
+    if (!line) return 180;
+    if (!file || !functionName) return 240;
 
     const moduleName = getModuleName(file);
     const hue = (hashString(moduleName ?? '') + 50) % 360;
-    const saturation =
-        theme === 'dark'
-            ? 50 + (hashString(functionName) % 50) // Higher saturation for dark mode
-            : 10 + (hashString(functionName) % 40); // Lower saturation for light mode
-    const lightness =
-        theme === 'dark'
-            ? 45 + (line % 10) // Darker colors for dark mode
-            : 65 + (line % 10); // Lighter colors for light mode
-    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+    return hue;
+}
+
+export function getFunctionHue(functionName: string): number {
+    return (hashString(functionName ?? '') + 50) % 360;
 }
 
 export function getFunctionColor(functionName: string, theme: ColorTheme = 'dark'): string {
-    const hue = (hashString(functionName ?? '') + 50) % 360;
+    const hue = getFunctionHue(functionName);
     const lightness = theme === 'dark' ? 40 : 70;
     const saturation = theme === 'dark' ? 50 : 40;
     return `hsl(${hue}, ${saturation}%, ${lightness}%)`;

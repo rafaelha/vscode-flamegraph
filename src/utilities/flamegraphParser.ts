@@ -1,6 +1,6 @@
 import { basename } from 'path';
 import { getModuleName, toUnixPath } from './pathUtils';
-import { getNodeColor } from './colors';
+import { getFunctionHue, getNodeHue } from './colors';
 
 /**
  * A sample from a stack trace.
@@ -47,7 +47,8 @@ export interface FlamegraphNode {
     functionName: string;
     numSamples: number;
     depth: number;
-    color: string;
+    hue: number;
+    cmdHue: number;
     fileLineId: number;
     functionId: string;
     filePath?: string;
@@ -176,7 +177,8 @@ export function parseProfilingData(data: string): [ProfilesByFile, FlamegraphNod
         lineNumber: 0,
         depth: 0,
         fileLineId: -1,
-        color: '#808080',
+        hue: 240,
+        cmdHue: 240,
         children: [],
     };
     const fileLineToInt: Record<string, number> = {};
@@ -222,7 +224,8 @@ export function parseProfilingData(data: string): [ProfilesByFile, FlamegraphNod
                     fileName: frame.fileName,
                     lineNumber: frame.lineNumber,
                     numSamples,
-                    color: getNodeColor(frame.filePath, frame.lineNumber, frame.fileName),
+                    hue: getNodeHue(frame.filePath, frame.lineNumber, frame.fileName),
+                    cmdHue: getFunctionHue(frame.functionName),
                     children: [],
                     depth: currentDepth,
                     fileLineId: fileLineToInt[frame.fileLineKey],

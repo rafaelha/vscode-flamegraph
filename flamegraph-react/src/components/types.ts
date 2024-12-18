@@ -3,7 +3,7 @@
  */
 export interface LegendItem {
     name: string;
-    color: string;
+    hue: number;
     totalValue: number;
 }
 
@@ -15,7 +15,8 @@ export interface FlamegraphNode {
     functionName: string;
     numSamples: number;
     depth: number;
-    color: string;
+    hue: number;
+    cmdHue: number;
     fileLineId: number;
     filePath?: string;
     fileName: string;
