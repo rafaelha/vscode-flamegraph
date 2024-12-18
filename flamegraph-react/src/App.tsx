@@ -1,4 +1,4 @@
-import { FlameGraph } from './components/flame-graph';
+import { FlameGraph } from './components/Flamegraph';
 import { FlamegraphNode } from './components/types';
 import { useState, useEffect } from 'react';
 import './tailwind.css';
