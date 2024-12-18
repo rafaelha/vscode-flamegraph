@@ -12,7 +12,10 @@ export const lineColorDecorationType = vscode.window.createTextEditorDecorationT
 });
 
 function getCurrentTheme(): ColorTheme {
-    return vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ? 'dark' : 'light';
+    return vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ||
+        vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.HighContrast
+        ? 'dark'
+        : 'light';
 }
 
 /**

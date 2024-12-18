@@ -48,6 +48,12 @@ export async function loadAndRegisterProfile(context: vscode.ExtensionContext, p
         vscode.workspace.onDidChangeTextDocument(() => {
             updateDecorations(vscode.window.activeTextEditor, decorationTree, context.workspaceState);
         }),
+        // Add theme change listener
+        vscode.window.onDidChangeActiveColorTheme(() => {
+            vscode.window.visibleTextEditors.forEach((editor) => {
+                updateDecorations(editor, decorationTree, context.workspaceState);
+            });
+        }),
     ];
 
     // Add disposables to context subscriptions
