@@ -122,13 +122,13 @@ function parseStackTrace(stackString: string): Frame[] {
         const standardMatches = frame.match(standardRegex);
 
         if (processMatches) {
-            const filePath = processMatches[2].trim();
+            const executionCommand = processMatches[2].trim();
             result.push({
                 functionName: `process ${processMatches[1]}`,
-                filePath,
+                filePath: executionCommand,
                 fileName: '',
-                fileLineKey: filePath,
-                functionId: `process_${processMatches[1]}_${filePath}`,
+                fileLineKey: executionCommand,
+                functionId: `process__${executionCommand}`,
             });
         } else if (standardMatches) {
             const filePath = standardMatches[2].trim();
