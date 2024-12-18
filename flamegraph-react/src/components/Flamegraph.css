@@ -53,8 +53,14 @@ body.vscode-high-contrast-dark {
     filter: brightness(1.3);
 }
 
-.graph-node:hover {
+body.vscode-dark .graph-node:hover,
+body.vscode-high-contrast-dark .graph-node:hover {
     filter: brightness(1.6) !important;
+}
+
+body.vscode-light .graph-node:hover,
+body.vscode-high-contrast-light .graph-node:hover {
+    filter: brightness(0.85) !important;
 }
 
 .graph-node.command-pressed .node-label {
