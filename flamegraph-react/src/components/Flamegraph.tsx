@@ -48,8 +48,8 @@ export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height
             });
         }
 
-        const isHovered = hoveredLineId === node.fileLineId;
-        const isRelatedFunction = hoveredFunctionId === node.functionId;
+        const isHovered = hoveredLineId === node.fileLineId && !node.fileName.startsWith('<');
+        const isRelatedFunction = hoveredFunctionId === node.functionId && !node.fileName.startsWith('<');
 
         const style = {
             left: `${x * 100}%`,
