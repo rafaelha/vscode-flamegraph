@@ -12,8 +12,18 @@ body.vscode-light {
     --node-saturation: 85%;
 }
 
+body.vscode-high-contrast-light {
+    --node-lightness: 75%;
+    --node-saturation: 85%;
+}
+
 /* Dark theme adjustments */
 body.vscode-dark {
+    --node-lightness: 45%;
+    --node-saturation: 70%;
+}
+
+body.vscode-high-contrast-dark {
     --node-lightness: 45%;
     --node-saturation: 70%;
 }
@@ -89,7 +99,6 @@ body.vscode-dark {
     flex-shrink: 0;
 }
 
-/* Theme-specific styles */
 body.vscode-light .node-label {
     color: var(--vscode-editor-foreground);
     text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
@@ -100,8 +109,13 @@ body.vscode-dark .node-label {
     text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
-body.vscode-high-contrast .node-label {
+body.vscode-high-contrast-light .node-label {
     color: var(--vscode-editor-foreground);
+    text-shadow: none;
+}
+
+body.vscode-high-contrast-dark .node-label {
+    color: white;
     text-shadow: none;
 }
 
