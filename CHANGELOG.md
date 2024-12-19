@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [unreleased]
 ### Added
 - Added support for light and high contrast themes.
+- Added two new commands: `Attach py-spy to running process` and `Attach py-spy to running process (native)`.
+
+### Changes
+- The flamegraph colors now only depend on the module name. Previously, file names and line numbers also had small effects on saturation and lightness.
 
 ## [0.2.1] - 2024-12-13
 ### Fixed
