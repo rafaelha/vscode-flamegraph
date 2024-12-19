@@ -1,18 +1,4 @@
 :root {
-    --legend-saturation: 70%;
-    --legend-lightness: 45%;
-}
-
-/* Light theme adjustments */
-body.vscode-light,
-body.vscode-high-contrast-light {
-    --legend-saturation: 85%;
-    --legend-lightness: 75%;
-}
-
-/* Dark theme adjustments */
-body.vscode-dark,
-body.vscode-high-contrast-dark {
-    --legend-saturation: 70%;
-    --legend-lightness: 45%;
+    --legend-saturation: var(--node-saturation);
+    --legend-lightness: var(--node-lightness);
 }
