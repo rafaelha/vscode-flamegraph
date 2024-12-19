@@ -5,13 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [0.2.2] - 2024-12-18
 ### Added
-- Added support for light and high contrast themes.
-- Added two new commands: `Attach py-spy to running process` and `Attach py-spy to running process (native)`.
+- Added support for light and high contrast themes in VS Code.
+- Added two new commands: `Attach py-spy to running process` and `Attach py-spy to running process (native)`. The extension will ask for the PID of the process to attach to. In the `native` case, the `--native` flag of `py-spy` is used, i.e. native python extensions will be sampled. This is not supported on all platforms. See this [blog post by Ben Frederickson](https://www.benfrederickson.com/profiling-native-python-extensions-with-py-spy/).
 
-### Changes
-- The flamegraph colors now only depend on the module name. Previously, file names and line numbers also had small effects on saturation and lightness.
+### Changed
+- Simplified flamegraph coloring: Colors are now determined solely by module names. Previously file names and line numbers slightly influenced saturation and lightness. This  change should make the flamegraph less visually noisy and easier to read.
 
 ## [0.2.1] - 2024-12-13
 ### Fixed
