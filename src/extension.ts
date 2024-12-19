@@ -1,6 +1,12 @@
 import * as vscode from 'vscode';
 import { ExtensionContext } from 'vscode';
-import { loadProfileCommand, runProfilerCommand, toggleProfileCommand, showFlamegraphCommand } from './commands';
+import {
+    loadProfileCommand,
+    runProfilerCommand,
+    toggleProfileCommand,
+    showFlamegraphCommand,
+    attachProfilerCommand,
+} from './commands';
 import { unregisterProfile } from './register';
 
 /**
@@ -20,6 +26,7 @@ export function activate(context: ExtensionContext) {
         loadProfileCommand(context),
         toggleProfileCommand(context),
         runProfilerCommand(context),
+        attachProfilerCommand(context),
         showFlamegraphCommand(context)
     );
 }

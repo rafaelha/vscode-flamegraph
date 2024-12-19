@@ -71,7 +71,7 @@ export class FlamegraphPanel {
                 data: profileData,
             });
         } else {
-            const panel = window.createWebviewPanel('showFlamegraph', 'Flamegraph profile', ViewColumn.Beside, {
+            const panel = window.createWebviewPanel('showFlamegraph', 'Flamegraph', ViewColumn.Beside, {
                 enableScripts: true,
                 retainContextWhenHidden: true,
                 localResourceRoots: [

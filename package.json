@@ -35,6 +35,10 @@
             {
                 "command": "flamegraph.runProfiler",
                 "title": "Flamegraph: Profile active file with py-spy"
+            },
+            {
+                "command": "flamegraph.attachProfiler",
+                "title": "Flamegraph: Attach py-spy to running process"
             }
         ]
     },
