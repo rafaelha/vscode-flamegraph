@@ -12,10 +12,10 @@ import {
     TextEditorRevealType,
     ExtensionContext,
 } from 'vscode';
-import { getUri } from '../utilities/pathUtils';
-import { getNonce } from '../utilities/nonceUtils';
-import { ProfilesByFile, FlamegraphNode } from '../utilities/flamegraphParser';
-import { updateDecorations } from '../render';
+import { getUri } from './utilities/pathUtils';
+import { getNonce } from './utilities/nonceUtils';
+import { ProfilesByFile, FlamegraphNode } from './utilities/flamegraphParser';
+import { updateDecorations } from './render';
 
 /**
  * This class manages the state and behavior of HelloWorld webview panels.

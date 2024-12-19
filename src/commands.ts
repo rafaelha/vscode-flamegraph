@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { checkAndInstallProfiler, getPythonPath, selectProfileFile } from './utilities/fsUtils';
 import { loadAndRegisterProfile, unregisterProfile } from './register';
-import { FlamegraphPanel } from './panels/FlamegraphPanel';
+import { FlamegraphPanel } from './flamegraphPanel';
 import { FlamegraphNode } from './utilities/flamegraphParser';
 
 let activeProfileWatcher: vscode.FileSystemWatcher | undefined;
