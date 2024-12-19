@@ -17,8 +17,8 @@ body.vscode-high-contrast-light {
 /* Dark theme adjustments */
 body.vscode-dark,
 body.vscode-high-contrast-dark {
-    --node-lightness: 45%;
-    --node-saturation: 70%;
+    --node-lightness: 40%;
+    --node-saturation: 65%;
     --node-text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
     --node-text-color: white;
 }
