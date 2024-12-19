@@ -153,29 +153,54 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
     });
 }
 
+/**
+ * Attaches py-spy to the running process.
+ *
+ * @param context - The extension context.
+ * @param flags - The flags to pass to py-spy, such as --subprocesses or --native.
+ * @returns The command registration.
+ */
+export async function attach(context: vscode.ExtensionContext, flags: string) {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) {
+        vscode.window.showErrorMessage('Please open a workspace in VS Code.');
+        return;
+    }
+
+    // Prompt user for PID
+    const pid = await vscode.window.showInputBox({
+        prompt: 'Enter the Process ID (PID) to attach py-spy to:',
+        placeHolder: '1234',
+        validateInput: (value) => {
+            // Validate that input is a number
+            return /^\d+$/.test(value) ? null : 'Please enter a valid process ID (numbers only)';
+        },
+    });
+    if (!pid) return;
+    runTask(context, workspaceFolder, `--pid ${pid}`, flags);
+}
+
+/**
+ * Attaches py-spy to the running process with the --subprocesses flag.
+ *
+ * @param context - The extension context.
+ * @returns The command registration.
+ */
 export function attachProfilerCommand(context: vscode.ExtensionContext) {
     return vscode.commands.registerCommand('flamegraph.attachProfiler', async () => {
-        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-        if (!workspaceFolder) {
-            vscode.window.showErrorMessage('Please open a workspace in VS Code.');
-            return;
-        }
+        await attach(context, '--subprocesses');
+    });
+}
 
-        // Prompt user for PID
-        const pid = await vscode.window.showInputBox({
-            prompt: 'Enter the Process ID (PID) to attach py-spy to:',
-            placeHolder: '1234',
-            validateInput: (value) => {
-                // Validate that input is a number
-                return /^\d+$/.test(value) ? null : 'Please enter a valid process ID (numbers only)';
-            },
-        });
-
-        if (!pid) return;
-
-        const command = `--pid "${pid}"`;
-        const flags = '--subprocesses';
-        runTask(context, workspaceFolder, command, flags);
+/**
+ * Attaches py-spy to the running process with the --native flag.
+ *
+ * @param context - The extension context.
+ * @returns The command registration.
+ */
+export function attachNativeProfilerCommand(context: vscode.ExtensionContext) {
+    return vscode.commands.registerCommand('flamegraph.attachNativeProfiler', async () => {
+        await attach(context, '--native');
     });
 }
 

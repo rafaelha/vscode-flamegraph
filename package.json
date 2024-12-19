@@ -39,6 +39,10 @@
             {
                 "command": "flamegraph.attachProfiler",
                 "title": "Flamegraph: Attach py-spy to running process"
+            },
+            {
+                "command": "flamegraph.attachNativeProfiler",
+                "title": "Flamegraph: Attach py-spy to running process (native)"
             }
         ]
     },

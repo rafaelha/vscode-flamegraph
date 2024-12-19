@@ -6,6 +6,7 @@ import {
     toggleProfileCommand,
     showFlamegraphCommand,
     attachProfilerCommand,
+    attachNativeProfilerCommand,
 } from './commands';
 import { unregisterProfile } from './register';
 
@@ -27,6 +28,7 @@ export function activate(context: ExtensionContext) {
         toggleProfileCommand(context),
         runProfilerCommand(context),
         attachProfilerCommand(context),
+        attachNativeProfilerCommand(context),
         showFlamegraphCommand(context)
     );
 }
