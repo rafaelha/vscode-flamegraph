@@ -20,6 +20,7 @@ export interface FlamegraphNode {
     filePath?: string;
     fileName: string;
     lineNumber?: number;
+    codeLine?: string;
     children?: FlamegraphNode[];
     parent?: FlamegraphNode;
     moduleName?: string;

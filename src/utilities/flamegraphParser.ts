@@ -1,4 +1,5 @@
 import { basename } from 'path';
+import { readFileSync } from 'fs';
 import { getModuleName, toUnixPath } from './pathUtils';
 import { getFunctionHue, getModuleHue } from './colors';
 
@@ -53,6 +54,7 @@ export interface FlamegraphNode {
     filePath?: string;
     fileName: string;
     lineNumber?: number;
+    codeLine?: string;
     children?: FlamegraphNode[];
     parent?: FlamegraphNode;
     moduleName?: string;
@@ -149,6 +151,30 @@ function parseStackTrace(stackString: string): Frame[] {
     return result;
 }
 
+const fileCache: Map<string, string[]> = new Map();
+
+function getCodeLine(filePath: string, lineNumber?: number): string {
+    if (!filePath || !lineNumber) return '';
+
+    try {
+        // Check cache first
+        let lines = fileCache.get(filePath);
+
+        if (!lines) {
+            // Read file and cache its lines
+            const fileContent = readFileSync(filePath, 'utf-8');
+            lines = fileContent.split('\n');
+            fileCache.set(filePath, lines);
+        }
+
+        // Line numbers are 1-based, array is 0-based
+        return lines[lineNumber - 1]?.trim() || '';
+    } catch (error) {
+        // Return empty string if file can't be read
+        return '';
+    }
+}
+
 /**
  * Parses profiling data and structures it into two data structures:
  * - ProfilesByFile: A nested data structure optimized for efficient lookup when the file and line number is known. This
@@ -219,6 +245,7 @@ export function parseProfilingData(data: string): [ProfilesByFile, FlamegraphNod
                     filePath: frame.filePath,
                     fileName: frame.fileName,
                     lineNumber: frame.lineNumber,
+                    codeLine: getCodeLine(frame.filePath, frame.lineNumber),
                     numSamples,
                     hue: getModuleHue(frame.filePath),
                     cmdHue: getFunctionHue(frame.functionName),
