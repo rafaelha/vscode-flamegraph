@@ -1,0 +1,23 @@
+/* Base theme (dark) */
+body.vscode-dark,
+body.vscode-high-contrast-dark {
+    --syntax-comment: #6e7681;
+    --syntax-keyword: #569cd6;
+    --syntax-entity: #dcdc9c;
+    --syntax-string: #ce9178;
+    --syntax-constant: #b5cea8;
+    --syntax-punctuation: #d4d4d4;
+    --syntax-type: #4ec9b0;
+}
+
+/* Light theme */
+body.vscode-light,
+body.vscode-high-contrast-light {
+    --syntax-comment: #ef3dff;
+    --syntax-keyword: #0550ae;
+    --syntax-entity: #6f42c1;
+    --syntax-string: #0a3069;
+    --syntax-constant: #005cc5;
+    --syntax-punctuation: #24292f;
+    --syntax-type: #116329;
+} 

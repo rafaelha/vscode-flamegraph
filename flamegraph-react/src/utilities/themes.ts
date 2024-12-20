@@ -1,4 +1,5 @@
 import { PrismTheme } from 'prism-react-renderer';
+import '../utilities/syntax-colors.css';
 
 export const minimalTheme: PrismTheme = {
     plain: {
@@ -9,28 +10,44 @@ export const minimalTheme: PrismTheme = {
         {
             types: ['comment', 'prolog', 'doctype', 'cdata'],
             style: {
-                color: 'var(--vscode-editor-foreground)',
-                opacity: 0.7,
+                color: 'var(--syntax-comment)',
+                fontStyle: 'italic',
+            },
+        },
+        {
+            types: ['keyword', 'builtin'],
+            style: {
+                color: 'var(--syntax-keyword)',
+            },
+        },
+        {
+            types: ['function'],
+            style: {
+                color: 'var(--syntax-entity)',
+            },
+        },
+        {
+            types: ['string', 'attr-value'],
+            style: {
+                color: 'var(--syntax-string)',
+            },
+        },
+        {
+            types: ['number'],
+            style: {
+                color: 'var(--syntax-constant)',
             },
         },
         {
             types: ['punctuation', 'operator'],
             style: {
-                color: 'var(--vscode-editor-foreground)',
+                color: 'var(--syntax-punctuation)',
             },
         },
         {
-            types: ['keyword', 'boolean', 'number', 'function', 'builtin'],
+            types: ['class-name', 'maybe-class-name'],
             style: {
-                color: 'var(--vscode-editor-foreground)',
-                opacity: 0.9,
-            },
-        },
-        {
-            types: ['string', 'char', 'symbol'],
-            style: {
-                color: 'var(--vscode-editor-foreground)',
-                opacity: 0.8,
+                color: 'var(--syntax-type)',
             },
         },
     ],
