@@ -1,6 +1,6 @@
 import { basename } from 'path';
 import { getModuleName, toUnixPath } from './pathUtils';
-import { getFunctionHue, getNodeHue } from './colors';
+import { getFunctionHue, getModuleHue } from './colors';
 
 /**
  * A sample from a stack trace.
@@ -224,7 +224,7 @@ export function parseProfilingData(data: string): [ProfilesByFile, FlamegraphNod
                     fileName: frame.fileName,
                     lineNumber: frame.lineNumber,
                     numSamples,
-                    hue: getNodeHue(frame.filePath, frame.lineNumber, frame.fileName),
+                    hue: getModuleHue(frame.filePath),
                     cmdHue: getFunctionHue(frame.functionName),
                     children: [],
                     depth: currentDepth,
