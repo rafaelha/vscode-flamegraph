@@ -126,21 +126,27 @@ export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height
     function renderNodes(): React.ReactNode[] {
         const nodes: React.ReactNode[] = [];
 
+        function filter(node: FlamegraphNode): boolean {
+            return node.fileName.startsWith('<');
+        }
+
         // Render parents (full width)
         let current = focusNode;
 
         // Figure out the depth of the focus node by counting the number of parents
         let focusDepth = 0;
         while (current.parent) {
-            focusDepth++;
+            if (!filter(current.parent)) focusDepth++;
             current = current.parent;
         }
 
         current = focusNode;
         let depth = focusDepth;
         while (current.parent) {
-            depth--;
-            nodes.push(renderNode(current.parent, depth, focusDepth, 0, 1));
+            if (!filter(current.parent)) {
+                depth--;
+                nodes.push(renderNode(current.parent, depth, focusDepth, 0, 1));
+            }
             current = current.parent;
         }
 
@@ -156,12 +162,16 @@ export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height
 
             node.children?.forEach((child) => {
                 const childWidth = child.numSamples / focusNode.numSamples;
-                nodes.push(renderNode(child, depth + 1, focusDepth, currentX, childWidth));
-                if (childWidth >= 0.008) {
-                    // Only process children if parent is large enough to be visible
-                    renderChildren(child, depth + 1, currentX);
+                if (!filter(child)) {
+                    nodes.push(renderNode(child, depth + 1, focusDepth, currentX, childWidth));
+                    if (childWidth >= 0.008) {
+                        // Only process children if parent is large enough to be visible
+                        renderChildren(child, depth + 1, currentX);
+                    }
+                    currentX += childWidth;
+                } else {
+                    renderChildren(child, depth, currentX);
                 }
-                currentX += childWidth;
             });
         }
 
