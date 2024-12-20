@@ -3,6 +3,7 @@ import './Flamegraph.css';
 import { vscode } from '../utilities/vscode';
 import { Legend } from './Legend';
 import { FlamegraphNode } from './types';
+import { Highlight, themes } from 'prism-react-renderer';
 
 export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height?: number }) {
     const [focusNode, setFocusNode] = useState<FlamegraphNode>(data);
@@ -196,7 +197,21 @@ export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height
 
         return (
             <div className="node-label">
-                <span>{node.codeLine || node.functionName}</span>
+                <span>
+                    {node.codeLine ? (
+                        <Highlight code={node.codeLine} language="python" theme={themes.vsDark}>
+                            {({ tokens, getTokenProps }) => (
+                                <>
+                                    {tokens[0].map((token, i) => (
+                                        <span key={i} {...getTokenProps({ token })} />
+                                    ))}
+                                </>
+                            )}
+                        </Highlight>
+                    ) : (
+                        node.functionName
+                    )}
+                </span>
                 <span>{fileInfo}</span>
             </div>
         );
