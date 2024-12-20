@@ -3,7 +3,8 @@ import './Flamegraph.css';
 import { vscode } from '../utilities/vscode';
 import { Legend } from './Legend';
 import { FlamegraphNode } from './types';
-import { Highlight, themes } from 'prism-react-renderer';
+import { Highlight } from 'prism-react-renderer';
+import { minimalTheme } from '../utilities/themes';
 
 export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height?: number }) {
     const [focusNode, setFocusNode] = useState<FlamegraphNode>(data);
@@ -199,7 +200,7 @@ export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height
             <div className="node-label">
                 <span>
                     {node.codeLine ? (
-                        <Highlight code={node.codeLine} language="python" theme={themes.vsDark}>
+                        <Highlight code={node.codeLine} language="python" theme={minimalTheme}>
                             {({ tokens, getTokenProps }) => (
                                 <>
                                     {tokens[0].map((token, i) => (
