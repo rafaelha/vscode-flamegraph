@@ -46,7 +46,6 @@ export interface FlamegraphNode {
     uid: number;
     functionName: string;
     numSamples: number;
-    depth: number;
     hue: number;
     cmdHue: number;
     fileLineId: number;
@@ -175,7 +174,6 @@ export function parseProfilingData(data: string): [ProfilesByFile, FlamegraphNod
         filePath: '',
         fileName: '',
         lineNumber: 0,
-        depth: 0,
         fileLineId: -1,
         hue: 240,
         cmdHue: 240,
@@ -202,12 +200,10 @@ export function parseProfilingData(data: string): [ProfilesByFile, FlamegraphNod
         const frames = parseStackTrace(callStackStr);
         root.numSamples += numSamples;
         let currentNode = root;
-        let currentDepth = 0;
         const parentIds = new Set<number>([root.uid]);
         let currentCallStackStr = '';
         for (const frame of frames) {
             if (!fileLineToInt[frame.fileLineKey]) fileLineToInt[frame.fileLineKey] = uid;
-            currentDepth += 1;
 
             let node = currentNode.children?.find(
                 (child) =>
@@ -227,7 +223,6 @@ export function parseProfilingData(data: string): [ProfilesByFile, FlamegraphNod
                     hue: getModuleHue(frame.filePath),
                     cmdHue: getFunctionHue(frame.functionName),
                     children: [],
-                    depth: currentDepth,
                     fileLineId: fileLineToInt[frame.fileLineKey],
                     functionId: frame.functionId,
                     moduleName: frame.moduleName,

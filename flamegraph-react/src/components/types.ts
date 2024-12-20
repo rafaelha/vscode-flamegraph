@@ -14,7 +14,6 @@ export interface FlamegraphNode {
     uid: number;
     functionName: string;
     numSamples: number;
-    depth: number;
     hue: number;
     cmdHue: number;
     fileLineId: number;
