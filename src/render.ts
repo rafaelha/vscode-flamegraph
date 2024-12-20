@@ -4,6 +4,7 @@ import { StackProfileSample, FileProfileData, ProfilesByFile } from './utilities
 import { getFunctionColor, ColorTheme } from './utilities/colors';
 import { toUnixPath } from './utilities/pathUtils';
 
+// TODO: Make this configurable in VS Code settings
 const DECORATION_WIDTH = 100; // Width in pixels for the decoration area
 
 // Create a decorator type for the line coloring
@@ -11,6 +12,10 @@ export const lineColorDecorationType = vscode.window.createTextEditorDecorationT
     before: {},
 });
 
+/**
+ * Get the current theme from VS Code, which is either 'dark' or 'light'.
+ * @returns The current theme.
+ */
 function getCurrentTheme(): ColorTheme {
     return vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ||
         vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.HighContrast
