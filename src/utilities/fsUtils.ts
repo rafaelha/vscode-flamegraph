@@ -4,11 +4,22 @@ import { exec, spawn } from 'child_process';
 
 const execAsync = promisify(exec);
 
+/**
+ * Reads a text file from the given URI.
+ *
+ * @param fileUri - The URI of the file to read.
+ * @returns The contents of the file as a string.
+ */
 export async function readTextFile(fileUri: vscode.Uri): Promise<string> {
     const data = await vscode.workspace.fs.readFile(fileUri);
     return Buffer.from(data).toString('utf8');
 }
 
+/**
+ * Opens a file dialog to select a profile file.
+ *
+ * @returns The URI of the selected file or undefined if no file is selected.
+ */
 export async function selectProfileFile(): Promise<vscode.Uri | undefined> {
     const options: vscode.OpenDialogOptions = {
         canSelectMany: false,
