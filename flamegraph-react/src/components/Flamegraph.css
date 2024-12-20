@@ -73,28 +73,32 @@ body.vscode-high-contrast-light .graph-node:hover {
     font-size: 12px;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 2px;
+    gap: 4px;
     width: 100%;
     color: var(--node-text-color);
     text-shadow: var(--node-text-shadow);
 }
 
 .node-label span:first-child {
-    flex-shrink: 1;
-    min-width: 0;
+    flex: 0 1 auto;
+    min-width: min-content;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .node-label span:last-child {
-    flex-shrink: 0;
+    flex: 0 0 auto;
+    overflow: hidden;
+    white-space: nowrap;
+    visibility: visible;
+    margin-left: auto;
 }
+
 
 /* High contrast mode adjustments */
 body.vscode-high-contrast .graph-node {

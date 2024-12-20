@@ -200,7 +200,7 @@ export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height
 
         return (
             <div className="node-label">
-                <span>{node.functionName}</span>
+                <span>{node.codeLine || node.functionName}</span>
                 {node.filePath && node.lineNumber && <span>{fileInfo}</span>}
             </div>
         );
