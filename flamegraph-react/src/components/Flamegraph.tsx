@@ -196,12 +196,12 @@ export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height
 
     function renderNodeContent(node: FlamegraphNode) {
         const fileName = node.fileName;
-        const fileInfo = node.lineNumber ? `${fileName}:${node.lineNumber}` : fileName;
+        const fileInfo = node.filePath ? (node.lineNumber ? `${fileName}:${node.lineNumber}` : fileName) : '';
 
         return (
             <div className="node-label">
                 <span>{node.codeLine || node.functionName}</span>
-                {node.filePath && node.lineNumber && <span>{fileInfo}</span>}
+                <span>{fileInfo}</span>
             </div>
         );
     }
