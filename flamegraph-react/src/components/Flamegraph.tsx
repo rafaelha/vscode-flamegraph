@@ -91,12 +91,8 @@ export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height
         const percentageOfTotal = ((node.numSamples / rootValue) * 100).toFixed(1);
         const percentageOfFocus = ((node.numSamples / focusNode.numSamples) * 100).toFixed(1);
         const tooltipContent = [
-            `${node.functionName}`,
-            node.filePath && node.lineNumber
-                ? `${node.filePath}:${node.lineNumber}`
-                : node.filePath
-                  ? node.filePath
-                  : null,
+            `${node.functionName} (${node.lineNumber ? `${node.fileName}:${node.lineNumber}` : node.fileName})`,
+            node.codeLine,
             `${node.numSamples / 100}s / ${percentageOfTotal}% / ${percentageOfFocus}%`,
         ]
             .filter(Boolean)
