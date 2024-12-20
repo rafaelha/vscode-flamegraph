@@ -38,7 +38,7 @@ export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height
 
     const moduleMap = new Map<string, { hue: number; totalValue: number }>();
 
-    function renderNode(node: FlamegraphNode, x: number, width: number) {
+    function renderNode(node: FlamegraphNode, depth: number, focusDepth: number, x: number, width: number) {
         // Update module map for legend
         if (node.moduleName) {
             const existing = moduleMap.get(node.moduleName);
@@ -55,11 +55,11 @@ export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height
         const style = {
             left: `${x * 100}%`,
             width: `calc(${width * 100}% - 2px)`,
-            top: `${node.depth * height}px`,
+            top: `${depth * height}px`,
             height: `${height - 2}px`,
             '--node-hue': isCommandPressed && isRelatedFunction ? node.cmdHue : node.hue,
             position: 'absolute' as const,
-            opacity: node.depth < focusNode.depth ? 0.35 : 1,
+            opacity: depth < focusDepth ? 0.35 : 1,
         };
 
         const handleClick = (e: React.MouseEvent) => {
@@ -128,33 +128,44 @@ export function FlameGraph({ data, height = 23 }: { data: FlamegraphNode; height
 
         // Render parents (full width)
         let current = focusNode;
+
+        // Figure out the depth of the focus node by counting the number of parents
+        let focusDepth = 0;
         while (current.parent) {
-            nodes.push(renderNode(current.parent, 0, 1));
+            focusDepth++;
+            current = current.parent;
+        }
+
+        current = focusNode;
+        let depth = focusDepth;
+        while (current.parent) {
+            depth--;
+            nodes.push(renderNode(current.parent, depth, focusDepth, 0, 1));
             current = current.parent;
         }
 
         // Render focus node (full width)
-        nodes.push(renderNode(focusNode, 0, 1));
+        nodes.push(renderNode(focusNode, focusDepth, focusDepth, 0, 1));
 
         let maxDepth = 0;
 
         // Render children at respective position and width
-        function renderChildren(node: FlamegraphNode, startX: number) {
+        function renderChildren(node: FlamegraphNode, depth: number, startX: number) {
             let currentX = startX;
-            maxDepth = Math.max(maxDepth, node.depth);
+            maxDepth = Math.max(maxDepth, depth + 1);
 
             node.children?.forEach((child) => {
                 const childWidth = child.numSamples / focusNode.numSamples;
-                nodes.push(renderNode(child, currentX, childWidth));
+                nodes.push(renderNode(child, depth + 1, focusDepth, currentX, childWidth));
                 if (childWidth >= 0.008) {
                     // Only process children if parent is large enough to be visible
-                    renderChildren(child, currentX);
+                    renderChildren(child, depth + 1, currentX);
                 }
                 currentX += childWidth;
             });
         }
 
-        renderChildren(focusNode, 0);
+        renderChildren(focusNode, focusDepth, 0);
 
         // Add a single invisible placeholder node at the bottom, for some scroll padding
         nodes.push(
