@@ -1,5 +1,5 @@
 import { type LegendItem } from './types';
-import './Legend.css';
+import './Flamegraph.css';
 
 interface LegendProps {
     items: LegendItem[];
@@ -17,7 +17,7 @@ export function Legend({ items }: LegendProps) {
                             <div 
                                 className="w-3 h-3 rounded-sm" 
                                 style={{ 
-                                    backgroundColor: `hsl(${hue}, var(--legend-saturation), var(--legend-lightness))` 
+                                    backgroundColor: `hsl(${hue}, var(--node-saturation), var(--node-lightness))` 
                                 }} 
                             />
                             <span className="text-xs text-white/80 whitespace-nowrap">{name}</span>
