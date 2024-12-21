@@ -1,23 +1,23 @@
 /* Base theme (dark) */
 body.vscode-dark,
 body.vscode-high-contrast-dark {
-    --syntax-comment: #6e7681;
-    --syntax-keyword: #569cd6;
+    --syntax-comment: #bcbcbc;
+    --syntax-keyword: #c6e5ff;
     --syntax-entity: #dcdc9c;
-    --syntax-string: #ce9178;
+    --syntax-string: #ffc9b4;
     --syntax-constant: #b5cea8;
-    --syntax-punctuation: #d4d4d4;
-    --syntax-type: #4ec9b0;
+    --syntax-punctuation: #eeeeee;
+    --syntax-type: #aee5ff;
 }
 
 /* Light theme */
 body.vscode-light,
 body.vscode-high-contrast-light {
-    --syntax-comment: #ef3dff;
-    --syntax-keyword: #0550ae;
-    --syntax-entity: #6f42c1;
+    --syntax-comment: #424242;
+    --syntax-keyword: #0048a0;
+    --syntax-entity: #59349d;
     --syntax-string: #0a3069;
-    --syntax-constant: #005cc5;
-    --syntax-punctuation: #24292f;
-    --syntax-type: #116329;
+    --syntax-constant: #003c81;
+    --syntax-punctuation: #222222;
+    --syntax-type: #0b431c;
 } 
