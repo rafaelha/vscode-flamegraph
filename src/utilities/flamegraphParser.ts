@@ -74,6 +74,8 @@ interface Frame {
     uid?: number;
     parentIds?: Set<number>;
     callStackStr?: string;
+    hue: number;
+    cmdHue: number;
 }
 
 /**
@@ -130,6 +132,8 @@ function parseStackTrace(stackString: string): Frame[] {
                 fileName: '',
                 fileLineKey: executionCommand,
                 functionId: `process__${executionCommand}`,
+                hue: 110,
+                cmdHue: 110,
             });
         } else if (standardMatches) {
             const filePath = standardMatches[2].trim();
@@ -144,6 +148,8 @@ function parseStackTrace(stackString: string): Frame[] {
                 moduleName: getModuleName(filePath),
                 fileLineKey: `${filePath}:${lineNumber}`,
                 functionId: functionName + filePath,
+                hue: getModuleHue(filePath),
+                cmdHue: getFunctionHue(functionName),
             });
         }
     }
@@ -247,8 +253,8 @@ export function parseProfilingData(data: string): [ProfilesByFile, FlamegraphNod
                     lineNumber: frame.lineNumber,
                     codeLine: getCodeLine(frame.filePath, frame.lineNumber),
                     numSamples,
-                    hue: getModuleHue(frame.filePath),
-                    cmdHue: getFunctionHue(frame.functionName),
+                    hue: frame.hue,
+                    cmdHue: frame.cmdHue,
                     children: [],
                     fileLineId: fileLineToInt[frame.fileLineKey],
                     functionId: frame.functionId,
