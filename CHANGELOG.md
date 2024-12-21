@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.3] - 2024-12-20
 ### Changed
 - The flamegraph now shows code line content instead of function names.
+- The flamegraph is now filtered to only show relevant frames. In the future, we will add an option to show all and filter by module.
 
 ## [0.2.2] - 2024-12-18
 ### Added
