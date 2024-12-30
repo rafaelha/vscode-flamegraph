@@ -129,12 +129,14 @@ function parseStackTrace(stackString: string): Frame[] {
             if (!functionName) continue; // A function name should always be defined
 
             const lineNumber = lineNumberStr ? parseInt(lineNumberStr, 10) : undefined;
-            let moduleName = getModuleName(filePath) ?? '';
-            if (functionName.includes('process')) moduleName = 'process';
+
+            // Get the module name from the file path. If the name contains 'process' followed by a number,
+            // it is a process frame and the module name is 'process'.
+            const moduleName = /process \d+/.test(functionName) ? 'process' : (getModuleName(filePath) ?? '');
 
             result.push({
-                functionName: functionName.trim(),
-                filePath: filePath?.trim() || '',
+                functionName,
+                filePath: filePath || '',
                 fileName: filePath ? basename(filePath) : '',
                 lineNumber,
                 moduleName,

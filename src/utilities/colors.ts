@@ -1,5 +1,3 @@
-import { getModuleName } from './pathUtils';
-
 export type ColorTheme = 'light' | 'dark';
 
 /**
