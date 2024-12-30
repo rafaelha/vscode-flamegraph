@@ -17,24 +17,12 @@ export function hashString(str: string): number {
 }
 
 /**
- * Convert a filename to a hue. The hue is computed from the module name which is inferred from the filename.
- * @param file - The file name.
- * @returns The hue for the module.
+ * Convert a string to a hue.
+ * @param str - The string to convert.
+ * @returns The hue for the string.
  */
-export function getModuleHue(file?: string): number {
-    if (!file) return 240;
-    const moduleName = getModuleName(file);
-    const hue = (hashString(moduleName ?? '') + 50) % 360;
-    return hue;
-}
-
-/**
- * Convert a function name to a hue.
- * @param functionName - The function name.
- * @returns The hue for the function.
- */
-export function getFunctionHue(functionName: string): number {
-    return (hashString(functionName ?? '') + 50) % 360;
+export function strToHue(str: string): number {
+    return (hashString(str) + 50) % 360;
 }
 
 /**
@@ -44,7 +32,7 @@ export function getFunctionHue(functionName: string): number {
  * @returns The color for the function.
  */
 export function getFunctionColor(functionName: string, theme: ColorTheme = 'dark'): string {
-    const hue = getFunctionHue(functionName);
+    const hue = strToHue(functionName);
     const lightness = theme === 'dark' ? 40 : 70;
     const saturation = theme === 'dark' ? 50 : 40;
     return `hsl(${hue}, ${saturation}%, ${lightness}%)`;

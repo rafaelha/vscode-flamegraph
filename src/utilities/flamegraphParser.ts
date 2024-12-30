@@ -1,7 +1,7 @@
 import { basename } from 'path';
 import { readFileSync } from 'fs';
 import { getModuleName, toUnixPath } from './pathUtils';
-import { getFunctionHue, getModuleHue } from './colors';
+import { strToHue } from './colors';
 
 /**
  * A sample from a stack trace.
@@ -117,39 +117,31 @@ function parseStackTrace(stackString: string): Frame[] {
     const result: Frame[] = [];
 
     for (const frame of frames) {
-        // Add new regex for process frames
-        const processRegex = /process\s+(\d+):"([^"]+)"/;
-        const standardRegex = /\s*(<[^>]+>|\w+)\s*\((.+):(\d+)\)/;
+        // Parse each frame using a regex. Py-spy records a frame either as
+        // functionName (filePath:lineNumber)
+        // functionName (filePath)
+        // functionName
+        const frameRegex = /^(.+?)(?:\s+\(([^:)]+)(?::(\d+))?\))?$/;
+        const matches = frame.match(frameRegex);
 
-        const processMatches = frame.match(processRegex);
-        const standardMatches = frame.match(standardRegex);
+        if (matches) {
+            const [, functionName, filePath, lineNumberStr] = matches;
+            if (!functionName) continue; // A function name should always be defined
 
-        if (processMatches) {
-            const executionCommand = processMatches[2].trim();
-            result.push({
-                functionName: `process ${processMatches[1]}`,
-                filePath: executionCommand,
-                fileName: '',
-                fileLineKey: executionCommand,
-                functionId: `process__${executionCommand}`,
-                hue: 110,
-                cmdHue: 110,
-            });
-        } else if (standardMatches) {
-            const filePath = standardMatches[2].trim();
-            const lineNumber = parseInt(standardMatches[3].trim(), 10);
-            const functionName = standardMatches[1].trim();
+            const lineNumber = lineNumberStr ? parseInt(lineNumberStr, 10) : undefined;
+            let moduleName = getModuleName(filePath) ?? '';
+            if (functionName.includes('process')) moduleName = 'process';
 
             result.push({
-                functionName,
-                filePath,
-                fileName: basename(filePath),
+                functionName: functionName.trim(),
+                filePath: filePath?.trim() || '',
+                fileName: filePath ? basename(filePath) : '',
                 lineNumber,
-                moduleName: getModuleName(filePath),
-                fileLineKey: `${filePath}:${lineNumber}`,
-                functionId: functionName + filePath,
-                hue: getModuleHue(filePath),
-                cmdHue: getFunctionHue(functionName),
+                moduleName,
+                fileLineKey: filePath ? `${filePath}${lineNumber ? `:${lineNumber}` : ''}` : functionName,
+                functionId: functionName + (filePath || ''),
+                hue: strToHue(moduleName),
+                cmdHue: strToHue(functionName),
             });
         }
     }
