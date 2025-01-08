@@ -4,7 +4,7 @@ import * as os from 'os';
 import { checkAndInstallProfiler, getPythonPath, selectProfileFile } from './utilities/fsUtils';
 import { loadAndRegisterProfile, unregisterProfile } from './register';
 import { FlamegraphPanel } from './flamegraphPanel';
-import { FlamegraphNode } from './utilities/flamegraphParser';
+import { Flamegraph } from './flamegraph';
 
 let activeProfileWatcher: vscode.FileSystemWatcher | undefined;
 
@@ -212,7 +212,7 @@ export function attachNativeProfilerCommand(context: vscode.ExtensionContext) {
  */
 export function showFlamegraphCommand(context: vscode.ExtensionContext) {
     return vscode.commands.registerCommand('flamegraph.showFlamegraph', () => {
-        const profileData: FlamegraphNode | undefined = context.workspaceState.get('flameTree');
-        if (profileData) FlamegraphPanel.render(context, context.extensionUri, profileData);
+        const flamegraph: Flamegraph | undefined = context.workspaceState.get('flamegraph');
+        if (flamegraph) FlamegraphPanel.render(context, context.extensionUri, flamegraph);
     });
 }

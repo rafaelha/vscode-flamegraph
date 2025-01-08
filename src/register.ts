@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { parseProfilingData } from './utilities/flamegraphParser';
 import { updateDecorations, lineColorDecorationType } from './render';
 import { readTextFile } from './utilities/fsUtils';
+import { Flamegraph } from './flamegraph';
 
 /**
  * Disposes of the profiling data from the workspace state.
@@ -35,23 +36,22 @@ export async function loadAndRegisterProfile(context: vscode.ExtensionContext, p
 
     const profileString = await readTextFile(profileUri);
     context.workspaceState.update('profileData', profileString);
-    const [decorationTree, flameTree] = parseProfilingData(profileString);
+    const flamegraph = new Flamegraph(profileString);
 
-    context.workspaceState.update('flameTree', flameTree);
-    context.workspaceState.update('decorationTree', decorationTree);
+    context.workspaceState.update('flamegraph', flamegraph);
 
     // Store disposables for later cleanup
     const disposables = [
         vscode.window.onDidChangeActiveTextEditor((editor) => {
-            updateDecorations(editor, decorationTree, context.workspaceState);
+            updateDecorations(editor, flamegraph, context.workspaceState);
         }),
         vscode.workspace.onDidChangeTextDocument(() => {
-            updateDecorations(vscode.window.activeTextEditor, decorationTree, context.workspaceState);
+            updateDecorations(vscode.window.activeTextEditor, flamegraph, context.workspaceState);
         }),
         // Add theme change listener
         vscode.window.onDidChangeActiveColorTheme(() => {
             vscode.window.visibleTextEditors.forEach((editor) => {
-                updateDecorations(editor, decorationTree, context.workspaceState);
+                updateDecorations(editor, flamegraph, context.workspaceState);
             });
         }),
     ];
@@ -62,6 +62,6 @@ export async function loadAndRegisterProfile(context: vscode.ExtensionContext, p
 
     // Initial update for all visible editors
     vscode.window.visibleTextEditors.forEach((editor) => {
-        updateDecorations(editor, decorationTree, context.workspaceState);
+        updateDecorations(editor, flamegraph, context.workspaceState);
     });
 }

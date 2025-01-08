@@ -12,10 +12,10 @@ import {
     TextEditorRevealType,
     ExtensionContext,
 } from 'vscode';
-import { getUri } from './utilities/pathUtils';
+import { getUri } from './utilities/fsUtils';
 import { getNonce } from './utilities/nonceUtils';
-import { ProfilesByFile, FlamegraphNode } from './utilities/flamegraphParser';
 import { updateDecorations } from './render';
+import { Flamegraph } from './flamegraph';
 
 /**
  * This class manages the state and behavior of HelloWorld webview panels.
@@ -60,15 +60,15 @@ export class FlamegraphPanel {
      * will be created and displayed.
      *
      * @param extensionUri The URI of the directory containing the extension.
-     * @param profileData The profile data to be passed to the React app.
+     * @param flamegraph The profile data to be passed to the React app.
      */
-    public static render(context: ExtensionContext, extensionUri: Uri, profileData: FlamegraphNode) {
+    public static render(context: ExtensionContext, extensionUri: Uri, flamegraph: Flamegraph) {
         if (FlamegraphPanel.currentPanel) {
             // Reveal the panel and update the profile data
             FlamegraphPanel.currentPanel._panel.reveal(ViewColumn.Beside);
             FlamegraphPanel.currentPanel._panel.webview.postMessage({
                 type: 'profile-data',
-                data: profileData,
+                data: { root: flamegraph.root, functions: flamegraph.functions },
             });
         } else {
             const panel = window.createWebviewPanel('showFlamegraph', 'Flamegraph', ViewColumn.Beside, {
@@ -84,7 +84,7 @@ export class FlamegraphPanel {
 
             panel.webview.postMessage({
                 type: 'profile-data',
-                data: profileData,
+                data: { root: flamegraph.root, functions: flamegraph.functions },
                 focusUid: context.workspaceState.get('focusNode') || 0,
             });
         }
@@ -194,7 +194,7 @@ export class FlamegraphPanel {
                         context.workspaceState.update('focusNode', uid);
                         context.workspaceState.update('focusNodeCallStack', new Set<number>(message.callStack));
                         context.workspaceState.update('focusFunctionId', message.focusFunctionId);
-                        const decorationTree = context.workspaceState.get('decorationTree') as ProfilesByFile;
+                        const decorationTree = context.workspaceState.get('flamegraph') as Flamegraph;
                         vscode.window.visibleTextEditors.forEach((editor) => {
                             updateDecorations(editor, decorationTree, context.workspaceState);
                         });

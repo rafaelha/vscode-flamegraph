@@ -1,5 +1,5 @@
 import { FlameGraph } from './components/Flamegraph';
-import { FlamegraphNode } from './components/types';
+import { Flamenode, Function } from './components/types';
 import { useState, useEffect } from 'react';
 import './tailwind.css';
 
@@ -17,7 +17,7 @@ declare global {
  * @param node - The node to add parents to.
  * @param parent - The parent node.
  */
-function addParents(node: FlamegraphNode, parent?: FlamegraphNode) {
+function addParents(node: Flamenode, parent?: Flamenode) {
     if (parent) node.parent = parent;
     if (node.children) node.children.forEach((child) => addParents(child, node));
 }
@@ -29,7 +29,7 @@ function addParents(node: FlamegraphNode, parent?: FlamegraphNode) {
  * @param uid - The UID to search for.
  * @returns The node with the given UID or null if not found.
  */
-function getNodeWithUid(node: FlamegraphNode, uid: number): FlamegraphNode | null {
+function getNodeWithUid(node: Flamenode, uid: number): Flamenode | null {
     if (node.uid === uid) return node;
     if (!node.children) return null;
 
@@ -41,17 +41,17 @@ function getNodeWithUid(node: FlamegraphNode, uid: number): FlamegraphNode | nul
 }
 
 export default function Home() {
-    const [parsedData, setParsedData] = useState<FlamegraphNode | null>(null);
+    const [parsedData, setParsedData] = useState<{ root: Flamenode; functions: Function[] } | null>(null);
 
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
             const message = event.data;
             if (message.type === 'profile-data') {
-                const root = message.data as FlamegraphNode;
+                const { root, functions } = message.data as { root: Flamenode; functions: Function[] };
                 const focusUid = message.focusUid as number;
 
                 addParents(root);
-                setParsedData(getNodeWithUid(root, focusUid) || root);
+                setParsedData({ root: getNodeWithUid(root, focusUid) || root, functions });
             }
         };
 
@@ -70,7 +70,7 @@ export default function Home() {
     return (
         <div className="App min-h-screen relative">
             <div className="pb-12">
-                <FlameGraph data={parsedData} />
+                <FlameGraph root={parsedData.root} functions={parsedData.functions} />
             </div>
         </div>
     );

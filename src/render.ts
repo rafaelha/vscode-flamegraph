@@ -1,11 +1,13 @@
 import * as vscode from 'vscode';
 import { basename } from 'path';
-import { StackProfileSample, FileProfileData, ProfilesByFile } from './utilities/flamegraphParser';
+import { Flamegraph, Flamenode } from './flamegraph';
+import { StackProfileSample, FileProfileData } from './utilities/flamegraphParser';
 import { getFunctionColor, ColorTheme } from './utilities/colors';
 import { toUnixPath } from './utilities/pathUtils';
 
 // TODO: Make this configurable in VS Code settings
 const DECORATION_WIDTH = 100; // Width in pixels for the decoration area
+const SAMPLES_PER_SECOND = 100; // TODO: Make this configurable
 
 // Create a decorator type for the line coloring
 export const lineColorDecorationType = vscode.window.createTextEditorDecorationType({
@@ -54,6 +56,15 @@ function makeToolTip(samples: StackProfileSample[]): string {
     return toolTip;
 }
 
+function emptyLineDecoration(line: number): vscode.DecorationOptions {
+    return {
+        range: new vscode.Range(line - 1, 0, line - 1, 0),
+        renderOptions: {
+            before: { contentText: '', width: `${DECORATION_WIDTH}px` },
+        },
+    };
+}
+
 /**
  * Updates the line decorations for the active editor.
  *
@@ -63,94 +74,60 @@ function makeToolTip(samples: StackProfileSample[]): string {
  */
 export function updateDecorations(
     activeEditor: vscode.TextEditor | undefined,
-    result: ProfilesByFile,
+    flamegraph: Flamegraph,
     workspaceState: vscode.Memento
 ) {
     if (!activeEditor) return;
 
     const theme = getCurrentTheme();
     const focusNode: number = workspaceState.get('focusNode') || 0;
-    const focusFunctionId: string = workspaceState.get('focusFunctionId') || 'all';
 
     const decorations: vscode.DecorationOptions[] = [];
     const documentLines = activeEditor.document.lineCount;
     const filePath = toUnixPath(activeEditor.document.fileName);
     const fileName = basename(filePath).toLowerCase();
 
-    if (!(fileName in result)) return;
+    const lineProfiles = flamegraph.getFileProfile(fileName, focusNode);
 
-    const profilingResults = result[fileName];
-    let profilingResult: FileProfileData | undefined;
+    if (!lineProfiles) return;
 
-    // check if the file path is in the profiling results
-    for (let i = 0; i < profilingResults.length; i += 1) {
-        // the file path need not match exactly, but one should be the end of the other.
-        // This ensures that relative paths are also matched.
-        const resultFilePath = profilingResults[i].filePath;
-        if (resultFilePath.endsWith(filePath) || filePath.endsWith(resultFilePath)) {
-            profilingResult = profilingResults[i];
-            break;
+    const totalSamples: Map<number, number> = new Map();
+    for (const lineProfile of lineProfiles) {
+        for (const node of lineProfile.nodes) {
+            totalSamples.set(node.functionId, (totalSamples.get(node.functionId) || 0) + node.ownSamples);
         }
     }
-    if (!profilingResult) return;
 
-    const focusNodeCallStack = workspaceState.get('focusNodeCallStack') as Set<number>;
-    let nonZeroDecorations = false;
+    let lastLine = 1;
+    for (const lineProfile of lineProfiles) {
+        const { line, nodes } = lineProfile;
+        const samples = nodes.reduce((acc: number, node: Flamenode) => acc + node.ownSamples, 0);
 
-    for (let line = 1; line < documentLines + 1; line += 1) {
-        let width = 0;
-        let toolTip = '';
-        let samples = 0;
-        let color = '';
+        const func = flamegraph.functions[nodes[0].functionId];
+        const { moduleHue: hue } = func;
 
-        if (line in profilingResult.lineProfiles) {
-            const lineProfile = profilingResult.lineProfiles[line];
-            const { functionName } = lineProfile;
+        const width =
+            samples === 0 ? 0 : Math.round((samples / totalSamples.get(nodes[0].functionId)!) * DECORATION_WIDTH);
 
-            color = getFunctionColor(functionName, theme);
-            const stats = profilingResult.functionProfiles[functionName];
-            let totalSamples = 0;
+        for (; lastLine < line; lastLine += 1) decorations.push(emptyLineDecoration(lastLine));
+        lastLine = line + 1;
 
-            for (const stat of stats) if (stat.callStackUids.has(focusNode)) totalSamples += stat.totalSamples;
-
-            const callStackSamples: StackProfileSample[] = [];
-
-            for (const sample of lineProfile.samples) {
-                if (sample.callStackUids.has(focusNode)) {
-                    samples += sample.numSamples;
-                    callStackSamples.push(sample);
-                }
-
-                // If the sample is in the call stack of the focus node, process it
-                // This tracks profiling info for all parent nodes of the focus node.
-                // There is a caveat for recursive calls: we must ensure that the parent node is not part of the same
-                // function as the focus node.
-                if (focusNodeCallStack.has(sample.uid) && focusFunctionId !== sample.functionId) {
-                    samples += sample.numSamples;
-                    totalSamples += sample.numSamples;
-                }
-            }
-
-            toolTip = makeToolTip(callStackSamples);
-            width = samples === 0 ? 0 : Math.round((samples / totalSamples) * DECORATION_WIDTH);
-            if (samples > 0) nonZeroDecorations = true;
-        }
         decorations.push({
             range: new vscode.Range(line - 1, 0, line - 1, 0),
             renderOptions: {
                 before: {
-                    backgroundColor: color,
-                    contentText: samples > 0 ? `${(samples / 100).toFixed(2)}s` : '',
+                    backgroundColor: `hsl(${hue}, 100%, 50%)`,
+                    contentText: samples > 0 ? `${(samples / SAMPLES_PER_SECOND).toFixed(2)}s` : '',
+                    // contentText: `${nodes.length}`,
                     color: theme === 'dark' ? 'white' : 'black',
                     width: `${width}px`,
                     margin: `0px ${DECORATION_WIDTH - width}px 0px 0px`,
                     fontWeight: 'bold',
                 },
             },
-            hoverMessage: new vscode.MarkdownString(toolTip),
+            // hoverMessage: new vscode.MarkdownString(toolTip),
         });
     }
-
-    if (nonZeroDecorations) activeEditor.setDecorations(lineColorDecorationType, decorations);
-    else activeEditor.setDecorations(lineColorDecorationType, []);
+    for (; lastLine <= documentLines; lastLine += 1) decorations.push(emptyLineDecoration(lastLine));
+    activeEditor.setDecorations(lineColorDecorationType, decorations);
 }
