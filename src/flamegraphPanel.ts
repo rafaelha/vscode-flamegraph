@@ -16,6 +16,7 @@ import { getUri } from './utilities/fsUtils';
 import { getNonce } from './utilities/nonceUtils';
 import { updateDecorations } from './render';
 import { Flamegraph } from './flamegraph';
+import { currentFlamegraph } from './state';
 
 /**
  * This class manages the state and behavior of HelloWorld webview panels.
@@ -194,9 +195,8 @@ export class FlamegraphPanel {
                         context.workspaceState.update('focusNode', uid);
                         context.workspaceState.update('focusNodeCallStack', new Set<number>(message.callStack));
                         context.workspaceState.update('focusFunctionId', message.focusFunctionId);
-                        const decorationTree = context.workspaceState.get('flamegraph') as Flamegraph;
                         vscode.window.visibleTextEditors.forEach((editor) => {
-                            updateDecorations(editor, decorationTree, context.workspaceState);
+                            updateDecorations(editor, currentFlamegraph!, context.workspaceState);
                         });
                         break;
                     }

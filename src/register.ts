@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { updateDecorations, lineColorDecorationType } from './render';
 import { readTextFile } from './utilities/fsUtils';
 import { Flamegraph } from './flamegraph';
+import { setCurrentFlamegraph } from './state';
 
 /**
  * Disposes of the profiling data from the workspace state.
@@ -21,6 +22,9 @@ export function unregisterProfile(context: vscode.ExtensionContext) {
         context.workspaceState.update('decorationDisposables', undefined);
         context.workspaceState.update('decorationDisposables', undefined);
     }
+
+    // Clear the global flamegraph
+    setCurrentFlamegraph(undefined);
 }
 
 /**
@@ -34,10 +38,10 @@ export async function loadAndRegisterProfile(context: vscode.ExtensionContext, p
     unregisterProfile(context);
 
     const profileString = await readTextFile(profileUri);
-    context.workspaceState.update('profileData', profileString);
     const flamegraph = new Flamegraph(profileString);
 
-    context.workspaceState.update('flamegraph', flamegraph);
+    // Set the global flamegraph
+    setCurrentFlamegraph(flamegraph);
 
     // Store disposables for later cleanup
     const disposables = [

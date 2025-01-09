@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
 import { basename } from 'path';
 import { Flamegraph, Flamenode } from './flamegraph';
-import { StackProfileSample, FileProfileData } from './utilities/flamegraphParser';
-import { getFunctionColor, ColorTheme } from './utilities/colors';
+import { ColorTheme } from './utilities/colors';
 import { toUnixPath } from './utilities/pathUtils';
 
 // TODO: Make this configurable in VS Code settings
@@ -23,37 +22,6 @@ function getCurrentTheme(): ColorTheme {
         vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.HighContrast
         ? 'dark'
         : 'light';
-}
-
-/**
- * Creates a markdown tooltip displaying the call stack of a profiling entry. This tooltip is used for the line
- * decorations.
- *
- * @param samples - The profiling entries to create the tooltip for.
- * @returns The tooltip.
- */
-function makeToolTip(samples: StackProfileSample[]): string {
-    if (samples.length === 0) return '';
-    if (samples.length <= 1) return samples[0].callStackString.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    let toolTip = '### Call Stack\n| | | | |\n|---|---|---|---|\n';
-    const totalSamples = samples.reduce((acc, sample) => acc + sample.numSamples, 0);
-
-    const maxEntries = 5; // Maximum number of call stack strings to show
-    for (let i = 0; i < Math.min(samples.length, maxEntries); i += 1) {
-        const sample = samples[i];
-        const percentage = ((sample.numSamples / totalSamples) * 100).toFixed(1);
-        const barElements = 15;
-        const barLength = Math.round((sample.numSamples / totalSamples) * barElements);
-        const bar = '█'.repeat(barLength) + ' '.repeat(barElements - barLength);
-        const escapedCallStackString = sample.callStackString.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        toolTip += `| ${sample.numSamples / 100}s | ${bar} | ${percentage}% | ${escapedCallStackString} |\n`;
-    }
-
-    if (samples.length > maxEntries) {
-        toolTip += `| +${samples.length - maxEntries} other caller(s) | | | |\n`;
-    }
-
-    return toolTip;
 }
 
 function emptyLineDecoration(line: number): vscode.DecorationOptions {
