@@ -19,7 +19,6 @@ export function activate(context: ExtensionContext) {
     context.workspaceState.update('profileVisible', false);
     context.workspaceState.update('decorationDisposables', undefined);
     context.workspaceState.update('focusNode', 0);
-    context.workspaceState.update('focusNodeCallStack', new Set<number>());
     context.workspaceState.update('focusFunctionId', 'all');
 
     // Register all commands

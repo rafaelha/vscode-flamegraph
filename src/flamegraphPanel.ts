@@ -193,7 +193,6 @@ export class FlamegraphPanel {
                     case 'set-focus-node': {
                         const { uid } = message;
                         context.workspaceState.update('focusNode', uid);
-                        context.workspaceState.update('focusNodeCallStack', new Set<number>(message.callStack));
                         context.workspaceState.update('focusFunctionId', message.focusFunctionId);
                         vscode.window.visibleTextEditors.forEach((editor) => {
                             updateDecorations(editor, currentFlamegraph!, context.workspaceState);
