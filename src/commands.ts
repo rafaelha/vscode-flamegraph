@@ -60,7 +60,7 @@ export function loadProfileCommand(context: vscode.ExtensionContext) {
  * @returns The command registration.
  */
 export function toggleProfileCommand(context: vscode.ExtensionContext) {
-    return vscode.commands.registerCommand('flamegraph.toggleProfile', () => {
+    return vscode.commands.registerCommand('flamegraph.toggleProfile', async () => {
         const profileVisible = context.workspaceState.get('profileVisible') as boolean | undefined;
         const profileUri = context.workspaceState.get('profileUri') as vscode.Uri | undefined;
 
@@ -72,7 +72,7 @@ export function toggleProfileCommand(context: vscode.ExtensionContext) {
                 vscode.window.showErrorMessage('No profile loaded. Please load a profile first.');
                 return;
             }
-            loadAndRegisterProfile(context, profileUri);
+            await loadAndRegisterProfile(context, profileUri);
             context.workspaceState.update('profileVisible', true);
         }
     });
@@ -98,8 +98,8 @@ async function runTask(
         context.subscriptions.push(activeProfileWatcher);
     }
 
-    activeProfileWatcher.onDidCreate(() => handleProfileUpdate(context, profileUri));
-    activeProfileWatcher.onDidChange(() => handleProfileUpdate(context, profileUri));
+    activeProfileWatcher.onDidCreate(async () => handleProfileUpdate(context, profileUri));
+    activeProfileWatcher.onDidChange(async () => handleProfileUpdate(context, profileUri));
 
     const sudo = os.platform() === 'darwin' ? 'sudo ' : '';
 

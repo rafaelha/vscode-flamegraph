@@ -59,7 +59,8 @@ export async function getPythonPath(): Promise<string | undefined> {
     const pythonExtension = vscode.extensions.getExtension('ms-python.python');
     if (pythonExtension) {
         await pythonExtension.activate();
-        return pythonExtension.exports.settings.getExecutionDetails().execCommand.join(' ');
+        const details = await pythonExtension.exports.settings.getExecutionDetails();
+        return details.execCommand.join(' ');
     }
     // otherwise fallback to the python path from the python config
     const pythonConfig = vscode.workspace.getConfiguration('python');
