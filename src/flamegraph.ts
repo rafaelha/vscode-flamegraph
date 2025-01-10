@@ -75,6 +75,7 @@ export class Flamegraph {
         this.parseFlamegraph(data);
         this.assignEulerTimes(this.root);
         this.buildIndex();
+        this.addSourceCode();
     }
 
     private parseFrame(frameString: string): [number | undefined, number | undefined, number | undefined] {
@@ -270,6 +271,34 @@ export class Flamegraph {
             (a.enterTime <= b.enterTime && a.exitTime >= b.exitTime) ||
             (b.enterTime <= a.enterTime && b.exitTime >= a.exitTime)
         );
+    }
+
+    public addSourceCode(): void {
+        // Process one file at a time
+        for (const fileName in this.index) {
+            if (!Object.prototype.hasOwnProperty.call(this.index, fileName)) continue;
+            const fileProfiles = this.index[fileName];
+
+            for (const fileProfile of fileProfiles) {
+                try {
+                    // Read file content once for all nodes in this file
+                    const fileContent = fs.readFileSync(fileProfile.filePath, 'utf-8');
+                    const lines = fileContent.split('\n');
+
+                    // Process all line profiles for this file
+                    for (const lineProfile of fileProfile.lineProfiles) {
+                        const sourceLine = lines[lineProfile.line - 1]?.trim() || '';
+
+                        // Add source code to all nodes for this line
+                        for (const node of lineProfile.nodes) {
+                            node.sourceCode = sourceLine;
+                        }
+                    }
+                } catch (error) {
+                    continue;
+                }
+            }
+        }
     }
 }
 

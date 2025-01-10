@@ -31,6 +31,6 @@ export type Flamenode = {
     children: Flamenode[];
     enterTime?: number;
     exitTime?: number;
+    sourceCode?: string;
     parent?: Flamenode;
-    codeLine?: string;
 };

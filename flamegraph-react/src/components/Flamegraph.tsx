@@ -50,7 +50,7 @@ export function FlameGraph({
 
     function renderNode(node: Flamenode, depth: number, focusDepth: number, x: number, width: number) {
         // Update module map for legend
-        const { frameId, functionId, samples, line, codeLine } = node;
+        const { frameId, functionId, samples, line, sourceCode } = node;
         let { module, moduleHue, functionHue, fileName, filePath, functionName } = functions[functionId];
         fileName = fileName || '';
         if (module) {
@@ -104,7 +104,7 @@ export function FlameGraph({
         const percentageOfFocus = ((samples / focusNode.samples) * 100).toFixed(1);
         const tooltipContent = [
             fileName ? `${functionName} (${line ? `${fileName}:${line}` : fileName})` : functionName,
-            codeLine,
+            sourceCode,
             `${samples / 100}s / ${percentageOfTotal}% / ${percentageOfFocus}%`,
         ]
             .filter(Boolean)
@@ -216,8 +216,8 @@ export function FlameGraph({
         return (
             <div className="node-label">
                 <span>
-                    {node.codeLine ? (
-                        <Highlight code={node.codeLine} language="python" theme={minimalTheme}>
+                    {node.sourceCode ? (
+                        <Highlight code={node.sourceCode} language="python" theme={minimalTheme}>
                             {({ tokens, getTokenProps }) => (
                                 <>
                                     {tokens[0].map((token, i) => (
