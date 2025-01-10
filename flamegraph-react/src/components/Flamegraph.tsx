@@ -136,8 +136,7 @@ export function FlameGraph({
         const nodes: React.ReactNode[] = [];
 
         function filter(node: Flamenode): boolean {
-            // return node.fileName.startsWith('<');
-            return false;
+            return functions[node.functionId]?.fileName?.startsWith('<') ?? false;
         }
 
         // Render parents (full width)
