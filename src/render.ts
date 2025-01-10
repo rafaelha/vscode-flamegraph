@@ -92,10 +92,9 @@ function makeToolTip(nodes: Flamenode[], samples: number, flamegraph: Flamegraph
  * @param flamegraph - The flamegraph data.
  */
 export function updateDecorations(activeEditor: vscode.TextEditor | undefined, flamegraph: Flamegraph) {
-    if (!activeEditor) return;
-
+    const { focusNode, profileVisible } = extensionState;
+    if (!profileVisible || !activeEditor) return;
     const theme = getCurrentTheme();
-    const { focusNode } = extensionState;
 
     const decorations: vscode.DecorationOptions[] = [];
     const documentLines = activeEditor.document.lineCount;
@@ -105,12 +104,19 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined, f
     const lineProfiles = flamegraph.getFileProfile(fileName, focusNode);
 
     if (!lineProfiles) return;
+    let anyDecorations = false;
 
     const totalSamples: Map<number, number> = new Map();
     for (const { nodes } of lineProfiles) {
         for (const node of nodes) {
+            if (node.ownSamples > 0) anyDecorations = true;
             totalSamples.set(node.functionId, (totalSamples.get(node.functionId) || 0) + node.ownSamples);
         }
+    }
+
+    if (!anyDecorations) {
+        activeEditor.setDecorations(lineColorDecorationType, []);
+        return;
     }
 
     let lastLine = 1;
