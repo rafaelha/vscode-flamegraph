@@ -21,6 +21,7 @@ export type Flamenode = {
     frameId: FrameId; // unique id for the frame, which is (functionName, filePath, lineNumber)
     functionId: FunctionId; // unique id for the function, which is (functionName, filePath)
     line?: LineNumber;
+    sourceCode?: string;
     depth: number;
     samples: number;
     ownSamples: number;
@@ -187,8 +188,13 @@ export class Flamegraph {
     }
 
     private buildIndex() {
-        // sort nodes by line number
-        const sortedNodes = [...this.nodes].sort((a, b) => (a.line ?? 0) - (b.line ?? 0));
+        // sort nodes by line number and own samples
+        const sortedNodes = [...this.nodes].sort((a, b) => {
+            const lineA = a.line ?? 0;
+            const lineB = b.line ?? 0;
+            if (lineA !== lineB) return lineA - lineB;
+            return b.ownSamples - a.ownSamples;
+        });
 
         // Build index
         this.index = {};

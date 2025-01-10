@@ -4,7 +4,7 @@ import * as os from 'os';
 import { checkAndInstallProfiler, getPythonPath, selectProfileFile } from './utilities/fsUtils';
 import { loadAndRegisterProfile, unregisterProfile } from './register';
 import { FlamegraphPanel } from './flamegraphPanel';
-import { currentFlamegraph } from './state';
+import { extensionState } from './state';
 
 let activeProfileWatcher: vscode.FileSystemWatcher | undefined;
 
@@ -17,9 +17,9 @@ let activeProfileWatcher: vscode.FileSystemWatcher | undefined;
 const handleProfileUpdate = async (context: vscode.ExtensionContext, profileUri: vscode.Uri) => {
     try {
         await loadAndRegisterProfile(context, profileUri);
-        context.workspaceState.update('profileUri', profileUri);
-        context.workspaceState.update('profileVisible', true);
-        context.workspaceState.update('focusNode', 0);
+        extensionState.profileUri = profileUri;
+        extensionState.profileVisible = true;
+        extensionState.focusNode = 0;
         vscode.commands.executeCommand('flamegraph.showFlamegraph');
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to open profile: ${error}`);
@@ -40,14 +40,15 @@ const handleProfileUpdate = async (context: vscode.ExtensionContext, profileUri:
 export function loadProfileCommand(context: vscode.ExtensionContext) {
     return vscode.commands.registerCommand('flamegraph.loadProfile', async () => {
         const profileUri = await selectProfileFile();
-        context.workspaceState.update('profileUri', profileUri);
 
         if (!profileUri) {
             vscode.window.showErrorMessage('No profile file selected.');
             return;
         }
-        context.workspaceState.update('focusNode', 0);
-        context.workspaceState.update('profileVisible', true);
+
+        extensionState.profileUri = profileUri;
+        extensionState.focusNode = 0;
+
         loadAndRegisterProfile(context, profileUri);
         vscode.commands.executeCommand('flamegraph.showFlamegraph');
     });
@@ -61,19 +62,16 @@ export function loadProfileCommand(context: vscode.ExtensionContext) {
  */
 export function toggleProfileCommand(context: vscode.ExtensionContext) {
     return vscode.commands.registerCommand('flamegraph.toggleProfile', async () => {
-        const profileVisible = context.workspaceState.get('profileVisible') as boolean | undefined;
-        const profileUri = context.workspaceState.get('profileUri') as vscode.Uri | undefined;
+        const { profileVisible, profileUri } = extensionState;
 
         if (profileVisible) {
-            unregisterProfile(context);
-            context.workspaceState.update('profileVisible', false);
+            unregisterProfile();
         } else {
             if (!profileUri) {
                 vscode.window.showErrorMessage('No profile loaded. Please load a profile first.');
                 return;
             }
-            await loadAndRegisterProfile(context, profileUri);
-            context.workspaceState.update('profileVisible', true);
+            loadAndRegisterProfile(context, profileUri);
         }
     });
 }
@@ -212,6 +210,7 @@ export function attachNativeProfilerCommand(context: vscode.ExtensionContext) {
  */
 export function showFlamegraphCommand(context: vscode.ExtensionContext) {
     return vscode.commands.registerCommand('flamegraph.showFlamegraph', () => {
-        if (currentFlamegraph) FlamegraphPanel.render(context, context.extensionUri, currentFlamegraph);
+        if (extensionState.currentFlamegraph)
+            FlamegraphPanel.render(context, context.extensionUri, extensionState.currentFlamegraph);
     });
 }

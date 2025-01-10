@@ -16,7 +16,7 @@ import { getUri } from './utilities/fsUtils';
 import { getNonce } from './utilities/nonceUtils';
 import { updateDecorations } from './render';
 import { Flamegraph } from './flamegraph';
-import { currentFlamegraph } from './state';
+import { extensionState } from './state';
 
 /**
  * This class manages the state and behavior of HelloWorld webview panels.
@@ -53,7 +53,7 @@ export class FlamegraphPanel {
         this._panel.webview.html = this._getWebviewContent(this._panel.webview, extensionUri);
 
         // Set an event listener to listen for messages passed from the webview context
-        this._setWebviewMessageListener(this._panel.webview, context);
+        this._setWebviewMessageListener(this._panel.webview);
     }
 
     /**
@@ -86,7 +86,7 @@ export class FlamegraphPanel {
             panel.webview.postMessage({
                 type: 'profile-data',
                 data: { root: flamegraph.root, functions: flamegraph.functions },
-                focusUid: context.workspaceState.get('focusNode') || 0,
+                focusUid: extensionState.focusNode,
             });
         }
     }
@@ -154,9 +154,8 @@ export class FlamegraphPanel {
      * executes code based on the message that is recieved.
      *
      * @param webview A reference to the extension webview
-     * @param context A reference to the extension context
      */
-    private _setWebviewMessageListener(webview: Webview, context: ExtensionContext) {
+    private _setWebviewMessageListener(webview: Webview) {
         webview.onDidReceiveMessage(
             async (message: any) => {
                 const { command } = message;
@@ -185,17 +184,16 @@ export class FlamegraphPanel {
                             editor.selection = new Selection(range.start, range.start);
                             editor.revealRange(range, TextEditorRevealType.InCenter);
                         } catch (error) {
-                            // do nothing
+                            // do nothing, error messages are overly verbose
                         }
 
                         break;
 
                     case 'set-focus-node': {
                         const { uid } = message;
-                        context.workspaceState.update('focusNode', uid);
-                        context.workspaceState.update('focusFunctionId', message.focusFunctionId);
+                        extensionState.focusNode = uid;
                         vscode.window.visibleTextEditors.forEach((editor) => {
-                            updateDecorations(editor, currentFlamegraph!, context.workspaceState);
+                            updateDecorations(editor, extensionState.currentFlamegraph!);
                         });
                         break;
                     }

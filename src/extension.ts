@@ -1,4 +1,3 @@
-import * as vscode from 'vscode';
 import { ExtensionContext } from 'vscode';
 import {
     loadProfileCommand,
@@ -9,6 +8,7 @@ import {
     attachNativeProfilerCommand,
 } from './commands';
 import { unregisterProfile } from './register';
+import { extensionState } from './state';
 
 /**
  * Activates the extension.
@@ -16,10 +16,8 @@ import { unregisterProfile } from './register';
  * @param context - The extension context.
  */
 export function activate(context: ExtensionContext) {
-    context.workspaceState.update('profileVisible', false);
-    context.workspaceState.update('decorationDisposables', undefined);
-    context.workspaceState.update('focusNode', 0);
-    context.workspaceState.update('focusFunctionId', 'all');
+    // Initialize extension state
+    extensionState.setContext(context);
 
     // Register all commands
     context.subscriptions.push(
@@ -34,9 +32,7 @@ export function activate(context: ExtensionContext) {
 
 /**
  * Deactivates the extension.
- *
- * @param context - The extension context.
  */
-export function deactivate(context: vscode.ExtensionContext) {
-    unregisterProfile(context);
+export function deactivate() {
+    unregisterProfile();
 }

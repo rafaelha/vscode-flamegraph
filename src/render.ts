@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { basename } from 'path';
-import { Flamegraph, Flamenode } from './flamegraph';
-import { ColorTheme } from './utilities/colors';
 import { toUnixPath } from './utilities/pathUtils';
+import { Flamegraph, Flamenode } from './flamegraph';
+import { extensionState } from './state';
 
 // TODO: Make this configurable in VS Code settings
 const DECORATION_WIDTH = 100; // Width in pixels for the decoration area
@@ -12,12 +12,8 @@ const SAMPLES_PER_SECOND = 100; // TODO: Make this configurable
 export const lineColorDecorationType = vscode.window.createTextEditorDecorationType({
     before: {},
 });
-
-/**
- * Get the current theme from VS Code, which is either 'dark' or 'light'.
- * @returns The current theme.
- */
-function getCurrentTheme(): ColorTheme {
+// Get the current theme from VS Code, which is either 'dark' or 'light'
+function getCurrentTheme(): 'dark' | 'light' {
     return vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ||
         vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.HighContrast
         ? 'dark'
@@ -37,18 +33,13 @@ function emptyLineDecoration(line: number): vscode.DecorationOptions {
  * Updates the line decorations for the active editor.
  *
  * @param activeEditor - The active editor.
- * @param result - The profiling results.
- * @param workspaceState - The workspace state.
+ * @param flamegraph - The flamegraph data.
  */
-export function updateDecorations(
-    activeEditor: vscode.TextEditor | undefined,
-    flamegraph: Flamegraph,
-    workspaceState: vscode.Memento
-) {
+export function updateDecorations(activeEditor: vscode.TextEditor | undefined, flamegraph: Flamegraph) {
     if (!activeEditor) return;
 
     const theme = getCurrentTheme();
-    const focusNode: number = workspaceState.get('focusNode') || 0;
+    const { focusNode } = extensionState;
 
     const decorations: vscode.DecorationOptions[] = [];
     const documentLines = activeEditor.document.lineCount;
@@ -60,8 +51,8 @@ export function updateDecorations(
     if (!lineProfiles) return;
 
     const totalSamples: Map<number, number> = new Map();
-    for (const lineProfile of lineProfiles) {
-        for (const node of lineProfile.nodes) {
+    for (const { nodes } of lineProfiles) {
+        for (const node of nodes) {
             totalSamples.set(node.functionId, (totalSamples.get(node.functionId) || 0) + node.ownSamples);
         }
     }
@@ -86,14 +77,12 @@ export function updateDecorations(
                 before: {
                     backgroundColor: `hsl(${hue}, 100%, 50%)`,
                     contentText: samples > 0 ? `${(samples / SAMPLES_PER_SECOND).toFixed(2)}s` : '',
-                    // contentText: `${nodes.length}`,
                     color: theme === 'dark' ? 'white' : 'black',
                     width: `${width}px`,
                     margin: `0px ${DECORATION_WIDTH - width}px 0px 0px`,
                     fontWeight: 'bold',
                 },
             },
-            // hoverMessage: new vscode.MarkdownString(toolTip),
         });
     }
     for (; lastLine <= documentLines; lastLine += 1) decorations.push(emptyLineDecoration(lastLine));
