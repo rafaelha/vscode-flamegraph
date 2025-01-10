@@ -9,6 +9,7 @@ type LineNumber = number;
 
 export type Function = {
     functionName: string;
+    shortFunctionName?: string;
     filePath?: string;
     fileName?: string;
     module?: string;
@@ -18,6 +19,7 @@ export type Function = {
 
 export type Flamenode = {
     uid: number;
+    parentUid?: number;
     frameId: FrameId; // unique id for the frame, which is (functionName, filePath, lineNumber)
     functionId: FunctionId; // unique id for the function, which is (functionName, filePath)
     line?: LineNumber;
@@ -101,8 +103,14 @@ export class Flamegraph {
             const functionHue = strToHue(functionName);
             const moduleHue = module ? strToHue(module) : functionHue;
 
+            // Extract "process <number>" if the function name matches the pattern
+            const processRegex = /^process\s+(\d+)(?:\s+|:).+/;
+            const processMatches = functionName.match(processRegex);
+            const shortFunctionName = processMatches ? `process ${processMatches[1]}` : undefined;
+
             const func: Function = {
                 functionName,
+                shortFunctionName,
                 filePath,
                 fileName,
                 module,
@@ -172,6 +180,7 @@ export class Flamegraph {
                 } else {
                     const newNode: Flamenode = {
                         uid: this.nodes.length,
+                        parentUid: current.uid,
                         frameId,
                         functionId,
                         line,
@@ -299,6 +308,19 @@ export class Flamegraph {
                 }
             }
         }
+    }
+
+    public getCallStack(node: Flamenode): string[] {
+        const stack: string[] = [];
+        let currentUid: number | undefined = node.uid;
+
+        while (currentUid !== undefined && currentUid !== 0) {
+            const currentNode: Flamenode = this.nodes[currentUid];
+            const func = this.functions[currentNode.functionId];
+            stack.push(func.shortFunctionName ?? func.functionName);
+            currentUid = currentNode.parentUid;
+        }
+        return stack.reverse();
     }
 }
 

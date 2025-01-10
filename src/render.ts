@@ -7,6 +7,8 @@ import { extensionState } from './state';
 // TODO: Make this configurable in VS Code settings
 const DECORATION_WIDTH = 100; // Width in pixels for the decoration area
 const SAMPLES_PER_SECOND = 100; // TODO: Make this configurable
+const MAX_TOOLTIP_ENTRIES = 5;
+const TOOLTIP_BAR_ELEMENTS = 15;
 
 // Add these constants near the top with other constants
 const LIGHT_THEME_SETTINGS = {
@@ -38,6 +40,49 @@ function emptyLineDecoration(line: number): vscode.DecorationOptions {
             before: { contentText: '', width: `${DECORATION_WIDTH}px` },
         },
     };
+}
+/**
+ * Creates a markdown tooltip displaying the call stack of a profiling entry. This tooltip is used for the line
+ * decorations.
+ *
+ * @param samples - The profiling entries to create the tooltip for.
+ * @returns The tooltip.
+ */
+function makeToolTip(nodes: Flamenode[], samples: number, flamegraph: Flamegraph): string {
+    const n = nodes.length;
+    if (n === 0) return '';
+
+    const stackToString = (stack: string[]): string => stack.join('/').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    if (n <= 1) return stackToString(flamegraph.getCallStack(nodes[0]));
+    let toolTip = '### Call Stack\n| | | | |\n|---|---|---|---|\n';
+
+    let callStacks: string[][] = [];
+    for (const node of nodes.slice(0, MAX_TOOLTIP_ENTRIES)) {
+        callStacks.push(flamegraph.getCallStack(node));
+    }
+
+    // remove elements from the top of the call stacks until they are the same for all call stacks
+    // this is to make the tooltip more readable
+    while (n > 1 && callStacks[0].length > 1) {
+        const s = callStacks[0];
+        if (!callStacks.every((stack) => stack[0] === s[0])) break;
+        callStacks = callStacks.map((stack) => stack.slice(1));
+    }
+
+    for (let i = 0; i < Math.min(n, MAX_TOOLTIP_ENTRIES); i += 1) {
+        const node = nodes[i];
+        const percentage = ((node.ownSamples / samples) * 100).toFixed(1);
+        const barLength = Math.round((node.ownSamples / samples) * TOOLTIP_BAR_ELEMENTS);
+        const bar = '█'.repeat(barLength) + ' '.repeat(TOOLTIP_BAR_ELEMENTS - barLength);
+        const callStack = stackToString(callStacks[i]);
+        toolTip += `| ${node.ownSamples / 100}s | ${bar} | ${percentage}% | ${callStack} |\n`;
+    }
+
+    if (n > MAX_TOOLTIP_ENTRIES) {
+        toolTip += `| +${n - MAX_TOOLTIP_ENTRIES} other caller(s) | | | |\n`;
+    }
+
+    return toolTip;
 }
 
 /**
@@ -96,6 +141,7 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined, f
                     fontWeight: 'bold',
                 },
             },
+            hoverMessage: new vscode.MarkdownString(makeToolTip(nodes, samples, flamegraph)),
         });
     }
     for (; lastLine <= documentLines; lastLine += 1) decorations.push(emptyLineDecoration(lastLine));
