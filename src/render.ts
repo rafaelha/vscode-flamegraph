@@ -8,6 +8,17 @@ import { extensionState } from './state';
 const DECORATION_WIDTH = 100; // Width in pixels for the decoration area
 const SAMPLES_PER_SECOND = 100; // TODO: Make this configurable
 
+// Add these constants near the top with other constants
+const LIGHT_THEME_SETTINGS = {
+    saturation: '85%',
+    lightness: '75%',
+};
+
+const DARK_THEME_SETTINGS = {
+    saturation: '65%',
+    lightness: '40%',
+};
+
 // Create a decorator type for the line coloring
 export const lineColorDecorationType = vscode.window.createTextEditorDecorationType({
     before: {},
@@ -63,7 +74,7 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined, f
         const samples = nodes.reduce((acc: number, node: Flamenode) => acc + node.ownSamples, 0);
 
         const func = flamegraph.functions[nodes[0].functionId];
-        const { moduleHue: hue } = func;
+        const { functionHue } = func;
 
         const width =
             samples === 0 ? 0 : Math.round((samples / totalSamples.get(nodes[0].functionId)!) * DECORATION_WIDTH);
@@ -75,7 +86,9 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined, f
             range: new vscode.Range(line - 1, 0, line - 1, 0),
             renderOptions: {
                 before: {
-                    backgroundColor: `hsl(${hue}, 100%, 50%)`,
+                    backgroundColor: `hsl(${functionHue}, ${
+                        theme === 'dark' ? DARK_THEME_SETTINGS.saturation : LIGHT_THEME_SETTINGS.saturation
+                    }, ${theme === 'dark' ? DARK_THEME_SETTINGS.lightness : LIGHT_THEME_SETTINGS.lightness})`,
                     contentText: samples > 0 ? `${(samples / SAMPLES_PER_SECOND).toFixed(2)}s` : '',
                     color: theme === 'dark' ? 'white' : 'black',
                     width: `${width}px`,
