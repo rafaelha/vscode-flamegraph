@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
 import { checkAndInstallProfiler, getPythonPath, selectProfileFile } from './utilities/fsUtils';
-import { loadAndRegisterProfile, unregisterProfile } from './register';
+import { loadProfile, registerProfile, unregisterProfile } from './register';
 import { FlamegraphPanel } from './flamegraphPanel';
 import { extensionState } from './state';
 
@@ -16,7 +16,7 @@ let activeProfileWatcher: vscode.FileSystemWatcher | undefined;
  */
 const handleProfileUpdate = async (context: vscode.ExtensionContext, profileUri: vscode.Uri) => {
     try {
-        await loadAndRegisterProfile(context, profileUri);
+        await registerProfile(context, profileUri);
         extensionState.profileUri = profileUri;
         extensionState.profileVisible = true;
         extensionState.focusNode = 0;
@@ -49,7 +49,7 @@ export function loadProfileCommand(context: vscode.ExtensionContext) {
         extensionState.profileUri = profileUri;
         extensionState.focusNode = 0;
 
-        loadAndRegisterProfile(context, profileUri);
+        registerProfile(context, profileUri);
         vscode.commands.executeCommand('flamegraph.showFlamegraph');
     });
 }
@@ -71,7 +71,7 @@ export function toggleProfileCommand(context: vscode.ExtensionContext) {
                 vscode.window.showErrorMessage('No profile loaded. Please load a profile first.');
                 return;
             }
-            loadAndRegisterProfile(context, profileUri);
+            registerProfile(context, profileUri, false);
         }
     });
 }
@@ -210,7 +210,15 @@ export function attachNativeProfilerCommand(context: vscode.ExtensionContext) {
  */
 export function showFlamegraphCommand(context: vscode.ExtensionContext) {
     return vscode.commands.registerCommand('flamegraph.showFlamegraph', () => {
-        if (extensionState.currentFlamegraph)
-            FlamegraphPanel.render(context, context.extensionUri, extensionState.currentFlamegraph);
+        const { currentFlamegraph, profileUri } = extensionState;
+        if (!profileUri && !currentFlamegraph) {
+            vscode.window.showErrorMessage('No profile loaded. Please load a profile first.');
+            return;
+        }
+        if (profileUri && !currentFlamegraph) {
+            loadProfile(profileUri);
+        }
+        if (!currentFlamegraph) return;
+        FlamegraphPanel.render(context, context.extensionUri, currentFlamegraph);
     });
 }

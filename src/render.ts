@@ -45,7 +45,9 @@ function emptyLineDecoration(line: number): vscode.DecorationOptions {
  * Creates a markdown tooltip displaying the call stack of a profiling entry. This tooltip is used for the line
  * decorations.
  *
- * @param samples - The profiling entries to create the tooltip for.
+ * @param nodes - The profiling entries to create the tooltip for.
+ * @param samples - The total samples for the profiling entries.
+ * @param flamegraph - The flamegraph data.
  * @returns The tooltip.
  */
 function makeToolTip(nodes: Flamenode[], samples: number, flamegraph: Flamegraph): string {

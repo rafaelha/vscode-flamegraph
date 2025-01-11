@@ -15,9 +15,12 @@ export function unregisterProfile() {
         editor.setDecorations(lineColorDecorationType, []);
     });
 
-    // Clear the global flamegraph
-    extensionState.currentFlamegraph = undefined;
     extensionState.profileVisible = false;
+}
+
+export async function loadProfile(profileUri: vscode.Uri) {
+    const profileString = await readTextFile(profileUri);
+    extensionState.currentFlamegraph = new Flamegraph(profileString);
 }
 
 /**
@@ -25,16 +28,22 @@ export function unregisterProfile() {
  *
  * @param profileUri - The URI of the profile file.
  */
-export async function loadAndRegisterProfile(context: vscode.ExtensionContext, profileUri: vscode.Uri) {
+export async function registerProfile(
+    context: vscode.ExtensionContext,
+    profileUri: vscode.Uri,
+    reload: boolean = true
+) {
     // Unregister any existing profile
     unregisterProfile();
 
-    const profileString = await readTextFile(profileUri);
-    const flamegraph = new Flamegraph(profileString);
+    if (reload || !extensionState.currentFlamegraph) {
+        await loadProfile(profileUri);
+    }
+    if (!extensionState.currentFlamegraph) return;
+    const flamegraph = extensionState.currentFlamegraph;
 
-    // Set the global flamegraph
-    extensionState.currentFlamegraph = flamegraph;
     extensionState.profileVisible = true;
+
     // Store disposables for later cleanup
     const disposables = [
         vscode.window.onDidChangeActiveTextEditor((editor) => {
