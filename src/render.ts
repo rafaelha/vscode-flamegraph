@@ -90,7 +90,6 @@ function makeToolTip(nodes: Flamenode[], samples: number, flamegraph: Flamegraph
  * Updates the line decorations for the active editor.
  *
  * @param activeEditor - The active editor.
- * @param flamegraph - The flamegraph data.
  */
 export function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
     const { focusNode, profileVisible, currentFlamegraph: flamegraph, decorationCache } = extensionState;

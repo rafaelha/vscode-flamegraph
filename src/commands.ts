@@ -53,7 +53,6 @@ export function loadProfileCommand(context: vscode.ExtensionContext) {
 /**
  * Toggles the inline profile visibility.
  *
- * @param context - The extension context.
  * @returns The command registration.
  */
 export function toggleProfileCommand() {
@@ -76,6 +75,15 @@ export function toggleProfileCommand() {
     });
 }
 
+/**
+ * Create a new vscode task to run py-spy and monitor the profile file.
+ *
+ * @param context - The extension context.
+ * @param workspaceFolder - The workspace folder.
+ * @param command - The command to run.
+ * @param flags - The flags to pass to py-spy.
+ * @returns The command registration.
+ */
 async function runTask(
     context: vscode.ExtensionContext,
     workspaceFolder: vscode.WorkspaceFolder,

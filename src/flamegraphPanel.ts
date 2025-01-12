@@ -58,7 +58,6 @@ export class FlamegraphPanel {
      * will be created and displayed.
      *
      * @param extensionUri The URI of the directory containing the extension.
-     * @param flamegraph The profile data to be passed to the React app.
      */
     public static render(extensionUri: Uri) {
         const flamegraph: Flamegraph | undefined = extensionState.currentFlamegraph;

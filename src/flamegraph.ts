@@ -59,6 +59,10 @@ export class Flamegraph {
 
     public root: Flamenode;
 
+    /**
+     * Constructor for the Flamegraph class.
+     * @param data - The profile data to be parsed. This should be the raw output of py-spy as a string.
+     */
     constructor(data: string) {
         this.functions = [{ functionName: 'all', moduleHue: 240, functionHue: 240 }];
         this.frameCache = new Map();
@@ -82,11 +86,21 @@ export class Flamegraph {
         this.addSourceCode();
     }
 
+    /**
+     * Loads a profile from a file.
+     * @param profileUri - The URI of the profile file.
+     * @returns A new Flamegraph instance.
+     */
     public static async load(profileUri: Uri) {
         const profileString = await readTextFile(profileUri);
         return new Flamegraph(profileString);
     }
 
+    /**
+     * Parses a frame string into a frame ID, function ID, and line number.
+     * @param frameString - The frame string to parse.
+     * @returns A tuple containing the frame ID, function ID, and line number.
+     */
     private parseFrame(frameString: string): [number | undefined, number | undefined, number | undefined] {
         if (this.frameCache.has(frameString)) {
             return this.frameCache.get(frameString)!;
@@ -139,6 +153,10 @@ export class Flamegraph {
         return [frameId, functionId, line];
     }
 
+    /**
+     * Assigns Euler times to the nodes in the flamegraph.
+     * @param node - The root node of the flamegraph.
+     */
     private assignEulerTimes(node: Flamenode) {
         let time = 0;
         const assign = (n: Flamenode) => {
@@ -153,6 +171,11 @@ export class Flamegraph {
         assign(node);
     }
 
+    /**
+     * Parses the flamegraph string into a tree of nodes. This will populate the `this.root` node and the `this.nodes`
+     * array.
+     * @param flamegraphString - The flamegraph string to parse.
+     */
     public parseFlamegraph(flamegraphString: string): void {
         const rows = flamegraphString.trim().split('\n');
 
@@ -208,6 +231,10 @@ export class Flamegraph {
         }
     }
 
+    /**
+     * Builds an index of the flamegraph. This will populate the `this.index` object.
+     * The index is used to quickly find profile data for a single file.
+     */
     private buildIndex() {
         // sort nodes by line number and own samples
         const sortedNodes = [...this.nodes].sort((a, b) => {
@@ -251,6 +278,14 @@ export class Flamegraph {
         }
     }
 
+    /**
+     * Gets the profile data for a single file.
+     * @param filePath - The path to the file.
+     * @param focusUid - The UID of the focus node that is selected in the react flamegraph. Only profile data of
+     * children or ancestors of the focus node will be returned. This ensures that the profile data is synchronized
+     * with the visible nodes in the react flamegraph.
+     * @returns The profile data for the file, as an array of LineProfile objects.
+     */
     public getFileProfile(filePath: string, focusUid?: number): LineProfile[] | undefined {
         filePath = toUnixPath(filePath).toLowerCase();
         const filename = basename(filePath);
@@ -278,6 +313,12 @@ export class Flamegraph {
         return filteredLineProfiles;
     }
 
+    /**
+     * Filters the nodes to only include those that are children or ancestors of the focus node.
+     * @param nodes - The nodes to filter.
+     * @param focusUid - The UID of the focus node.
+     * @returns The filtered nodes.
+     */
     private filterNodes(nodes: Flamenode[], focusUid: number): Flamenode[] {
         return nodes.filter((node) => {
             const focusNode = this.nodes[focusUid];
@@ -285,6 +326,12 @@ export class Flamegraph {
         });
     }
 
+    /**
+     * Checks if a node is a child or ancestor of another node.
+     * @param a - The first node.
+     * @param b - The second node.
+     * @returns True if a is a child or ancestor of b, false otherwise.
+     */
     public isChildOrAncestor(a: Flamenode, b: Flamenode): boolean {
         if (!a.enterTime || !a.exitTime || !b.enterTime || !b.exitTime) return false;
         return (
@@ -293,6 +340,10 @@ export class Flamegraph {
         );
     }
 
+    /**
+     * Adds source code to the nodes in the flamegraph. For efficiency this can only be called after the index has been
+     * built. Then source code files are read once for each file, and the relevant lines are added to the nodes.
+     */
     public addSourceCode(): void {
         // Process one file at a time
         for (const fileName in this.index) {
@@ -321,6 +372,11 @@ export class Flamegraph {
         }
     }
 
+    /**
+     * Gets the call stack for a node.
+     * @param node - The node to get the call stack for.
+     * @returns The call stack as an array of function names.
+     */
     public getCallStack(node: Flamenode): string[] {
         const stack: string[] = [];
         let currentUid: number | undefined = node.uid;
@@ -333,14 +389,4 @@ export class Flamegraph {
         }
         return stack.reverse();
     }
-}
-
-// Example usage in main:
-if (require.main === module) {
-    const profile = fs.readFileSync(
-        '/Users/rafaelha/Documents/computer_science/vscode-flamegraph/src/utilities/profile2.txt',
-        'utf8'
-    );
-    const flamegraph = new Flamegraph(profile);
-    console.log(flamegraph.getFileProfile('src/utilities/pathUtils.ts'));
 }
