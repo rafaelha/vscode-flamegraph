@@ -351,6 +351,7 @@ export class Flamegraph {
             const fileProfiles = this.index[fileName];
 
             for (const fileProfile of fileProfiles) {
+                if (!fileProfile.filePath.endsWith('.py')) continue;
                 try {
                     // Read file content once for all nodes in this file
                     const fileContent = fs.readFileSync(fileProfile.filePath, 'utf-8');
