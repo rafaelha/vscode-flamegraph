@@ -57,7 +57,9 @@ export function getModuleName(filePath: string | undefined): string | undefined 
     if (filePath.startsWith('<') && filePath.includes('importlib')) return '<importlib>';
 
     let fileName = filePath;
-    if (isAbsolute(filePath)) fileName = shortenFilename(fileName);
+    if (isAbsolute(filePath)) {
+        fileName = shortenFilename(fileName);
+    }
 
     const moduleName = fileName.replace(/\//g, '\\').split('\\')[0] || '<>';
 

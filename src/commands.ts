@@ -49,7 +49,7 @@ export function loadProfileCommand(context: vscode.ExtensionContext) {
         extensionState.profileUri = profileUri;
         extensionState.focusNode = 0;
 
-        registerProfile(context, profileUri);
+        await registerProfile(context, profileUri);
         vscode.commands.executeCommand('flamegraph.showFlamegraph');
     });
 }
