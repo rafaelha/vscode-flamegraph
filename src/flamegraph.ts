@@ -231,10 +231,10 @@ export class Flamegraph {
             const name = fileName.toLowerCase();
             this.index[name] ??= [];
             const fileIndex = this.index[name];
-            const i = fileIndex.findIndex((x) => x.filePath === filePath);
+            const i = fileIndex.findIndex((x) => x.filePath.toLowerCase() === filePath.toLowerCase());
             if (i === -1) {
                 const fileProfile = {
-                    filePath,
+                    filePath: filePath.toLowerCase(),
                     lineProfiles: [{ line, nodes: [node] }],
                 };
                 fileIndex.push(fileProfile);
@@ -252,7 +252,7 @@ export class Flamegraph {
     }
 
     public getFileProfile(filePath: string, focusUid?: number): LineProfile[] | undefined {
-        filePath = toUnixPath(filePath);
+        filePath = toUnixPath(filePath).toLowerCase();
         const filename = basename(filePath);
 
         const fileIndex = this.index[filename];

@@ -113,9 +113,8 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
     const theme = getCurrentTheme();
     const decorations: vscode.DecorationOptions[] = [];
     const documentLines = activeEditor.document.lineCount;
-    const fileName = basename(filePath).toLowerCase();
 
-    const lineProfiles = flamegraph.getFileProfile(fileName, focusNode);
+    const lineProfiles = flamegraph.getFileProfile(filePath, focusNode);
 
     if (!lineProfiles) return;
     let anyDecorations = false;
