@@ -22,7 +22,12 @@ const DARK_THEME_SETTINGS = {
 
 // Create a decorator type for the line coloring
 export const lineColorDecorationType = vscode.window.createTextEditorDecorationType({
-    before: {},
+    before: {
+        contentText: '',
+        width: `$0px`,
+        margin: `0px ${DECORATION_WIDTH}px 0px 0px`,
+        fontWeight: 'bold',
+    },
 });
 // Get the current theme from VS Code, which is either 'dark' or 'light'
 function getCurrentTheme(): 'dark' | 'light' {
@@ -36,7 +41,7 @@ function emptyLineDecoration(line: number): vscode.DecorationOptions {
     return {
         range: new vscode.Range(line - 1, 0, line - 1, 0),
         renderOptions: {
-            before: { contentText: '', width: `${DECORATION_WIDTH}px` },
+            before: { contentText: '' },
         },
     };
 }
@@ -155,7 +160,6 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
                     color: theme === 'dark' ? 'white' : 'black',
                     width: `${width}px`,
                     margin: `0px ${DECORATION_WIDTH - width}px 0px 0px`,
-                    fontWeight: 'bold',
                 },
             },
             hoverMessage: new vscode.MarkdownString(makeToolTip(nodes, samples, flamegraph)),
