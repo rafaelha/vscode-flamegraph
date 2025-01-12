@@ -53,7 +53,7 @@ export function FlameGraph({
         const { frameId, functionId, samples, line, sourceCode } = node;
         const functionData = functions[functionId];
         if (!functionData) return null;
-        let { module, moduleHue, functionHue, fileName, filePath, functionName } = functionData;
+        let { module, moduleHue, functionHue, fileName, filePath, functionName, shortFunctionName } = functionData;
         fileName = fileName || '';
 
         if (module) {
@@ -106,7 +106,9 @@ export function FlameGraph({
         const percentageOfTotal = ((samples / rootValue) * 100).toFixed(1);
         const percentageOfFocus = ((samples / focusNode.samples) * 100).toFixed(1);
         const tooltipContent = [
-            fileName ? `${functionName} (${line ? `${fileName}:${line}` : fileName})` : functionName,
+            fileName
+                ? `${functionName} (${line ? `${fileName}:${line}` : fileName})`
+                : functionName,
             sourceCode,
             `${samples / 100}s / ${percentageOfTotal}% / ${percentageOfFocus}%`,
         ]
@@ -129,7 +131,7 @@ export function FlameGraph({
                 }}
                 title={tooltipContent}
             >
-                {renderNodeContent(node, functionName, fileName, line, filePath)}
+                {renderNodeContent(node, shortFunctionName || functionName, fileName, line, filePath)}
             </div>
         );
     }

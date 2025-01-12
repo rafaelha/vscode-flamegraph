@@ -13,6 +13,7 @@ type LineNumber = number;
 
 export type Function = {
     functionName: string;
+    shortFunctionName?: string;
     filePath?: string;
     fileName?: string;
     module?: string;
