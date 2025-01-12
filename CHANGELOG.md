@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased]
+### Fixed
+- Fixed a performance issue where the extension would become slow for large profile files.
+- Fixed a bug where native frames were not shown in the flamegraph.
+
 ## [0.2.3] - 2024-12-20
 ### Changed
 - The flamegraph now shows code line content instead of function names.

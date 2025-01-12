@@ -8,7 +8,8 @@ import {
     attachProfilerCommand,
     attachNativeProfilerCommand,
 } from './commands';
-import { unregisterProfile } from './register';
+import { updateDecorations } from './render';
+import { extensionState } from './state';
 
 /**
  * Activates the extension.
@@ -16,28 +17,49 @@ import { unregisterProfile } from './register';
  * @param context - The extension context.
  */
 export function activate(context: ExtensionContext) {
-    context.workspaceState.update('profileVisible', false);
-    context.workspaceState.update('decorationDisposables', undefined);
-    context.workspaceState.update('focusNode', 0);
-    context.workspaceState.update('focusNodeCallStack', new Set<number>());
-    context.workspaceState.update('focusFunctionId', 'all');
+    // Initialize extension state
+    extensionState.setContext(context);
 
     // Register all commands
     context.subscriptions.push(
         loadProfileCommand(context),
-        toggleProfileCommand(context),
+        toggleProfileCommand(),
         runProfilerCommand(context),
         attachProfilerCommand(context),
         attachNativeProfilerCommand(context),
         showFlamegraphCommand(context)
     );
+
+    // Register decoration visible changed listener
+    context.subscriptions.push(
+        extensionState.onUpdateUI(() => {
+            vscode.window.visibleTextEditors.forEach((editor) => {
+                updateDecorations(editor);
+            });
+        })
+    );
+
+    // Register decoration listeners
+    context.subscriptions.push(
+        vscode.window.onDidChangeActiveTextEditor((editor) => {
+            if (editor) {
+                updateDecorations(editor);
+            }
+        }),
+        vscode.workspace.onDidChangeTextDocument(() => {
+            updateDecorations(vscode.window.activeTextEditor);
+        }),
+        vscode.window.onDidChangeActiveColorTheme(() => {
+            vscode.window.visibleTextEditors.forEach((editor) => {
+                updateDecorations(editor);
+            });
+        })
+    );
 }
 
 /**
  * Deactivates the extension.
- *
- * @param context - The extension context.
  */
-export function deactivate(context: vscode.ExtensionContext) {
-    unregisterProfile(context);
+export function deactivate() {
+    extensionState.dispose();
 }

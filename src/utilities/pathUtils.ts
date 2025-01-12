@@ -1,21 +1,6 @@
-import { Uri, Webview } from 'vscode';
 import { isAbsolute, normalize } from 'path';
 import * as fs from 'fs';
 import * as path from 'path';
-/**
- * A helper function which will get the webview URI of a given file or resource.
- *
- * @remarks This URI can be used within a webview's HTML as a link to the
- * given file/resource.
- *
- * @param webview A reference to the extension webview
- * @param extensionUri The URI of the directory containing the extension
- * @param pathList An array of strings representing the path to a file/resource
- * @returns A URI pointing to the file/resource
- */
-export function getUri(webview: Webview, extensionUri: Uri, pathList: string[]) {
-    return webview.asWebviewUri(Uri.joinPath(extensionUri, ...pathList));
-}
 
 /**
  * Normalizes a file path to use forward slashes and lower case.
@@ -69,9 +54,12 @@ function shortenFilename(filename: string): string {
 export function getModuleName(filePath: string | undefined): string | undefined {
     // check if the file path is absolute
     if (!filePath) return undefined;
+    if (filePath.startsWith('<') && filePath.includes('importlib')) return '<importlib>';
 
     let fileName = filePath;
-    if (isAbsolute(filePath)) fileName = shortenFilename(fileName);
+    if (isAbsolute(filePath)) {
+        fileName = shortenFilename(fileName);
+    }
 
     const moduleName = fileName.replace(/\//g, '\\').split('\\')[0] || '<>';
 

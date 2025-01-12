@@ -58,3 +58,14 @@ Then, in VS Code
 
 1. Press `F5` to open a new Extension Development Host window
 2. Inside the host window, open the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac) and type `Flamegraph: Profile active file with py-spy`
+
+
+### TODO
+
+- [ ] Unit tests
+- [ ] Performance tests
+- [ ] Option to filter the flamegraph by module. Since processes are treated as a module, this would allow to show the flamegraph resolved for all processes or combined for all processes.
+- [ ] Refactor flamegraph. Currently, the whole graph is recomputed on every mouse hover.
+- [ ] Search in flamegraph
+- [ ] Memray memory profiles
+- [ ] Zoom animations in flamegraph

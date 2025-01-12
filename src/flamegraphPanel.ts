@@ -1,4 +1,3 @@
-import * as vscode from 'vscode';
 import * as path from 'path';
 import {
     Disposable,
@@ -10,12 +9,11 @@ import {
     workspace,
     Selection,
     TextEditorRevealType,
-    ExtensionContext,
 } from 'vscode';
-import { getUri } from './utilities/pathUtils';
+import { getUri } from './utilities/fsUtils';
 import { getNonce } from './utilities/nonceUtils';
-import { ProfilesByFile, FlamegraphNode } from './utilities/flamegraphParser';
-import { updateDecorations } from './render';
+import { Flamegraph } from './flamegraph';
+import { extensionState } from './state';
 
 /**
  * This class manages the state and behavior of HelloWorld webview panels.
@@ -41,7 +39,7 @@ export class FlamegraphPanel {
      * @param panel A reference to the webview panel
      * @param extensionUri The URI of the directory containing the extension
      */
-    private constructor(panel: WebviewPanel, context: ExtensionContext, extensionUri: Uri) {
+    private constructor(panel: WebviewPanel, extensionUri: Uri) {
         this._panel = panel;
 
         // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
@@ -52,7 +50,7 @@ export class FlamegraphPanel {
         this._panel.webview.html = this._getWebviewContent(this._panel.webview, extensionUri);
 
         // Set an event listener to listen for messages passed from the webview context
-        this._setWebviewMessageListener(this._panel.webview, context);
+        this._setWebviewMessageListener(this._panel.webview);
     }
 
     /**
@@ -60,16 +58,14 @@ export class FlamegraphPanel {
      * will be created and displayed.
      *
      * @param extensionUri The URI of the directory containing the extension.
-     * @param profileData The profile data to be passed to the React app.
      */
-    public static render(context: ExtensionContext, extensionUri: Uri, profileData: FlamegraphNode) {
+    public static render(extensionUri: Uri) {
+        const flamegraph: Flamegraph | undefined = extensionState.currentFlamegraph;
+        if (!flamegraph) return;
+
         if (FlamegraphPanel.currentPanel) {
             // Reveal the panel and update the profile data
             FlamegraphPanel.currentPanel._panel.reveal(ViewColumn.Beside);
-            FlamegraphPanel.currentPanel._panel.webview.postMessage({
-                type: 'profile-data',
-                data: profileData,
-            });
         } else {
             const panel = window.createWebviewPanel('showFlamegraph', 'Flamegraph', ViewColumn.Beside, {
                 enableScripts: true,
@@ -80,14 +76,13 @@ export class FlamegraphPanel {
                 ],
             });
 
-            FlamegraphPanel.currentPanel = new FlamegraphPanel(panel, context, extensionUri);
-
-            panel.webview.postMessage({
-                type: 'profile-data',
-                data: profileData,
-                focusUid: context.workspaceState.get('focusNode') || 0,
-            });
+            FlamegraphPanel.currentPanel = new FlamegraphPanel(panel, extensionUri);
         }
+        FlamegraphPanel.currentPanel._panel.webview.postMessage({
+            type: 'profile-data',
+            data: { root: flamegraph.root, functions: flamegraph.functions },
+            focusUid: extensionState.focusNode,
+        });
     }
 
     /**
@@ -153,9 +148,8 @@ export class FlamegraphPanel {
      * executes code based on the message that is recieved.
      *
      * @param webview A reference to the extension webview
-     * @param context A reference to the extension context
      */
-    private _setWebviewMessageListener(webview: Webview, context: ExtensionContext) {
+    private _setWebviewMessageListener(webview: Webview) {
         webview.onDidReceiveMessage(
             async (message: any) => {
                 const { command } = message;
@@ -184,20 +178,15 @@ export class FlamegraphPanel {
                             editor.selection = new Selection(range.start, range.start);
                             editor.revealRange(range, TextEditorRevealType.InCenter);
                         } catch (error) {
-                            // do nothing
+                            // do nothing, error messages are overly verbose
                         }
 
                         break;
 
                     case 'set-focus-node': {
                         const { uid } = message;
-                        context.workspaceState.update('focusNode', uid);
-                        context.workspaceState.update('focusNodeCallStack', new Set<number>(message.callStack));
-                        context.workspaceState.update('focusFunctionId', message.focusFunctionId);
-                        const decorationTree = context.workspaceState.get('decorationTree') as ProfilesByFile;
-                        vscode.window.visibleTextEditors.forEach((editor) => {
-                            updateDecorations(editor, decorationTree, context.workspaceState);
-                        });
+                        extensionState.focusNode = uid;
+                        extensionState.updateUI();
                         break;
                     }
 

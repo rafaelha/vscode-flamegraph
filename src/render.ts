@@ -1,22 +1,36 @@
 import * as vscode from 'vscode';
-import { basename } from 'path';
-import { StackProfileSample, FileProfileData, ProfilesByFile } from './utilities/flamegraphParser';
-import { getFunctionColor, ColorTheme } from './utilities/colors';
 import { toUnixPath } from './utilities/pathUtils';
+import { Flamegraph, Flamenode } from './flamegraph';
+import { extensionState } from './state';
 
 // TODO: Make this configurable in VS Code settings
 const DECORATION_WIDTH = 100; // Width in pixels for the decoration area
+const SAMPLES_PER_SECOND = 100; // TODO: Make this configurable
+const MAX_TOOLTIP_ENTRIES = 5;
+const TOOLTIP_BAR_ELEMENTS = 15;
+
+// Add these constants near the top with other constants
+const LIGHT_THEME_SETTINGS = {
+    saturation: '85%',
+    lightness: '75%',
+};
+
+const DARK_THEME_SETTINGS = {
+    saturation: '65%',
+    lightness: '40%',
+};
 
 // Create a decorator type for the line coloring
 export const lineColorDecorationType = vscode.window.createTextEditorDecorationType({
-    before: {},
+    before: {
+        contentText: '',
+        width: `$0px`,
+        margin: `0px ${DECORATION_WIDTH}px 0px 0px`,
+        fontWeight: 'bold',
+    },
 });
-
-/**
- * Get the current theme from VS Code, which is either 'dark' or 'light'.
- * @returns The current theme.
- */
-function getCurrentTheme(): ColorTheme {
+// Get the current theme from VS Code, which is either 'dark' or 'light'
+function getCurrentTheme(): 'dark' | 'light' {
     return vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ||
         vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.HighContrast
         ? 'dark'
@@ -24,31 +38,67 @@ function getCurrentTheme(): ColorTheme {
 }
 
 /**
+ * Creates an empty line decoration.
+ * @remarks Unfortunately, the `before` decorations are only rendered before the range specified in the decoration.
+ * This means that we need to create individual decoration for every line, even the empty ones.
+ * See for example, here:
+ * https://github.com/gitkraken/vscode-gitlens/blob/5abb804b10f1a90d507827477582c806bd9c9fe8/src/annotations/gutterBlameAnnotationProvider.ts#L153
+ * It also means that all decorations have to be re-rendered when the file is changed.
+ * It would be nice if we could make use of the `DecorationRangeBehavior` to automatically extend ranges when new lines
+ * are added.
+ *
+ * @param line - The line number to create the decoration for.
+ * @returns The decoration options.
+ */
+function emptyLineDecoration(line: number): vscode.DecorationOptions {
+    return {
+        range: new vscode.Range(line - 1, 0, line - 1, 0),
+        renderOptions: {
+            before: { contentText: '' },
+        },
+    };
+}
+/**
  * Creates a markdown tooltip displaying the call stack of a profiling entry. This tooltip is used for the line
  * decorations.
  *
- * @param samples - The profiling entries to create the tooltip for.
+ * @param nodes - The profiling entries to create the tooltip for.
+ * @param samples - The total samples for the profiling entries.
+ * @param flamegraph - The flamegraph data.
  * @returns The tooltip.
  */
-function makeToolTip(samples: StackProfileSample[]): string {
-    if (samples.length === 0) return '';
-    if (samples.length <= 1) return samples[0].callStackString.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    let toolTip = '### Call Stack\n| | | | |\n|---|---|---|---|\n';
-    const totalSamples = samples.reduce((acc, sample) => acc + sample.numSamples, 0);
+function makeToolTip(nodes: Flamenode[], samples: number, flamegraph: Flamegraph): string {
+    const n = nodes.length;
+    if (n === 0) return '';
 
-    const maxEntries = 5; // Maximum number of call stack strings to show
-    for (let i = 0; i < Math.min(samples.length, maxEntries); i += 1) {
-        const sample = samples[i];
-        const percentage = ((sample.numSamples / totalSamples) * 100).toFixed(1);
-        const barElements = 15;
-        const barLength = Math.round((sample.numSamples / totalSamples) * barElements);
-        const bar = '█'.repeat(barLength) + ' '.repeat(barElements - barLength);
-        const escapedCallStackString = sample.callStackString.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        toolTip += `| ${sample.numSamples / 100}s | ${bar} | ${percentage}% | ${escapedCallStackString} |\n`;
+    const stackToString = (stack: string[]): string => stack.join('/').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    if (n <= 1) return stackToString(flamegraph.getCallStack(nodes[0]));
+    let toolTip = '### Call Stack\n| | | | |\n|---|---|---|---|\n';
+
+    let callStacks: string[][] = [];
+    for (const node of nodes.slice(0, MAX_TOOLTIP_ENTRIES)) {
+        callStacks.push(flamegraph.getCallStack(node));
     }
 
-    if (samples.length > maxEntries) {
-        toolTip += `| +${samples.length - maxEntries} other caller(s) | | | |\n`;
+    // remove elements from the top of the call stacks until they are the same for all call stacks
+    // this is to make the tooltip more readable
+    while (n > 1 && callStacks[0].length > 1) {
+        const s = callStacks[0];
+        if (!callStacks.every((stack) => stack[0] === s[0])) break;
+        callStacks = callStacks.map((stack) => stack.slice(1));
+    }
+
+    for (let i = 0; i < Math.min(n, MAX_TOOLTIP_ENTRIES); i += 1) {
+        const node = nodes[i];
+        const percentage = ((node.ownSamples / samples) * 100).toFixed(1);
+        const barLength = Math.round((node.ownSamples / samples) * TOOLTIP_BAR_ELEMENTS);
+        const bar = '█'.repeat(barLength) + ' '.repeat(TOOLTIP_BAR_ELEMENTS - barLength);
+        const callStack = stackToString(callStacks[i]);
+        toolTip += `| ${node.ownSamples / 100}s | ${bar} | ${percentage}% | ${callStack} |\n`;
+    }
+
+    if (n > MAX_TOOLTIP_ENTRIES) {
+        toolTip += `| +${n - MAX_TOOLTIP_ENTRIES} other caller(s) | | | |\n`;
     }
 
     return toolTip;
@@ -58,99 +108,79 @@ function makeToolTip(samples: StackProfileSample[]): string {
  * Updates the line decorations for the active editor.
  *
  * @param activeEditor - The active editor.
- * @param result - The profiling results.
- * @param workspaceState - The workspace state.
  */
-export function updateDecorations(
-    activeEditor: vscode.TextEditor | undefined,
-    result: ProfilesByFile,
-    workspaceState: vscode.Memento
-) {
-    if (!activeEditor) return;
+export function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
+    const { focusNode, profileVisible, currentFlamegraph: flamegraph, decorationCache } = extensionState;
+    if (!profileVisible || !activeEditor || !flamegraph) {
+        activeEditor?.setDecorations(lineColorDecorationType, []);
+        return;
+    }
+
+    const filePath = toUnixPath(activeEditor.document.fileName);
+    const cacheKey = `${filePath}:${focusNode}`;
+
+    // Check if we have cached decorations for this file and focus node
+    const cachedDecorations = decorationCache.get(cacheKey);
+    if (cachedDecorations) {
+        activeEditor.setDecorations(lineColorDecorationType, cachedDecorations);
+        return;
+    }
 
     const theme = getCurrentTheme();
-    const focusNode: number = workspaceState.get('focusNode') || 0;
-    const focusFunctionId: string = workspaceState.get('focusFunctionId') || 'all';
-
     const decorations: vscode.DecorationOptions[] = [];
     const documentLines = activeEditor.document.lineCount;
-    const filePath = toUnixPath(activeEditor.document.fileName);
-    const fileName = basename(filePath).toLowerCase();
 
-    if (!(fileName in result)) return;
+    const lineProfiles = flamegraph.getFileProfile(filePath, focusNode);
 
-    const profilingResults = result[fileName];
-    let profilingResult: FileProfileData | undefined;
+    if (!lineProfiles) return;
+    let anyDecorations = false;
 
-    // check if the file path is in the profiling results
-    for (let i = 0; i < profilingResults.length; i += 1) {
-        // the file path need not match exactly, but one should be the end of the other.
-        // This ensures that relative paths are also matched.
-        const resultFilePath = profilingResults[i].filePath;
-        if (resultFilePath.endsWith(filePath) || filePath.endsWith(resultFilePath)) {
-            profilingResult = profilingResults[i];
-            break;
+    const totalSamples: Map<number, number> = new Map();
+    for (const { nodes } of lineProfiles) {
+        for (const node of nodes) {
+            if (node.ownSamples > 0) anyDecorations = true;
+            totalSamples.set(node.functionId, (totalSamples.get(node.functionId) || 0) + node.ownSamples);
         }
     }
-    if (!profilingResult) return;
 
-    const focusNodeCallStack = workspaceState.get('focusNodeCallStack') as Set<number>;
-    let nonZeroDecorations = false;
+    if (!anyDecorations) {
+        activeEditor.setDecorations(lineColorDecorationType, []);
+        return;
+    }
 
-    for (let line = 1; line < documentLines + 1; line += 1) {
-        let width = 0;
-        let toolTip = '';
-        let samples = 0;
-        let color = '';
+    let lastLine = 1;
+    for (const lineProfile of lineProfiles) {
+        const { line, nodes } = lineProfile;
+        const samples = nodes.reduce((acc: number, node: Flamenode) => acc + node.ownSamples, 0);
 
-        if (line in profilingResult.lineProfiles) {
-            const lineProfile = profilingResult.lineProfiles[line];
-            const { functionName } = lineProfile;
+        const func = flamegraph.functions[nodes[0].functionId];
+        const { functionHue } = func;
 
-            color = getFunctionColor(functionName, theme);
-            const stats = profilingResult.functionProfiles[functionName];
-            let totalSamples = 0;
+        const width =
+            samples === 0 ? 0 : Math.round((samples / totalSamples.get(nodes[0].functionId)!) * DECORATION_WIDTH);
 
-            for (const stat of stats) if (stat.callStackUids.has(focusNode)) totalSamples += stat.totalSamples;
+        for (; lastLine < line; lastLine += 1) decorations.push(emptyLineDecoration(lastLine));
+        lastLine = line + 1;
 
-            const callStackSamples: StackProfileSample[] = [];
-
-            for (const sample of lineProfile.samples) {
-                if (sample.callStackUids.has(focusNode)) {
-                    samples += sample.numSamples;
-                    callStackSamples.push(sample);
-                }
-
-                // If the sample is in the call stack of the focus node, process it
-                // This tracks profiling info for all parent nodes of the focus node.
-                // There is a caveat for recursive calls: we must ensure that the parent node is not part of the same
-                // function as the focus node.
-                if (focusNodeCallStack.has(sample.uid) && focusFunctionId !== sample.functionId) {
-                    samples += sample.numSamples;
-                    totalSamples += sample.numSamples;
-                }
-            }
-
-            toolTip = makeToolTip(callStackSamples);
-            width = samples === 0 ? 0 : Math.round((samples / totalSamples) * DECORATION_WIDTH);
-            if (samples > 0) nonZeroDecorations = true;
-        }
         decorations.push({
             range: new vscode.Range(line - 1, 0, line - 1, 0),
             renderOptions: {
                 before: {
-                    backgroundColor: color,
-                    contentText: samples > 0 ? `${(samples / 100).toFixed(2)}s` : '',
+                    backgroundColor: `hsl(${functionHue}, ${
+                        theme === 'dark' ? DARK_THEME_SETTINGS.saturation : LIGHT_THEME_SETTINGS.saturation
+                    }, ${theme === 'dark' ? DARK_THEME_SETTINGS.lightness : LIGHT_THEME_SETTINGS.lightness})`,
+                    contentText: samples > 0 ? `${(samples / SAMPLES_PER_SECOND).toFixed(2)}s` : '',
                     color: theme === 'dark' ? 'white' : 'black',
                     width: `${width}px`,
                     margin: `0px ${DECORATION_WIDTH - width}px 0px 0px`,
-                    fontWeight: 'bold',
                 },
             },
-            hoverMessage: new vscode.MarkdownString(toolTip),
+            hoverMessage: new vscode.MarkdownString(makeToolTip(nodes, samples, flamegraph)),
         });
     }
+    for (; lastLine <= documentLines; lastLine += 1) decorations.push(emptyLineDecoration(lastLine));
 
-    if (nonZeroDecorations) activeEditor.setDecorations(lineColorDecorationType, decorations);
-    else activeEditor.setDecorations(lineColorDecorationType, []);
+    // Cache the decorations before applying them
+    decorationCache.set(cacheKey, decorations);
+    activeEditor.setDecorations(lineColorDecorationType, decorations);
 }
