@@ -60,4 +60,6 @@ export function activate(context: ExtensionContext) {
 /**
  * Deactivates the extension.
  */
-export function deactivate() {}
+export function deactivate() {
+    extensionState.dispose();
+}

@@ -51,8 +51,11 @@ export function FlameGraph({
     function renderNode(node: Flamenode, depth: number, focusDepth: number, x: number, width: number) {
         // Update module map for legend
         const { frameId, functionId, samples, line, sourceCode } = node;
-        let { module, moduleHue, functionHue, fileName, filePath, functionName } = functions[functionId];
+        const functionData = functions[functionId];
+        if (!functionData) return null;
+        let { module, moduleHue, functionHue, fileName, filePath, functionName } = functionData;
         fileName = fileName || '';
+
         if (module) {
             const existing = moduleMap.get(module);
             moduleMap.set(module, {

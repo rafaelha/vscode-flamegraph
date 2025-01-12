@@ -67,10 +67,6 @@ export class FlamegraphPanel {
         if (FlamegraphPanel.currentPanel) {
             // Reveal the panel and update the profile data
             FlamegraphPanel.currentPanel._panel.reveal(ViewColumn.Beside);
-            FlamegraphPanel.currentPanel._panel.webview.postMessage({
-                type: 'profile-data',
-                data: { root: flamegraph.root, functions: flamegraph.functions },
-            });
         } else {
             const panel = window.createWebviewPanel('showFlamegraph', 'Flamegraph', ViewColumn.Beside, {
                 enableScripts: true,
@@ -82,13 +78,12 @@ export class FlamegraphPanel {
             });
 
             FlamegraphPanel.currentPanel = new FlamegraphPanel(panel, extensionUri);
-
-            panel.webview.postMessage({
-                type: 'profile-data',
-                data: { root: flamegraph.root, functions: flamegraph.functions },
-                focusUid: extensionState.focusNode,
-            });
         }
+        FlamegraphPanel.currentPanel._panel.webview.postMessage({
+            type: 'profile-data',
+            data: { root: flamegraph.root, functions: flamegraph.functions },
+            focusUid: extensionState.focusNode,
+        });
     }
 
     /**

@@ -13,6 +13,8 @@ class ExtensionState {
 
     private _focusNode: number = 0;
 
+    private _activeProfileWatcher?: vscode.FileSystemWatcher;
+
     private _onUpdateUI: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
 
     public readonly onUpdateUI: vscode.Event<void> = this._onUpdateUI.event;
@@ -70,6 +72,17 @@ class ExtensionState {
         this._context.workspaceState.update('profileUri', uri);
     }
 
+    get activeProfileWatcher(): vscode.FileSystemWatcher | undefined {
+        return this._activeProfileWatcher;
+    }
+
+    set activeProfileWatcher(watcher: vscode.FileSystemWatcher | undefined) {
+        if (this._activeProfileWatcher) {
+            this._activeProfileWatcher.dispose();
+        }
+        this._activeProfileWatcher = watcher;
+    }
+
     public updateUI() {
         this._onUpdateUI.fire();
     }
@@ -85,6 +98,9 @@ class ExtensionState {
 
     dispose() {
         this._onUpdateUI.dispose();
+        if (this._activeProfileWatcher) {
+            this._activeProfileWatcher.dispose();
+        }
     }
 }
 

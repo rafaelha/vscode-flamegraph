@@ -6,7 +6,6 @@ import { FlamegraphPanel } from './flamegraphPanel';
 import { extensionState } from './state';
 import { Flamegraph } from './flamegraph';
 
-let activeProfileWatcher: vscode.FileSystemWatcher | undefined;
 /**
  * Handles the profile update event. This is called when a new profile is written to the file system.
  *
@@ -25,10 +24,7 @@ const handleProfileUpdate = async (context: vscode.ExtensionContext, profileUri:
         vscode.window.showErrorMessage(`Failed to open profile: ${error}`);
     }
     // Cleanup watcher after profile is loaded
-    if (activeProfileWatcher) {
-        activeProfileWatcher.dispose();
-        activeProfileWatcher = undefined;
-    }
+    extensionState.activeProfileWatcher = undefined;
 };
 
 /**
@@ -66,7 +62,6 @@ export function toggleProfileCommand() {
 
         if (profileVisible) {
             extensionState.profileVisible = false;
-            extensionState.updateUI();
         } else {
             if (!profileUri) {
                 vscode.window.showErrorMessage('No profile loaded. Please load a profile first.');
@@ -76,8 +71,8 @@ export function toggleProfileCommand() {
                 extensionState.currentFlamegraph = await Flamegraph.load(profileUri);
             }
             extensionState.profileVisible = true;
-            extensionState.updateUI();
         }
+        extensionState.updateUI();
     });
 }
 
@@ -94,15 +89,15 @@ async function runTask(
     if (!pySpyInstalled) return;
 
     // Setup file watcher
-    if (!activeProfileWatcher) {
-        activeProfileWatcher = vscode.workspace.createFileSystemWatcher(
+    if (!extensionState.activeProfileWatcher) {
+        const watcher = vscode.workspace.createFileSystemWatcher(
             new vscode.RelativePattern(workspaceFolder, '.pyspy-profile')
         );
-        context.subscriptions.push(activeProfileWatcher);
+        extensionState.activeProfileWatcher = watcher;
     }
 
-    activeProfileWatcher.onDidCreate(async () => handleProfileUpdate(context, profileUri));
-    activeProfileWatcher.onDidChange(async () => handleProfileUpdate(context, profileUri));
+    extensionState.activeProfileWatcher.onDidCreate(async () => handleProfileUpdate(context, profileUri));
+    extensionState.activeProfileWatcher.onDidChange(async () => handleProfileUpdate(context, profileUri));
 
     const sudo = os.platform() === 'darwin' ? 'sudo ' : '';
 
