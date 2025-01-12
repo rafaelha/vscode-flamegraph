@@ -24,14 +24,14 @@ export type Flamenode = {
     parentUid?: number;
     frameId: FrameId; // unique id for the frame, which is (functionName, filePath, lineNumber)
     functionId: FunctionId; // unique id for the function, which is (functionName, filePath)
-    line?: LineNumber;
-    sourceCode?: string;
-    depth: number;
-    samples: number;
-    ownSamples: number;
+    line?: LineNumber; // line number of the source code for this node
+    sourceCode?: string; // the string of source code for this line
+    depth: number; // depth in the tree
+    samples: number; // total number of samples for this node as recorded in the profile
+    ownSamples: number; // for recursive functions, this is the number of samples for the deepest occurrence
     children: Flamenode[];
-    enterTime?: number;
-    exitTime?: number;
+    enterTime?: number; // Euler tour enter time
+    exitTime?: number; // Euler tour exit time
 };
 
 type LineProfile = {
@@ -40,9 +40,10 @@ type LineProfile = {
 };
 
 type FileIndex = {
+    // map fileName to a list of matching filePaths
     [fileName: string]: {
         filePath: string;
-        lineProfiles: LineProfile[];
+        lineProfiles: LineProfile[]; // profile data associated with lines in the file
     }[];
 };
 
@@ -51,13 +52,14 @@ export class Flamegraph {
 
     private functionCache: Map<string, FunctionId>;
 
-    public nodes: Flamenode[];
+    public root: Flamenode; // root node of the flamegraph
 
-    public functions: Function[];
+    public nodes: Flamenode[]; // array of all nodes in the flamegraph, where node is at index node.uid in the array
 
-    public index: FileIndex;
+    public functions: Function[]; // array of all functions in the flamegraph, where function is at index
+    // function.functionId in the array
 
-    public root: Flamenode;
+    public index: FileIndex; // index of the flamegraph, used for efficient lookup of profile data for a single file
 
     /**
      * Constructor for the Flamegraph class.

@@ -37,6 +37,19 @@ function getCurrentTheme(): 'dark' | 'light' {
         : 'light';
 }
 
+/**
+ * Creates an empty line decoration.
+ * @remarks Unfortunately, the `before` decorations are only rendered before the range specified in the decoration.
+ * This means that we need to create individual decoration for every line, even the empty ones.
+ * See for example, here:
+ * https://github.com/gitkraken/vscode-gitlens/blob/5abb804b10f1a90d507827477582c806bd9c9fe8/src/annotations/gutterBlameAnnotationProvider.ts#L153
+ * It also means that all decorations have to be re-rendered when the file is changed.
+ * It would be nice if we could make use of the `DecorationRangeBehavior` to automatically extend ranges when new lines
+ * are added.
+ *
+ * @param line - The line number to create the decoration for.
+ * @returns The decoration options.
+ */
 function emptyLineDecoration(line: number): vscode.DecorationOptions {
     return {
         range: new vscode.Range(line - 1, 0, line - 1, 0),
