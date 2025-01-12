@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { basename } from 'path';
 import { toUnixPath } from './utilities/pathUtils';
 import { Flamegraph, Flamenode } from './flamegraph';
 import { extensionState } from './state';
