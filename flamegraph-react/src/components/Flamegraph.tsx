@@ -171,6 +171,15 @@ export function FlameGraph({
             let currentX = startX;
             maxDepth = Math.max(maxDepth, depth + 1);
 
+            // sort children by file name and line number
+            node.children?.sort((a, b) => {
+                const aFile = functions[a.functionId]?.fileName || '';
+                const bFile = functions[b.functionId]?.fileName || '';
+                const aLine = a.line || 0;
+                const bLine = b.line || 0;
+                return aFile.localeCompare(bFile) || aLine - bLine;
+            });
+
             node.children?.forEach((child) => {
                 const childWidth = child.samples / focusNode.samples;
                 if (!filter(child)) {
