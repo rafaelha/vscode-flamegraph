@@ -94,16 +94,25 @@ function makeToolTip(nodes: Flamenode[], samples: number, flamegraph: Flamegraph
  * @param flamegraph - The flamegraph data.
  */
 export function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
-    const { focusNode, profileVisible, currentFlamegraph: flamegraph } = extensionState;
+    const { focusNode, profileVisible, currentFlamegraph: flamegraph, decorationCache } = extensionState;
     if (!profileVisible || !activeEditor || !flamegraph) {
         activeEditor?.setDecorations(lineColorDecorationType, []);
         return;
     }
-    const theme = getCurrentTheme();
 
+    const filePath = toUnixPath(activeEditor.document.fileName);
+    const cacheKey = `${filePath}:${focusNode}`;
+
+    // Check if we have cached decorations for this file and focus node
+    const cachedDecorations = decorationCache.get(cacheKey);
+    if (cachedDecorations) {
+        activeEditor.setDecorations(lineColorDecorationType, cachedDecorations);
+        return;
+    }
+
+    const theme = getCurrentTheme();
     const decorations: vscode.DecorationOptions[] = [];
     const documentLines = activeEditor.document.lineCount;
-    const filePath = toUnixPath(activeEditor.document.fileName);
     const fileName = basename(filePath).toLowerCase();
 
     const lineProfiles = flamegraph.getFileProfile(fileName, focusNode);
@@ -156,5 +165,8 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
         });
     }
     for (; lastLine <= documentLines; lastLine += 1) decorations.push(emptyLineDecoration(lastLine));
+
+    // Cache the decorations before applying them
+    decorationCache.set(cacheKey, decorations);
     activeEditor.setDecorations(lineColorDecorationType, decorations);
 }

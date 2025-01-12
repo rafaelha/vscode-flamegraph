@@ -19,6 +19,8 @@ class ExtensionState {
 
     public readonly onUpdateUI: vscode.Event<void> = this._onUpdateUI.event;
 
+    private _decorationCache = new Map<string, vscode.DecorationOptions[]>();
+
     // Private constructor to prevent instantiation
     // eslint-disable-next-line no-useless-constructor, no-empty-function
     private constructor() {}
@@ -41,6 +43,7 @@ class ExtensionState {
 
     set currentFlamegraph(flamegraph: Flamegraph | undefined) {
         this._currentFlamegraph = flamegraph;
+        this._decorationCache.clear();
     }
 
     get profileVisible(): boolean {
@@ -59,6 +62,7 @@ class ExtensionState {
 
     set focusNode(node: number) {
         this._focusNode = node;
+        this._decorationCache.clear();
     }
 
     // Profile URI with workspaceState persistence
@@ -70,6 +74,7 @@ class ExtensionState {
     set profileUri(uri: vscode.Uri | undefined) {
         if (!this._context) return;
         this._context.workspaceState.update('profileUri', uri);
+        this._decorationCache.clear();
     }
 
     get activeProfileWatcher(): vscode.FileSystemWatcher | undefined {
@@ -101,6 +106,14 @@ class ExtensionState {
         if (this._activeProfileWatcher) {
             this._activeProfileWatcher.dispose();
         }
+    }
+
+    get decorationCache(): Map<string, vscode.DecorationOptions[]> {
+        return this._decorationCache;
+    }
+
+    set decorationCache(cache: Map<string, vscode.DecorationOptions[]>) {
+        this._decorationCache = cache;
     }
 }
 
