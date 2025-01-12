@@ -9,7 +9,6 @@ import {
     workspace,
     Selection,
     TextEditorRevealType,
-    ExtensionContext,
 } from 'vscode';
 import { getUri } from './utilities/fsUtils';
 import { getNonce } from './utilities/nonceUtils';
@@ -40,7 +39,7 @@ export class FlamegraphPanel {
      * @param panel A reference to the webview panel
      * @param extensionUri The URI of the directory containing the extension
      */
-    private constructor(panel: WebviewPanel, context: ExtensionContext, extensionUri: Uri) {
+    private constructor(panel: WebviewPanel, extensionUri: Uri) {
         this._panel = panel;
 
         // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
@@ -61,7 +60,10 @@ export class FlamegraphPanel {
      * @param extensionUri The URI of the directory containing the extension.
      * @param flamegraph The profile data to be passed to the React app.
      */
-    public static render(context: ExtensionContext, extensionUri: Uri, flamegraph: Flamegraph) {
+    public static render(extensionUri: Uri) {
+        const flamegraph: Flamegraph | undefined = extensionState.currentFlamegraph;
+        if (!flamegraph) return;
+
         if (FlamegraphPanel.currentPanel) {
             // Reveal the panel and update the profile data
             FlamegraphPanel.currentPanel._panel.reveal(ViewColumn.Beside);
@@ -79,7 +81,7 @@ export class FlamegraphPanel {
                 ],
             });
 
-            FlamegraphPanel.currentPanel = new FlamegraphPanel(panel, context, extensionUri);
+            FlamegraphPanel.currentPanel = new FlamegraphPanel(panel, extensionUri);
 
             panel.webview.postMessage({
                 type: 'profile-data',

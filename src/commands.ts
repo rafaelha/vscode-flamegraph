@@ -20,7 +20,7 @@ const handleProfileUpdate = async (context: vscode.ExtensionContext, profileUri:
         extensionState.focusNode = 0;
         extensionState.profileVisible = true;
         extensionState.updateUI();
-        vscode.commands.executeCommand('flamegraph.showFlamegraph');
+        FlamegraphPanel.render(context.extensionUri);
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to open profile: ${error}`);
     }
@@ -37,7 +37,7 @@ const handleProfileUpdate = async (context: vscode.ExtensionContext, profileUri:
  * @param context - The extension context.
  * @returns The command registration.
  */
-export function loadProfileCommand() {
+export function loadProfileCommand(context: vscode.ExtensionContext) {
     return vscode.commands.registerCommand('flamegraph.loadProfile', async () => {
         const profileUri = await selectProfileFile();
         if (!profileUri) {
@@ -50,7 +50,7 @@ export function loadProfileCommand() {
         extensionState.focusNode = 0;
         extensionState.profileVisible = true;
         extensionState.updateUI();
-        vscode.commands.executeCommand('flamegraph.showFlamegraph');
+        FlamegraphPanel.render(context.extensionUri);
     });
 }
 
@@ -225,6 +225,6 @@ export function showFlamegraphCommand(context: vscode.ExtensionContext) {
         }
         extensionState.profileVisible = true;
         extensionState.updateUI();
-        FlamegraphPanel.render(context, context.extensionUri, extensionState.currentFlamegraph);
+        FlamegraphPanel.render(context.extensionUri);
     });
 }

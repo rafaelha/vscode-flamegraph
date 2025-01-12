@@ -22,7 +22,7 @@ export function activate(context: ExtensionContext) {
 
     // Register all commands
     context.subscriptions.push(
-        loadProfileCommand(),
+        loadProfileCommand(context),
         toggleProfileCommand(),
         runProfilerCommand(context),
         attachProfilerCommand(context),
