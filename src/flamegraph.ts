@@ -154,7 +154,7 @@ export class Flamegraph {
     }
 
     /**
-     * Assigns Euler times to the nodes in the flamegraph.
+     * Assigns Euler times to the nodes in the flamegraph. These are used for O(1) child/ancestor queries.
      * @param node - The root node of the flamegraph.
      */
     private assignEulerTimes(node: Flamenode) {
@@ -202,6 +202,10 @@ export class Flamegraph {
             let current = this.root;
 
             for (const { frameId, functionId, line } of frames) {
+                // Recursive functions appear multiple times in the stack trace.
+                // In this case, we assign the samples only to the deepest occurrence.
+                // This approach works most of the time. It fails however, when recursive calls involve two functions.
+                // TODO: Come up with a better solution.
                 const occurrences = stackTraceCounts.get(functionId) ?? 0;
                 if (occurrences > 1) stackTraceCounts.set(functionId, occurrences - 1);
 
@@ -245,6 +249,12 @@ export class Flamegraph {
         });
 
         // Build index
+        // The index allows for efficient lookup of profile data for a single file.
+        // Essentially, the strategy is as follows:
+        // Pass a filename to the index, and it will return a list of file paths that match the filename.
+        // Given the file path, line profiles are returned for the file, which corresponds to list of nodes for
+        // each line.
+        // filename -> [filePaths] -> [line] -> [nodes]
         this.index = {};
         for (const node of sortedNodes) {
             const { filePath, fileName, functionName } = this.functions[node.functionId];
@@ -279,7 +289,9 @@ export class Flamegraph {
     }
 
     /**
-     * Gets the profile data for a single file.
+     * Gets the profile data for a single file. While also allowing for filtering of the profile data by a focus node.
+     * Only nodes that are children or ancestors of the focus node will be returned. This corresponds to visible nodes
+     * in the react flamegraph.
      * @param filePath - The path to the file.
      * @param focusUid - The UID of the focus node that is selected in the react flamegraph. Only profile data of
      * children or ancestors of the focus node will be returned. This ensures that the profile data is synchronized
@@ -287,7 +299,8 @@ export class Flamegraph {
      * @returns The profile data for the file, as an array of LineProfile objects.
      */
     public getFileProfile(filePath: string, focusUid?: number): LineProfile[] | undefined {
-        filePath = toUnixPath(filePath).toLowerCase();
+        filePath = toUnixPath(filePath).toLowerCase(); // use lower case since Windows is case insensitive
+        // TODO: only use lower case on OS that are case insensitive
         const filename = basename(filePath);
 
         const fileIndex = this.index[filename];
