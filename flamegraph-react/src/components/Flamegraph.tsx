@@ -135,7 +135,6 @@ export function FlameGraph({
     }
 
     function renderNodes(): React.ReactNode[] {
-        console.log('renderNodes');
         const nodes: React.ReactNode[] = [];
 
         function filter(node: Flamenode): boolean {
