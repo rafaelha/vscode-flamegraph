@@ -1,7 +1,9 @@
 import * as fs from 'fs';
+import { Uri } from 'vscode';
 import { basename } from 'path';
 import { strToHue } from './utilities/colors';
 import { getModuleName, toUnixPath } from './utilities/pathUtils';
+import { readTextFile } from './utilities/fsUtils';
 
 type FrameId = number;
 type FunctionId = number;
@@ -78,6 +80,11 @@ export class Flamegraph {
         this.assignEulerTimes(this.root);
         this.buildIndex();
         this.addSourceCode();
+    }
+
+    public static async load(profileUri: Uri) {
+        const profileString = await readTextFile(profileUri);
+        return new Flamegraph(profileString);
     }
 
     private parseFrame(frameString: string): [number | undefined, number | undefined, number | undefined] {
@@ -335,5 +342,5 @@ if (require.main === module) {
         'utf8'
     );
     const flamegraph = new Flamegraph(profile);
-    console.log(flamegraph.index);
+    console.log(flamegraph.getFileProfile('src/utilities/pathUtils.ts'));
 }

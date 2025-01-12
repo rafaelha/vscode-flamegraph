@@ -1,4 +1,3 @@
-import * as vscode from 'vscode';
 import * as path from 'path';
 import {
     Disposable,
@@ -14,7 +13,6 @@ import {
 } from 'vscode';
 import { getUri } from './utilities/fsUtils';
 import { getNonce } from './utilities/nonceUtils';
-import { updateDecorations } from './render';
 import { Flamegraph } from './flamegraph';
 import { extensionState } from './state';
 
@@ -192,9 +190,7 @@ export class FlamegraphPanel {
                     case 'set-focus-node': {
                         const { uid } = message;
                         extensionState.focusNode = uid;
-                        vscode.window.visibleTextEditors.forEach((editor) => {
-                            updateDecorations(editor, extensionState.currentFlamegraph!);
-                        });
+                        extensionState.updateUI();
                         break;
                     }
 

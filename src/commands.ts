@@ -2,12 +2,11 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
 import { checkAndInstallProfiler, getPythonPath, selectProfileFile } from './utilities/fsUtils';
-import { loadProfile, registerProfile, unregisterProfile } from './register';
 import { FlamegraphPanel } from './flamegraphPanel';
 import { extensionState } from './state';
+import { Flamegraph } from './flamegraph';
 
 let activeProfileWatcher: vscode.FileSystemWatcher | undefined;
-
 /**
  * Handles the profile update event. This is called when a new profile is written to the file system.
  *
@@ -16,10 +15,11 @@ let activeProfileWatcher: vscode.FileSystemWatcher | undefined;
  */
 const handleProfileUpdate = async (context: vscode.ExtensionContext, profileUri: vscode.Uri) => {
     try {
-        await registerProfile(context, profileUri);
+        extensionState.currentFlamegraph = await Flamegraph.load(profileUri);
         extensionState.profileUri = profileUri;
-        extensionState.profileVisible = true;
         extensionState.focusNode = 0;
+        extensionState.profileVisible = true;
+        extensionState.updateUI();
         vscode.commands.executeCommand('flamegraph.showFlamegraph');
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to open profile: ${error}`);
@@ -37,19 +37,19 @@ const handleProfileUpdate = async (context: vscode.ExtensionContext, profileUri:
  * @param context - The extension context.
  * @returns The command registration.
  */
-export function loadProfileCommand(context: vscode.ExtensionContext) {
+export function loadProfileCommand() {
     return vscode.commands.registerCommand('flamegraph.loadProfile', async () => {
         const profileUri = await selectProfileFile();
-
         if (!profileUri) {
             vscode.window.showErrorMessage('No profile file selected.');
             return;
         }
 
+        extensionState.currentFlamegraph = await Flamegraph.load(profileUri);
         extensionState.profileUri = profileUri;
         extensionState.focusNode = 0;
-
-        await registerProfile(context, profileUri);
+        extensionState.profileVisible = true;
+        extensionState.updateUI();
         vscode.commands.executeCommand('flamegraph.showFlamegraph');
     });
 }
@@ -60,18 +60,23 @@ export function loadProfileCommand(context: vscode.ExtensionContext) {
  * @param context - The extension context.
  * @returns The command registration.
  */
-export function toggleProfileCommand(context: vscode.ExtensionContext) {
+export function toggleProfileCommand() {
     return vscode.commands.registerCommand('flamegraph.toggleProfile', async () => {
         const { profileVisible, profileUri } = extensionState;
 
         if (profileVisible) {
-            unregisterProfile();
+            extensionState.profileVisible = false;
+            extensionState.updateUI();
         } else {
             if (!profileUri) {
                 vscode.window.showErrorMessage('No profile loaded. Please load a profile first.');
                 return;
             }
-            registerProfile(context, profileUri, false);
+            if (!extensionState.currentFlamegraph) {
+                extensionState.currentFlamegraph = await Flamegraph.load(profileUri);
+            }
+            extensionState.profileVisible = true;
+            extensionState.updateUI();
         }
     });
 }
@@ -209,16 +214,17 @@ export function attachNativeProfilerCommand(context: vscode.ExtensionContext) {
  * @returns The command registration.
  */
 export function showFlamegraphCommand(context: vscode.ExtensionContext) {
-    return vscode.commands.registerCommand('flamegraph.showFlamegraph', () => {
-        const { currentFlamegraph, profileUri } = extensionState;
-        if (!profileUri && !currentFlamegraph) {
+    return vscode.commands.registerCommand('flamegraph.showFlamegraph', async () => {
+        const { profileUri } = extensionState;
+        if (!profileUri) {
             vscode.window.showErrorMessage('No profile loaded. Please load a profile first.');
             return;
         }
-        if (profileUri && !currentFlamegraph) {
-            loadProfile(profileUri);
+        if (!extensionState.currentFlamegraph) {
+            extensionState.currentFlamegraph = await Flamegraph.load(profileUri);
         }
-        if (!currentFlamegraph) return;
-        FlamegraphPanel.render(context, context.extensionUri, currentFlamegraph);
+        extensionState.profileVisible = true;
+        extensionState.updateUI();
+        FlamegraphPanel.render(context, context.extensionUri, extensionState.currentFlamegraph);
     });
 }

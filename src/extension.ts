@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 import { ExtensionContext } from 'vscode';
 import {
     loadProfileCommand,
@@ -7,7 +8,7 @@ import {
     attachProfilerCommand,
     attachNativeProfilerCommand,
 } from './commands';
-import { unregisterProfile } from './register';
+import { updateDecorations } from './render';
 import { extensionState } from './state';
 
 /**
@@ -21,18 +22,42 @@ export function activate(context: ExtensionContext) {
 
     // Register all commands
     context.subscriptions.push(
-        loadProfileCommand(context),
-        toggleProfileCommand(context),
+        loadProfileCommand(),
+        toggleProfileCommand(),
         runProfilerCommand(context),
         attachProfilerCommand(context),
         attachNativeProfilerCommand(context),
         showFlamegraphCommand(context)
+    );
+
+    // Register decoration visible changed listener
+    context.subscriptions.push(
+        extensionState.onUpdateUI(() => {
+            vscode.window.visibleTextEditors.forEach((editor) => {
+                updateDecorations(editor);
+            });
+        })
+    );
+
+    // Register decoration listeners
+    context.subscriptions.push(
+        vscode.window.onDidChangeActiveTextEditor((editor) => {
+            if (editor) {
+                updateDecorations(editor);
+            }
+        }),
+        vscode.workspace.onDidChangeTextDocument(() => {
+            updateDecorations(vscode.window.activeTextEditor);
+        }),
+        vscode.window.onDidChangeActiveColorTheme(() => {
+            vscode.window.visibleTextEditors.forEach((editor) => {
+                updateDecorations(editor);
+            });
+        })
     );
 }
 
 /**
  * Deactivates the extension.
  */
-export function deactivate() {
-    unregisterProfile();
-}
+export function deactivate() {}

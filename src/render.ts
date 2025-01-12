@@ -93,9 +93,12 @@ function makeToolTip(nodes: Flamenode[], samples: number, flamegraph: Flamegraph
  * @param activeEditor - The active editor.
  * @param flamegraph - The flamegraph data.
  */
-export function updateDecorations(activeEditor: vscode.TextEditor | undefined, flamegraph: Flamegraph) {
-    const { focusNode, profileVisible } = extensionState;
-    if (!profileVisible || !activeEditor) return;
+export function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
+    const { focusNode, profileVisible, currentFlamegraph: flamegraph } = extensionState;
+    if (!profileVisible || !activeEditor || !flamegraph) {
+        activeEditor?.setDecorations(lineColorDecorationType, []);
+        return;
+    }
     const theme = getCurrentTheme();
 
     const decorations: vscode.DecorationOptions[] = [];

@@ -13,6 +13,10 @@ class ExtensionState {
 
     private _focusNode: number = 0;
 
+    private _onUpdateUI: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
+
+    public readonly onUpdateUI: vscode.Event<void> = this._onUpdateUI.event;
+
     // Private constructor to prevent instantiation
     // eslint-disable-next-line no-useless-constructor, no-empty-function
     private constructor() {}
@@ -42,7 +46,9 @@ class ExtensionState {
     }
 
     set profileVisible(visible: boolean) {
-        this._profileVisible = visible;
+        if (this._profileVisible !== visible) {
+            this._profileVisible = visible;
+        }
     }
 
     get focusNode(): number {
@@ -64,6 +70,10 @@ class ExtensionState {
         this._context.workspaceState.update('profileUri', uri);
     }
 
+    public updateUI() {
+        this._onUpdateUI.fire();
+    }
+
     private clearContext() {
         if (!this._context) return;
         for (const key of this._context.workspaceState.keys()) {
@@ -71,6 +81,10 @@ class ExtensionState {
                 this._context.workspaceState.update(key, undefined);
             }
         }
+    }
+
+    dispose() {
+        this._onUpdateUI.dispose();
     }
 }
 
