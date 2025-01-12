@@ -84,7 +84,11 @@ export class Flamegraph {
         if (this.frameCache.has(frameString)) {
             return this.frameCache.get(frameString)!;
         }
-        const frameRegex = /^(.+?)(?:\s+\(([^:)]+)(?::(\d+))?\))?$/;
+        // match regex of the form
+        // <functionName> (<filePath>:<lineNumber>)
+        // <functionName> (<filePath>)
+        // <functionName>
+        const frameRegex = /^(.+?)(?:\s+\(([^)]+?)(?::(\d+))?\))?$/;
         const matches = frameString.match(frameRegex);
 
         if (!matches) return [undefined, undefined, undefined];
