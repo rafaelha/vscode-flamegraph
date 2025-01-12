@@ -64,8 +64,9 @@ Then, in VS Code
 
 - [ ] Unit tests
 - [ ] Performance tests
-- [ ] Option to filter the flamegraph by module. Since processes are treated as a module, this would allow to show the flamegraph resolved for all processes or combined for all processes.
-- [ ] Refactor flamegraph. Currently, the whole graph is recomputed on every mouse hover.
+- [ ] Option to filter the flamegraph by module. Since processes are treated as a module, this would, e.g., allow to show the flamegraph resolved for all processes or combined for all processes.
+- [ ] Refactor flamegraph. Currently, the whole graph is recomputed on every mouse hover event.
 - [ ] Search in flamegraph
+- [ ] Profiling files without opening a workspace/folder. Currently, the extension requires a workspace/folder to be opened.
 - [ ] Memray memory profiles
 - [ ] Zoom animations in flamegraph
