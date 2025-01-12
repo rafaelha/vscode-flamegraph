@@ -144,7 +144,9 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
         }
         const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
         if (!workspaceFolder) {
-            vscode.window.showErrorMessage('File is not part of a workspace.');
+            vscode.window.showErrorMessage(
+                'File is not part of a workspace or folder. Please open the folder containing the file.'
+            );
             return;
         }
         const pythonPath = await getPythonPath();
