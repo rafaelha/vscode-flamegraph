@@ -111,13 +111,13 @@ function makeToolTip(nodes: Flamenode[], samples: number, flamegraph: Flamegraph
  */
 export function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
     const { focusNode, profileVisible, currentFlamegraph: flamegraph, decorationCache } = extensionState;
+    const theme = getCurrentTheme();
     if (!profileVisible || !activeEditor || !flamegraph) {
-        activeEditor?.setDecorations(lineColorDecorationType, []);
         return;
     }
 
     const filePath = toUnixPath(activeEditor.document.fileName);
-    const cacheKey = `${filePath}:${focusNode}`;
+    const cacheKey = `${filePath}:${focusNode}:${theme}`;
 
     // Check if we have cached decorations for this file and focus node
     const cachedDecorations = decorationCache.get(cacheKey);
@@ -126,7 +126,6 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
         return;
     }
 
-    const theme = getCurrentTheme();
     const decorations: vscode.DecorationOptions[] = [];
     const documentLines = activeEditor.document.lineCount;
 
@@ -143,10 +142,7 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
         }
     }
 
-    if (!anyDecorations) {
-        activeEditor.setDecorations(lineColorDecorationType, []);
-        return;
-    }
+    if (!anyDecorations) return;
 
     let lastLine = 1;
     for (const lineProfile of lineProfiles) {
