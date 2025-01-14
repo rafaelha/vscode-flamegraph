@@ -1,9 +1,7 @@
 import * as fs from 'fs';
-import { Uri } from 'vscode';
 import { basename } from 'path';
 import { strToHue } from './utilities/colors';
 import { getModuleName, toUnixPath } from './utilities/pathUtils';
-import { readTextFile } from './utilities/fsUtils';
 
 type FrameId = number;
 type FunctionId = number;

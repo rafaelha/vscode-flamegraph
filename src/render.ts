@@ -123,7 +123,11 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
 
     const lineProfiles = flamegraph.getFileProfile(filePath, focusNode);
 
-    if (!lineProfiles) return;
+    if (!lineProfiles) {
+        activeEditor.setDecorations(lineColorDecorationType, []);
+        return;
+    }
+
     let anyDecorations = false;
 
     const totalSamples: Map<number, number> = new Map();
@@ -134,7 +138,10 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
         }
     }
 
-    if (!anyDecorations) return;
+    if (!anyDecorations) {
+        activeEditor.setDecorations(lineColorDecorationType, []);
+        return;
+    }
 
     let lastLine = 1;
     for (const lineProfile of lineProfiles) {
