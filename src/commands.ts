@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
-import { checkAndInstallProfiler, getPythonPath, selectProfileFile } from './utilities/fsUtils';
+import { checkAndInstallProfiler, getPythonPath, selectProfileFile, readTextFile } from './utilities/fsUtils';
 import { FlamegraphPanel } from './flamegraphPanel';
 import { extensionState } from './state';
 import { Flamegraph } from './flamegraph';
@@ -14,7 +14,7 @@ import { Flamegraph } from './flamegraph';
  */
 const handleProfileUpdate = async (context: vscode.ExtensionContext, profileUri: vscode.Uri) => {
     try {
-        extensionState.currentFlamegraph = await Flamegraph.load(profileUri);
+        extensionState.currentFlamegraph = new Flamegraph(await readTextFile(profileUri));
         extensionState.profileUri = profileUri;
         extensionState.focusNode = 0;
         extensionState.profileVisible = true;
@@ -41,7 +41,7 @@ export function loadProfileCommand(context: vscode.ExtensionContext) {
             return;
         }
 
-        extensionState.currentFlamegraph = await Flamegraph.load(profileUri);
+        extensionState.currentFlamegraph = new Flamegraph(await readTextFile(profileUri));
         extensionState.profileUri = profileUri;
         extensionState.focusNode = 0;
         extensionState.profileVisible = true;
@@ -67,7 +67,7 @@ export function toggleProfileCommand() {
                 return;
             }
             if (!extensionState.currentFlamegraph) {
-                extensionState.currentFlamegraph = await Flamegraph.load(profileUri);
+                extensionState.currentFlamegraph = new Flamegraph(await readTextFile(profileUri));
             }
             extensionState.profileVisible = true;
         }
@@ -226,7 +226,7 @@ export function showFlamegraphCommand(context: vscode.ExtensionContext) {
             return;
         }
         if (!extensionState.currentFlamegraph) {
-            extensionState.currentFlamegraph = await Flamegraph.load(profileUri);
+            extensionState.currentFlamegraph = new Flamegraph(await readTextFile(profileUri));
         }
         extensionState.profileVisible = true;
         extensionState.updateUI();
