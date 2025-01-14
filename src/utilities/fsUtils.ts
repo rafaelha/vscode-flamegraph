@@ -110,7 +110,7 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
             {
                 location: vscode.ProgressLocation.Notification,
                 title: 'Installing py-spy...',
-                cancellable: false,
+                cancellable: true,
             },
             async (progress) => {
                 return new Promise<boolean>((resolve) => {
