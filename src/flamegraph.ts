@@ -89,16 +89,6 @@ export class Flamegraph {
     }
 
     /**
-     * Loads a profile from a file.
-     * @param profileUri - The URI of the profile file.
-     * @returns A new Flamegraph instance.
-     */
-    public static async load(profileUri: Uri) {
-        const profileString = await readTextFile(profileUri);
-        return new Flamegraph(profileString);
-    }
-
-    /**
      * Parses a frame string into a frame ID, function ID, and line number.
      * @param frameString - The frame string to parse.
      * @returns A tuple containing the frame ID, function ID, and line number.
