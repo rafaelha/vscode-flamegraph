@@ -93,7 +93,7 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
             },
             async (progress) => {
                 return new Promise<boolean>((resolve) => {
-                    const install = spawn('pip', ['install', 'py-spy']);
+                    const install = spawn('python3', ['-m', 'pip', 'install', 'py-spy']);
                     let errorOutput = '';
 
                     install.stdout.on('data', (data: Buffer) => {
@@ -105,6 +105,11 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
                         const error = data.toString().trim();
                         errorOutput += error;
                         progress.report({ message: error });
+                    });
+
+                    install.on('error', (error) => {
+                        errorOutput += error;
+                        resolve(false);
                     });
 
                     install.on('close', (code: number) => {
