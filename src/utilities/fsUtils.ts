@@ -77,6 +77,12 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
         await execAsync('py-spy --version');
         return true;
     } catch {
+        const pythonPath = await getPythonPath();
+        if (!pythonPath) {
+            vscode.window.showErrorMessage('Could not find Python installation');
+            return false;
+        }
+
         const installPySpy = await vscode.window.showInformationMessage(
             'py-spy is not installed. Would you like to install it?',
             'Yes',
@@ -93,7 +99,7 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
             },
             async (progress) => {
                 return new Promise<boolean>((resolve) => {
-                    const install = spawn('python3', ['-m', 'pip', 'install', 'py-spy']);
+                    const install = spawn(pythonPath, ['-m', 'pip', 'install', 'py-spy']);
                     let errorOutput = '';
 
                     install.stdout.on('data', (data: Buffer) => {
