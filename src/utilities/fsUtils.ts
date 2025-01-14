@@ -77,16 +77,32 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
         await execAsync('py-spy --version');
         return true;
     } catch {
-        let pythonPath = await getPythonPath();
-        if (!pythonPath) {
-            pythonPath = 'python3';
-        }
-
         const installPySpy = await vscode.window.showInformationMessage(
             'py-spy is not installed. Would you like to install it?',
             'Yes',
             'No'
         );
+
+        // get the python path for installying py-spy via the command
+        // `global/path/python-m pip install py-spy`
+        // TODO: this section should be improved. Do we really want to install py-spy globally?
+        let pythonPath = 'python3';
+        try {
+            execAsync('python3 --version'); // this should work for linux and macos
+        } catch {
+            try {
+                execAsync('python --version'); // this should work for windows
+                pythonPath = 'python';
+            } catch {
+                // otherwise fallback to the python path selected in the Python extension
+                const interpreterPath = await getPythonPath();
+                if (!interpreterPath) {
+                    vscode.window.showErrorMessage('Please select a Python interpreter.');
+                    return false;
+                }
+                pythonPath = interpreterPath;
+            }
+        }
 
         if (installPySpy !== 'Yes') return false;
 
@@ -94,7 +110,7 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
             {
                 location: vscode.ProgressLocation.Notification,
                 title: 'Installing py-spy...',
-                cancellable: true,
+                cancellable: false,
             },
             async (progress) => {
                 return new Promise<boolean>((resolve) => {
@@ -118,7 +134,7 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
                     });
 
                     install.on('close', (code: number) => {
-                        if (code === 0) {
+                        if (code === 0 && errorOutput === '') {
                             vscode.window.showInformationMessage('py-spy installed successfully');
                             resolve(true);
                         } else {
