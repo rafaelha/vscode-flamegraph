@@ -106,9 +106,7 @@ export function FlameGraph({
         const percentageOfTotal = ((samples / rootValue) * 100).toFixed(1);
         const percentageOfFocus = ((samples / focusNode.samples) * 100).toFixed(1);
         const tooltipContent = [
-            fileName
-                ? `${functionName} (${line ? `${fileName}:${line}` : fileName})`
-                : functionName,
+            fileName ? `${functionName} (${line ? `${fileName}:${line}` : fileName})` : functionName,
             sourceCode,
             `${samples / 100}s / ${percentageOfTotal}% / ${percentageOfFocus}%`,
         ]
