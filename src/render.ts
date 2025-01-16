@@ -105,6 +105,15 @@ function makeToolTip(nodes: Flamenode[], samples: number, flamegraph: Flamegraph
 }
 
 /**
+ * Clears the line decorations for the active editor.
+ *
+ * @param activeEditor - The active editor.
+ */
+function clearDecorations(activeEditor: vscode.TextEditor) {
+    activeEditor.setDecorations(lineColorDecorationType, []);
+}
+
+/**
  * Updates the line decorations for the active editor.
  *
  * @param activeEditor - The active editor.
@@ -112,7 +121,9 @@ function makeToolTip(nodes: Flamenode[], samples: number, flamegraph: Flamegraph
 export function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
     const { focusNode, profileVisible, currentFlamegraph: flamegraph } = extensionState;
     const theme = getCurrentTheme();
-    if (!profileVisible || !activeEditor || !flamegraph) {
+    if (!activeEditor) return;
+    if (!profileVisible || !flamegraph) {
+        clearDecorations(activeEditor);
         return;
     }
 
@@ -124,7 +135,7 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
     const lineProfiles = flamegraph.getFileProfile(filePath, focusNode);
 
     if (!lineProfiles) {
-        activeEditor.setDecorations(lineColorDecorationType, []);
+        clearDecorations(activeEditor);
         return;
     }
 
@@ -139,7 +150,7 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
     }
 
     if (!anyDecorations) {
-        activeEditor.setDecorations(lineColorDecorationType, []);
+        clearDecorations(activeEditor);
         return;
     }
 
