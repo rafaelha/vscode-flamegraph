@@ -41,7 +41,7 @@ export function FlameNode({
 
     if (!functionData) return null;
 
-    const { module, moduleHue, functionHue, fileName, filePath, functionName, shortFunctionName } = functionData;
+    const { module, moduleHue, functionHue, fileName, functionName, shortFunctionName } = functionData;
 
     const isHovered = hoveredLineId === frameId && !fileName?.startsWith('<') && fileName !== '';
     const isRelatedFunction = hoveredFunctionId === functionId && !fileName?.startsWith('<') && fileName !== '';
@@ -65,6 +65,7 @@ export function FlameNode({
     const tooltipContent = [
         fileName ? `${functionName} (${line ? `${fileName}:${line}` : fileName})` : functionName,
         sourceCode,
+        module,
         `${samples / 100}s / ${percentageOfTotal}% / ${percentageOfFocus}%`,
     ]
         .filter(Boolean)

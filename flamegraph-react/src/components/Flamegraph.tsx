@@ -24,7 +24,7 @@ function filterTree(hiddenModules: Set<string>, root: Flamenode, functions: Func
         node.children = [];
         for (const child of children) {
             for (const filteredChild of getValidChildren(child)) {
-                node.children.push({ ...filteredChild, parent: node, mergedUids: [node.uid] });
+                node.children.push({ ...filteredChild, parent: node, mergedUids: [filteredChild.uid] });
             }
         }
 
@@ -99,7 +99,7 @@ export function FlameGraph({
         return modules;
     }, [root, functions]);
 
-    const [hiddenModules, setHiddenModules] = useState<Set<string>>(() => new Set<string>());
+    const [hiddenModules, setHiddenModules] = useState<Set<string>>(() => new Set(['<importlib>']));
 
     const filteredRoot = React.useMemo(
         () => filterTree(hiddenModules, root, functions),
@@ -118,7 +118,7 @@ export function FlameGraph({
             setFocusNode(node);
             vscode.postMessage({
                 command: 'set-focus-node',
-                uid: node.uid,
+                uids: node.mergedUids || [node.uid],
                 focusFunctionId: functions[node.functionId]?.functionName,
             });
         },

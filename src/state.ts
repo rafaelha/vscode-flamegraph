@@ -14,7 +14,7 @@ class ExtensionState {
 
     private _profileVisible: boolean = false;
 
-    private _focusNode: number = 0;
+    private _focusNode: number[] = [0];
 
     private _activeProfileWatcher?: vscode.FileSystemWatcher;
 
@@ -84,7 +84,7 @@ class ExtensionState {
      * Gets the current focus node, i.e. the node that is currently selected in the react flamegraph
      * @returns The current focus node
      */
-    get focusNode(): number {
+    get focusNode(): number[] {
         return this._focusNode;
     }
 
@@ -92,7 +92,7 @@ class ExtensionState {
      * Sets the current focus node, i.e. the node that is currently selected in the react flamegraph
      * @param node The new focus node
      */
-    set focusNode(node: number) {
+    set focusNode(node: number[]) {
         this._focusNode = node;
     }
 

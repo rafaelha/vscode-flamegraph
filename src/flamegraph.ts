@@ -288,7 +288,7 @@ export class Flamegraph {
      * with the visible nodes in the react flamegraph.
      * @returns The profile data for the file, as an array of LineProfile objects.
      */
-    public getFileProfile(filePath: string, focusUid?: number): LineProfile[] | undefined {
+    public getFileProfile(filePath: string, focusUid?: number[]): LineProfile[] | undefined {
         filePath = toUnixPath(filePath).toLowerCase(); // use lower case since Windows is case insensitive
         // TODO: only use lower case on OS that are case insensitive
         const filename = basename(filePath);
@@ -304,7 +304,7 @@ export class Flamegraph {
 
         const { lineProfiles } = fileIndex[i];
         if (!lineProfiles) return undefined;
-        if (!focusUid || focusUid === 0) return lineProfiles;
+        if (!focusUid || (focusUid.length === 1 && focusUid[0] === 0)) return lineProfiles;
 
         const filteredLineProfiles: LineProfile[] = [];
         for (const lineProfile of lineProfiles) {
@@ -322,10 +322,13 @@ export class Flamegraph {
      * @param focusUid - The UID of the focus node.
      * @returns The filtered nodes.
      */
-    private filterNodes(nodes: Flamenode[], focusUid: number): Flamenode[] {
+    private filterNodes(nodes: Flamenode[], focusUid: number[]): Flamenode[] {
         return nodes.filter((node) => {
-            const focusNode = this.nodes[focusUid];
-            return this.isChildOrAncestor(node, focusNode) && node.ownSamples > 0;
+            for (const uid of focusUid) {
+                const focusNode = this.nodes[uid];
+                if (node.ownSamples > 0 && this.isChildOrAncestor(node, focusNode)) return true;
+            }
+            return false;
         });
     }
 

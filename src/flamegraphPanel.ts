@@ -184,8 +184,8 @@ export class FlamegraphPanel {
                         break;
 
                     case 'set-focus-node': {
-                        const { uid } = message;
-                        extensionState.focusNode = uid;
+                        const { uids } = message;
+                        extensionState.focusNode = uids;
                         extensionState.updateUI();
                         break;
                     }

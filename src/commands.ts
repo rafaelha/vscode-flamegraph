@@ -16,7 +16,7 @@ const handleProfileUpdate = async (context: vscode.ExtensionContext, profileUri:
     try {
         extensionState.currentFlamegraph = new Flamegraph(await readTextFile(profileUri));
         extensionState.profileUri = profileUri;
-        extensionState.focusNode = 0;
+        extensionState.focusNode = [0];
         extensionState.profileVisible = true;
         extensionState.updateUI();
         FlamegraphPanel.render(context.extensionUri);
@@ -43,7 +43,7 @@ export function loadProfileCommand(context: vscode.ExtensionContext) {
 
         extensionState.currentFlamegraph = new Flamegraph(await readTextFile(profileUri));
         extensionState.profileUri = profileUri;
-        extensionState.focusNode = 0;
+        extensionState.focusNode = [0];
         extensionState.profileVisible = true;
         extensionState.updateUI();
         FlamegraphPanel.render(context.extensionUri);
