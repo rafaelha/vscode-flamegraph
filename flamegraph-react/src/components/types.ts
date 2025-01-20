@@ -23,6 +23,7 @@ export type Function = {
 
 export type Flamenode = {
     uid: number;
+    mergedUids?: number[];
     frameId: FrameId; // unique id for the frame, which is (functionName, filePath, lineNumber)
     functionId: FunctionId; // unique id for the function, which is (functionName, filePath)
     line?: LineNumber;

@@ -1,9 +1,79 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './Flamegraph.css';
 import { vscode } from '../utilities/vscode';
 import { Legend } from './Legend';
 import { Flamenode, Function } from './types';
 import { FlameNode } from './FlameNode';
+
+function filterTree(hiddenModules: Set<string>, root: Flamenode, functions: Function[]): Flamenode {
+    function getValidChildren(child: Flamenode): Flamenode[] {
+        const module = functions[child.functionId]?.module;
+        const children: Flamenode[] = [];
+        if (!module || !hiddenModules.has(module)) {
+            children.push({ ...child, mergedUids: [child.uid] });
+        } else {
+            for (const child2 of child.children) {
+                children.push(...getValidChildren(child2));
+            }
+        }
+        return children;
+    }
+
+    function filter(node: Flamenode) {
+        const children = node.children;
+        node.children = [];
+        for (const child of children) {
+            for (const filteredChild of getValidChildren(child)) {
+                node.children.push({ ...filteredChild, parent: node, mergedUids: [node.uid] });
+            }
+        }
+
+        for (const child of node.children) {
+            filter(child);
+        }
+    }
+
+    const rootCopy: Flamenode = { ...root };
+
+    filter(rootCopy);
+
+    // perform a post order traversal to merge nodes with same functionId and line
+    function merge(node: Flamenode) {
+        // Sort children by functionId and line
+        node.children.sort((a, b) => {
+            const aKey = `${a.functionId}-${a.line}`;
+            const bKey = `${b.functionId}-${b.line}`;
+            return aKey.localeCompare(bKey);
+        });
+
+        // Merge nodes with the same functionId and line
+        const mergedChildren: Flamenode[] = [];
+        for (const child of node.children) {
+            const lastMerged = mergedChildren[mergedChildren.length - 1];
+
+            if (lastMerged && lastMerged.functionId === child.functionId && lastMerged.line === child.line) {
+                // Merge samples
+                lastMerged.samples += child.samples;
+                lastMerged.mergedUids ??= [lastMerged.uid];
+                lastMerged.mergedUids.push(child.uid);
+                lastMerged.children.push(...child.children);
+            } else {
+                // Add new child to mergedChildren
+                mergedChildren.push(child);
+            }
+        }
+        node.children = mergedChildren;
+
+        // Recursively merge children
+        for (const child of node.children) {
+            merge(child);
+        }
+    }
+
+    merge(rootCopy);
+
+    return rootCopy;
+}
 
 export function FlameGraph({
     root,
@@ -14,16 +84,37 @@ export function FlameGraph({
     functions: Function[];
     height?: number;
 }) {
-    const [focusNode, setFocusNode] = useState<Flamenode>(root);
+    // Initialize modules once
+    const initialModules = useMemo(() => {
+        const modules = new Map<string, { hue: number }>();
+        function collectModules(node: Flamenode) {
+            const functionData = functions[node.functionId];
+            const module = functionData?.module;
+            if (module && !modules.has(module)) {
+                modules.set(module, { hue: functionData.moduleHue });
+            }
+            node.children.forEach(collectModules);
+        }
+        collectModules(root);
+        return modules;
+    }, [root, functions]);
+
+    const [hiddenModules, setHiddenModules] = useState<Set<string>>(() => new Set<string>());
+
+    const filteredRoot = React.useMemo(
+        () => filterTree(hiddenModules, root, functions),
+        [hiddenModules, root, functions]
+    );
+
+    const [focusNode, setFocusNode] = useState<Flamenode>(filteredRoot);
     const [hoveredLineId, setHoveredLineId] = useState<number | null>(null);
     const [hoveredFunctionId, setHoveredFunctionId] = useState<number | null>(null);
     const [isCommandPressed, setIsCommandPressed] = useState(false);
-
-    const rootValue = root.samples;
+    const rootValue = filteredRoot.samples;
 
     React.useEffect(() => {
-        setFocusNode(root);
-    }, [root]);
+        setFocusNode(filteredRoot);
+    }, [filteredRoot]);
 
     useEffect(() => {
         function handleKeyDown(e: KeyboardEvent) {
@@ -67,16 +158,15 @@ export function FlameGraph({
     const moduleMap = new Map<string, { hue: number; totalValue: number }>();
 
     function filter(node: Flamenode): boolean {
-        const module = functions[node.functionId]?.module;
-        if (module) {
-            const existing = moduleMap.get(module);
-            moduleMap.set(module, {
-                hue: existing?.hue || functions[node.functionId]?.moduleHue || 0,
-                totalValue: (existing?.totalValue || 0) + node.samples,
-            });
-        }
-
-        return functions[node.functionId]?.fileName?.startsWith('<') ?? false;
+        const functionData = functions[node.functionId];
+        const module = functionData?.module;
+        if (!module) return false;
+        const existing = moduleMap.get(module);
+        moduleMap.set(module, {
+            hue: existing?.hue || functionData.moduleHue,
+            totalValue: (existing?.totalValue || 0) + node.samples,
+        });
+        return false;
     }
 
     // Calculate focusDepth once
@@ -181,14 +271,40 @@ export function FlameGraph({
 
     const renderedNodes = renderNodes();
 
-    const legendItems = Array.from(moduleMap.entries())
-        .map(([name, { hue, totalValue }]) => ({ name, hue, totalValue }))
-        .sort((a, b) => b.totalValue - a.totalValue);
+    // Compute legend items with proper ordering
+    const legendItems = Array.from(initialModules.entries())
+        .map(([name]) => {
+            const moduleData = moduleMap.get(name) || { hue: initialModules.get(name)!.hue, totalValue: 0 };
+            return { name, hue: moduleData.hue, totalValue: moduleData.totalValue };
+        })
+        .filter((item) => hiddenModules.has(item.name) || item.totalValue > 0) // Only show items that are either hidden or have value
+        .sort((a, b) => {
+            // First sort by hidden status
+            const aHidden = hiddenModules.has(a.name);
+            const bHidden = hiddenModules.has(b.name);
+            if (aHidden !== bHidden) return aHidden ? -1 : 1;
+            // Then sort by total value
+            return b.totalValue - a.totalValue;
+        });
 
     return (
         <div className="flamegraph relative">
             {renderedNodes}
-            <Legend items={legendItems} />
+            <Legend
+                items={legendItems}
+                hiddenModules={hiddenModules}
+                onModuleVisibilityChange={(moduleName, isVisible) => {
+                    setHiddenModules((prev) => {
+                        const next = new Set(prev);
+                        if (isVisible) {
+                            next.delete(moduleName);
+                        } else {
+                            next.add(moduleName);
+                        }
+                        return next;
+                    });
+                }}
+            />
         </div>
     );
 }
