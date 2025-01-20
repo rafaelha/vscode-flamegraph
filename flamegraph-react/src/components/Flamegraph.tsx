@@ -3,8 +3,7 @@ import './Flamegraph.css';
 import { vscode } from '../utilities/vscode';
 import { Legend } from './Legend';
 import { Flamenode, Function } from './types';
-import { Highlight } from 'prism-react-renderer';
-import { minimalTheme } from '../utilities/themes';
+import { FlameNode } from './FlameNode';
 
 export function FlameGraph({
     root,
@@ -46,123 +45,90 @@ export function FlameGraph({
         };
     }, []);
 
+    function handleNodeClick(node: Flamenode, e: React.MouseEvent) {
+        if (e.metaKey || e.ctrlKey) {
+            const functionData = functions[node.functionId];
+            if (!functionData?.filePath) return;
+            vscode.postMessage({
+                command: 'open-file',
+                file: functionData.filePath,
+                line: node.line || 1,
+            });
+        } else {
+            setFocusNode(node);
+            vscode.postMessage({
+                command: 'set-focus-node',
+                uid: node.uid,
+                focusFunctionId: functions[node.functionId]?.functionName,
+            });
+        }
+    }
+
     const moduleMap = new Map<string, { hue: number; totalValue: number }>();
 
-    function renderNode(node: Flamenode, depth: number, focusDepth: number, x: number, width: number) {
-        // Update module map for legend
-        const { frameId, functionId, samples, line, sourceCode } = node;
-        const functionData = functions[functionId];
-        if (!functionData) return null;
-        let { module, moduleHue, functionHue, fileName, filePath, functionName, shortFunctionName } = functionData;
-        fileName = fileName || '';
-
+    function filter(node: Flamenode): boolean {
+        const module = functions[node.functionId]?.module;
         if (module) {
             const existing = moduleMap.get(module);
             moduleMap.set(module, {
-                hue: existing?.hue || moduleHue,
-                totalValue: (existing?.totalValue || 0) + samples,
+                hue: existing?.hue || functions[node.functionId]?.moduleHue || 0,
+                totalValue: (existing?.totalValue || 0) + node.samples,
             });
         }
 
-        const isHovered = hoveredLineId === frameId && !fileName.startsWith('<') && fileName !== '';
-        const isRelatedFunction = hoveredFunctionId === functionId && !fileName.startsWith('<') && fileName !== '';
+        return functions[node.functionId]?.fileName?.startsWith('<') ?? false;
+    }
 
-        const style = {
-            left: `${x * 100}%`,
-            width: `calc(${width * 100}% - 2px)`,
-            top: `${depth * height}px`,
-            height: `${height - 2}px`,
-            '--node-hue': isCommandPressed && isRelatedFunction ? functionHue : moduleHue,
-            position: 'absolute' as const,
-            opacity: depth < focusDepth ? 0.35 : 1,
-        };
+    // Calculate focusDepth once
+    let focusDepth = 0;
+    let current = focusNode;
+    filter(current);
+    while (current.parent) {
+        if (!filter(current.parent)) focusDepth++;
+        current = current.parent;
+    }
 
-        const handleClick = (e: React.MouseEvent) => {
-            if (e.metaKey || e.ctrlKey) {
-                if (!filePath) return;
-                // Send message to extension
-                vscode.postMessage({
-                    command: 'open-file',
-                    file: filePath,
-                    line: line || 1,
-                });
-            } else {
-                setFocusNode(node);
-                // get the stack of all parents uid
-                let callStack: number[] = [];
-                for (let current = node; current.parent; current = current.parent) callStack.push(current.parent.uid);
-                vscode.postMessage({
-                    command: 'set-focus-node',
-                    uid: node.uid,
-                    focusFunctionId: functionName,
-                    callStack: callStack,
-                });
-            }
-        };
-
-        const className = `graph-node ${isHovered && isCommandPressed ? 'same-line-id command-pressed' : ''}`;
-
-        // Add tooltip content
-        const percentageOfTotal = ((samples / rootValue) * 100).toFixed(1);
-        const percentageOfFocus = ((samples / focusNode.samples) * 100).toFixed(1);
-        const tooltipContent = [
-            fileName ? `${functionName} (${line ? `${fileName}:${line}` : fileName})` : functionName,
-            sourceCode,
-            `${samples / 100}s / ${percentageOfTotal}% / ${percentageOfFocus}%`,
-        ]
-            .filter(Boolean)
-            .join('\n');
-
+    function createFlameNode(node: Flamenode, depth: number, x: number, width: number) {
         return (
-            <div
+            <FlameNode
                 key={node.uid}
-                className={className}
-                style={style}
-                onClick={handleClick}
-                onMouseEnter={() => {
+                node={node}
+                functions={functions}
+                depth={depth}
+                focusDepth={focusDepth}
+                x={x}
+                width={width}
+                height={height}
+                rootValue={rootValue}
+                focusNodeValue={focusNode.samples}
+                isCommandPressed={isCommandPressed}
+                hoveredLineId={hoveredLineId}
+                hoveredFunctionId={hoveredFunctionId}
+                onNodeClick={handleNodeClick}
+                onNodeHover={(frameId, functionId) => {
                     setHoveredLineId(frameId);
                     setHoveredFunctionId(functionId);
                 }}
-                onMouseLeave={() => {
-                    setHoveredLineId(null);
-                    setHoveredFunctionId(null);
-                }}
-                title={tooltipContent}
-            >
-                {renderNodeContent(node, shortFunctionName || functionName, fileName, line, filePath)}
-            </div>
+            />
         );
     }
 
     function renderNodes(): React.ReactNode[] {
         const nodes: React.ReactNode[] = [];
 
-        function filter(node: Flamenode): boolean {
-            return functions[node.functionId]?.fileName?.startsWith('<') ?? false;
-        }
-
         // Render parents (full width)
-        let current = focusNode;
-
-        // Figure out the depth of the focus node by counting the number of parents
-        let focusDepth = 0;
-        while (current.parent) {
-            if (!filter(current.parent)) focusDepth++;
-            current = current.parent;
-        }
-
         current = focusNode;
         let depth = focusDepth;
         while (current.parent) {
             if (!filter(current.parent)) {
                 depth--;
-                nodes.push(renderNode(current.parent, depth, focusDepth, 0, 1));
+                nodes.push(createFlameNode(current.parent, depth, 0, 1));
             }
             current = current.parent;
         }
 
         // Render focus node (full width)
-        nodes.push(renderNode(focusNode, focusDepth, focusDepth, 0, 1));
+        nodes.push(createFlameNode(focusNode, focusDepth, 0, 1));
 
         let maxDepth = 0;
 
@@ -183,9 +149,8 @@ export function FlameGraph({
             node.children?.forEach((child) => {
                 const childWidth = child.samples / focusNode.samples;
                 if (!filter(child)) {
-                    nodes.push(renderNode(child, depth + 1, focusDepth, currentX, childWidth));
+                    nodes.push(createFlameNode(child, depth + 1, currentX, childWidth));
                     if (childWidth >= 0.008) {
-                        // Only process children if parent is large enough to be visible
                         renderChildren(child, depth + 1, currentX);
                     }
                     currentX += childWidth;
@@ -197,7 +162,7 @@ export function FlameGraph({
 
         renderChildren(focusNode, focusDepth, 0);
 
-        // Add a single invisible placeholder node at the bottom, for some scroll padding
+        // Add a single invisible placeholder node at the bottom
         nodes.push(
             <div
                 key="placeholder"
@@ -212,37 +177,6 @@ export function FlameGraph({
         );
 
         return nodes;
-    }
-
-    function renderNodeContent(
-        node: Flamenode,
-        functionName: string,
-        fileName?: string,
-        line?: number,
-        filePath?: string
-    ) {
-        const fileInfo = filePath ? (line ? `${fileName}:${line}` : fileName) : '';
-
-        return (
-            <div className="node-label">
-                <span>
-                    {node.sourceCode ? (
-                        <Highlight code={node.sourceCode} language="python" theme={minimalTheme}>
-                            {({ tokens, getTokenProps }) => (
-                                <>
-                                    {tokens[0].map((token, i) => (
-                                        <span key={i} {...getTokenProps({ token })} />
-                                    ))}
-                                </>
-                            )}
-                        </Highlight>
-                    ) : (
-                        functionName
-                    )}
-                </span>
-                <span>{fileInfo}</span>
-            </div>
-        );
     }
 
     const renderedNodes = renderNodes();
