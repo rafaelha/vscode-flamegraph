@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import './Flamegraph.css';
 import { vscode } from '../utilities/vscode';
 import { Legend } from './Legend';
@@ -112,9 +112,22 @@ export function FlameGraph({
     const [isCommandPressed, setIsCommandPressed] = useState(false);
     const rootValue = filteredRoot.samples;
 
+    // Helper function to handle focus node changes
+    const handleFocusNodeChange = useCallback(
+        (node: Flamenode) => {
+            setFocusNode(node);
+            vscode.postMessage({
+                command: 'set-focus-node',
+                uid: node.uid,
+                focusFunctionId: functions[node.functionId]?.functionName,
+            });
+        },
+        [functions]
+    );
+
     React.useEffect(() => {
-        setFocusNode(filteredRoot);
-    }, [filteredRoot]);
+        handleFocusNodeChange(filteredRoot);
+    }, [filteredRoot, handleFocusNodeChange]);
 
     useEffect(() => {
         function handleKeyDown(e: KeyboardEvent) {
@@ -146,12 +159,7 @@ export function FlameGraph({
                 line: node.line || 1,
             });
         } else {
-            setFocusNode(node);
-            vscode.postMessage({
-                command: 'set-focus-node',
-                uid: node.uid,
-                focusFunctionId: functions[node.functionId]?.functionName,
-            });
+            handleFocusNodeChange(node);
         }
     }
 
