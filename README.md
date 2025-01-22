@@ -1,8 +1,12 @@
 # Flamegraphs in VS Code - Visualizing Profiles from the py-spy profiler
 
-Getting started is easy. Just run the command `Flamegraph: Profile active file with py-spy`. That's it!
+Getting started is easy. 
 
-(Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac) to open the command palette, then select the command.)
+1. Navigate to tab in editor with Python file you would like to profile 
+2. Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac) to open the command palette
+3. Select the command `Flamegraph: Profile active file with py-spy`
+
+That's it!
 
 Your code will be profiled using `py-spy`. Once finished (or interrupted via `Ctrl+C`), the profiling results are visualized as line annotations in the editor and shown as a flamegraph in a new tab.
 
