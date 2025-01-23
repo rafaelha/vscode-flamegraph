@@ -139,14 +139,30 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
     return vscode.commands.registerCommand('flamegraph.runProfiler', async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
-            vscode.window.showErrorMessage('No active editor found.');
+            vscode.window.showErrorMessage(
+                'No file is currently selected. Please open a Python file in an editor tab and try again.'
+            );
+            return;
+        }
+        if (!editor.document.uri.fsPath.endsWith('.py')) {
+            vscode.window.showErrorMessage(
+                'Only Python files are supported. Please open a Python file in an editor tab and try again.'
+            );
             return;
         }
         const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
         if (!workspaceFolder) {
-            vscode.window.showErrorMessage(
-                'File is not part of a workspace or folder. Please open the folder containing the file.'
-            );
+            vscode.window
+                .showErrorMessage(
+                    `The file ${path.basename(editor.document.uri.fsPath)} is not part of a workspace or folder. Please open the folder containing the file.`,
+                    { modal: true },
+                    'Open Folder'
+                )
+                .then((selection) => {
+                    if (selection === 'Open Folder') {
+                        vscode.commands.executeCommand('workbench.action.files.openFolder');
+                    }
+                });
             return;
         }
         const pythonPath = await getPythonPath();
