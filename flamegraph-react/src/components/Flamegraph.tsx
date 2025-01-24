@@ -4,76 +4,7 @@ import { vscode } from '../utilities/vscode';
 import { Legend } from './Legend';
 import { Flamenode, Function } from './types';
 import { FlameNode } from './FlameNode';
-
-function filterTree(hiddenModules: Set<string>, root: Flamenode, functions: Function[]): Flamenode {
-    function getValidChildren(child: Flamenode): Flamenode[] {
-        const module = functions[child.functionId]?.module;
-        const children: Flamenode[] = [];
-        if (!module || !hiddenModules.has(module)) {
-            children.push({ ...child, mergedUids: [child.uid] });
-        } else {
-            for (const child2 of child.children) {
-                children.push(...getValidChildren(child2));
-            }
-        }
-        return children;
-    }
-
-    function filter(node: Flamenode) {
-        const children = node.children;
-        node.children = [];
-        for (const child of children) {
-            for (const filteredChild of getValidChildren(child)) {
-                node.children.push({ ...filteredChild, parent: node, mergedUids: [filteredChild.uid] });
-            }
-        }
-
-        for (const child of node.children) {
-            filter(child);
-        }
-    }
-
-    const rootCopy: Flamenode = { ...root };
-
-    filter(rootCopy);
-
-    // perform a post order traversal to merge nodes with same functionId and line
-    function merge(node: Flamenode) {
-        // Sort children by functionId and line
-        node.children.sort((a, b) => {
-            const aKey = `${a.functionId}-${a.line}`;
-            const bKey = `${b.functionId}-${b.line}`;
-            return aKey.localeCompare(bKey);
-        });
-
-        // Merge nodes with the same functionId and line
-        const mergedChildren: Flamenode[] = [];
-        for (const child of node.children) {
-            const lastMerged = mergedChildren[mergedChildren.length - 1];
-
-            if (lastMerged && lastMerged.functionId === child.functionId && lastMerged.line === child.line) {
-                // Merge samples
-                lastMerged.samples += child.samples;
-                lastMerged.mergedUids ??= [lastMerged.uid];
-                lastMerged.mergedUids.push(child.uid);
-                lastMerged.children.push(...child.children);
-            } else {
-                // Add new child to mergedChildren
-                mergedChildren.push(child);
-            }
-        }
-        node.children = mergedChildren;
-
-        // Recursively merge children
-        for (const child of node.children) {
-            merge(child);
-        }
-    }
-
-    merge(rootCopy);
-
-    return rootCopy;
-}
+import { filterTreeByModule } from '../utilities/filter';
 
 export function FlameGraph({
     root,
@@ -84,7 +15,7 @@ export function FlameGraph({
     functions: Function[];
     height?: number;
 }) {
-    // Initialize modules once
+    // Initialize a map of all modules in the flamegraph to their hues
     const moduleDict = useMemo(() => {
         const modules = new Map<string, { hue: number }>();
         function collectModules(node: Flamenode) {
@@ -102,7 +33,7 @@ export function FlameGraph({
     const [hiddenModules, setHiddenModules] = useState<Set<string>>(() => new Set(['<importlib>']));
 
     const filteredRoot = React.useMemo(
-        () => filterTree(hiddenModules, root, functions),
+        () => filterTreeByModule(hiddenModules, root, functions),
         [hiddenModules, root, functions]
     );
 
@@ -163,26 +94,26 @@ export function FlameGraph({
         }
     }
 
-    const moduleMap = new Map<string, { hue: number; totalValue: number }>();
+    const moduleCount = new Map<string, { hue: number; totalValue: number }>();
 
-    function filter(node: Flamenode): boolean {
+    function getModuleCount(node: Flamenode) {
         const functionData = functions[node.functionId];
         const module = functionData?.module;
         if (!module) return false;
-        const existing = moduleMap.get(module);
-        moduleMap.set(module, {
+        const existing = moduleCount.get(module);
+        moduleCount.set(module, {
             hue: existing?.hue || functionData.moduleHue,
             totalValue: (existing?.totalValue || 0) + node.samples,
         });
-        return false;
     }
 
     // Calculate focusDepth once
     let focusDepth = 0;
     let current = focusNode;
-    filter(current);
+    getModuleCount(current);
     while (current.parent) {
-        if (!filter(current.parent)) focusDepth++;
+        getModuleCount(current.parent);
+        focusDepth += 1;
         current = current.parent;
     }
 
@@ -212,16 +143,16 @@ export function FlameGraph({
     }
 
     function renderNodes(): React.ReactNode[] {
+        console.log('render nodes');
         const nodes: React.ReactNode[] = [];
 
         // Render parents (full width)
         current = focusNode;
         let depth = focusDepth;
         while (current.parent) {
-            if (!filter(current.parent)) {
-                depth--;
-                nodes.push(createFlameNode(current.parent, depth, 0, 1));
-            }
+            getModuleCount(current.parent);
+            depth -= 1;
+            nodes.push(createFlameNode(current.parent, depth, 0, 1));
             current = current.parent;
         }
 
@@ -246,15 +177,12 @@ export function FlameGraph({
 
             node.children?.forEach((child) => {
                 const childWidth = child.samples / focusNode.samples;
-                if (!filter(child)) {
-                    nodes.push(createFlameNode(child, depth + 1, currentX, childWidth));
-                    if (childWidth >= 0.008) {
-                        renderChildren(child, depth + 1, currentX);
-                    }
-                    currentX += childWidth;
-                } else {
-                    renderChildren(child, depth, currentX);
+                getModuleCount(child);
+                nodes.push(createFlameNode(child, depth + 1, currentX, childWidth));
+                if (childWidth >= 0.008) {
+                    renderChildren(child, depth + 1, currentX);
                 }
+                currentX += childWidth;
             });
         }
 
@@ -282,7 +210,7 @@ export function FlameGraph({
     // Compute legend items with proper ordering
     const legendItems = Array.from(moduleDict.entries())
         .map(([name]) => {
-            const moduleData = moduleMap.get(name) || { hue: moduleDict.get(name)!.hue, totalValue: 0 };
+            const moduleData = moduleCount.get(name) || { hue: moduleDict.get(name)!.hue, totalValue: 0 };
             return { name, hue: moduleData.hue, totalValue: moduleData.totalValue };
         })
         .filter((item) => hiddenModules.has(item.name) || item.totalValue > 0) // Only show items that are either hidden or have value
