@@ -14,7 +14,17 @@ Then, the profiling results are visualized as line annotations in the editor and
 
 ![A demo of the extension](https://github.com/rafaelha/vscode-flamegraph/blob/main/assets/demo.gif?raw=true)
 
-This is an early version of the extension and is still under active development. Currently only py-spy generated profiles are supported but support for other formats is planned. Browse your code to identify performance bottlenecks.
+
+> **Note:** On macOS, `py-spy` requires root privileges. To avoid entering your password repeatedly, you can add `py-spy` to the sudoers file by running:
+> ```bash
+> sudo visudo -f /private/etc/sudoers.d/myOverrides
+> ```
+>
+> Then, add the following line to the file:
+> ```
+> username ALL=(ALL) NOPASSWD: /path/to/py-spy
+> ```
+> Replace `username` with your actual username and `/path/to/py-spy` with the path to the `py-spy` executable (you can find it by running `which py-spy` in your terminal).
 
 ## Usage
 
@@ -27,7 +37,7 @@ The extension visualizes profiling data in two ways:
    - Click parent elements to zoom out
    - `Cmd+Click` (Mac) or `Ctrl+Click` (Windows/Linux) any element to jump directly to that code.
 
-**The inline annotations and flamegraph are linked**:
+The inline annotations and flamegraph are linked:
 When you zoom in the flamegraph, the inline annotations automatically filter to show only the timing data for the visible part of the flamegraph.
 
 ![Interactive flamegraph demo](https://github.com/rafaelha/vscode-flamegraph/blob/main/assets/demo-interactive-flame-graph.gif?raw=true)
