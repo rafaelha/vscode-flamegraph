@@ -85,7 +85,7 @@ export function FlameGraph({
     height?: number;
 }) {
     // Initialize modules once
-    const initialModules = useMemo(() => {
+    const moduleDict = useMemo(() => {
         const modules = new Map<string, { hue: number }>();
         function collectModules(node: Flamenode) {
             const functionData = functions[node.functionId];
@@ -280,9 +280,9 @@ export function FlameGraph({
     const renderedNodes = renderNodes();
 
     // Compute legend items with proper ordering
-    const legendItems = Array.from(initialModules.entries())
+    const legendItems = Array.from(moduleDict.entries())
         .map(([name]) => {
-            const moduleData = moduleMap.get(name) || { hue: initialModules.get(name)!.hue, totalValue: 0 };
+            const moduleData = moduleMap.get(name) || { hue: moduleDict.get(name)!.hue, totalValue: 0 };
             return { name, hue: moduleData.hue, totalValue: moduleData.totalValue };
         })
         .filter((item) => hiddenModules.has(item.name) || item.totalValue > 0) // Only show items that are either hidden or have value
