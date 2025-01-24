@@ -40,15 +40,17 @@ const handleProfileUpdate = async (context: vscode.ExtensionContext, profileUri:
  * @returns The command registration.
  */
 export function loadProfileCommand(context: vscode.ExtensionContext) {
-    return vscode.commands.registerCommand('flamegraph.loadProfile', async () => {
-        const profileUri = await selectProfileFile();
-        if (!profileUri) {
+    return vscode.commands.registerCommand('flamegraph.loadProfile', async (fileUri?: vscode.Uri) => {
+        if (!fileUri) {
+            fileUri = await selectProfileFile();
+        }
+        if (!fileUri) {
             vscode.window.showErrorMessage('No profile file selected.');
             return;
         }
 
-        extensionState.currentFlamegraph = new Flamegraph(await readTextFile(profileUri));
-        extensionState.profileUri = profileUri;
+        extensionState.currentFlamegraph = new Flamegraph(await readTextFile(fileUri));
+        extensionState.profileUri = fileUri;
         extensionState.focusNode = [0];
         extensionState.profileVisible = true;
         extensionState.updateUI();
@@ -96,7 +98,7 @@ async function runTask(
     command: string,
     flags: string
 ): Promise<void> {
-    const profilePath = path.join(workspaceFolder.uri.fsPath, '.pyspy-profile');
+    const profilePath = path.join(workspaceFolder.uri.fsPath, 'profile.pyspy');
     const profileUri = vscode.Uri.file(profilePath);
 
     const pySpyInstalled = await checkAndInstallProfiler();
@@ -105,7 +107,7 @@ async function runTask(
     // Setup file watcher
     if (!extensionState.activeProfileWatcher) {
         const watcher = vscode.workspace.createFileSystemWatcher(
-            new vscode.RelativePattern(workspaceFolder, '.pyspy-profile')
+            new vscode.RelativePattern(workspaceFolder, 'profile.pyspy')
         );
         extensionState.activeProfileWatcher = watcher;
     }
@@ -118,7 +120,7 @@ async function runTask(
     // Create task definition
     const taskDefinition: vscode.TaskDefinition = {
         type: 'shell',
-        command: `${sudo}py-spy record --output .pyspy-profile --format raw --full-filenames ${flags} ${command}`,
+        command: `${sudo}py-spy record --output profile.pyspy --format raw --full-filenames ${flags} ${command}`,
     };
 
     // Create the task
@@ -142,31 +144,42 @@ async function runTask(
  * @returns The command registration.
  */
 export function runProfilerCommand(context: vscode.ExtensionContext) {
-    return vscode.commands.registerCommand('flamegraph.runProfiler', async () => {
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            vscode.window.showErrorMessage(
-                'No file is currently selected. Please open a Python file in an editor tab and try again.'
-            );
-            return;
+    return vscode.commands.registerCommand('flamegraph.runProfiler', async (fileUri?: vscode.Uri) => {
+        // If called with a file URI, use that file. Otherwise, use the uri from the active editor
+        let targetUri: vscode.Uri;
+        if (fileUri) {
+            targetUri = fileUri;
+        } else {
+            const editor = vscode.window.activeTextEditor;
+            if (!editor) {
+                vscode.window.showErrorMessage(
+                    'No file is currently selected. Please open a Python file in an editor tab and try again.'
+                );
+                return;
+            }
+            targetUri = editor.document.uri;
         }
-        if (!editor.document.uri.fsPath.endsWith('.py')) {
+
+        if (!targetUri.fsPath.endsWith('.py')) {
             vscode.window.showErrorMessage(
                 'Only Python files are supported. Please open a Python file in an editor tab and try again.'
             );
             return;
         }
-        const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+
+        const workspaceFolder = vscode.workspace.getWorkspaceFolder(targetUri);
         if (!workspaceFolder) {
-            promptUserToOpenFolder(editor.document.uri);
+            promptUserToOpenFolder(targetUri);
             return;
         }
+
         const pythonPath = await getPythonPath();
         if (!pythonPath) {
             vscode.window.showErrorMessage('No Python interpreter selected. Please select a Python interpreter.');
             return;
         }
-        const filePath = editor.document.uri.fsPath;
+
+        const filePath = targetUri.fsPath;
         const command = `"${pythonPath}" "${filePath}"`;
         const flags = '--subprocesses';
         runTask(context, workspaceFolder, command, flags);

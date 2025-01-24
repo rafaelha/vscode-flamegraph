@@ -34,7 +34,7 @@
             },
             {
                 "command": "flamegraph.runProfiler",
-                "title": "Flamegraph: Profile active file with py-spy"
+                "title": "Flamegraph: Profile file with py-spy"
             },
             {
                 "command": "flamegraph.attachProfiler",
@@ -44,7 +44,21 @@
                 "command": "flamegraph.attachNativeProfiler",
                 "title": "Flamegraph: Attach py-spy to running process (native)"
             }
-        ]
+        ],
+        "menus": {
+            "explorer/context": [
+                {
+                    "when": "resourceExtname == .py",
+                    "command": "flamegraph.runProfiler",
+                    "group": "navigation"
+                },
+                {
+                    "when": "resourceExtname == .pyspy",
+                    "command": "flamegraph.loadProfile",
+                    "group": "navigation"
+                }
+            ]
+        }
     },
     "scripts": {
         "install:all": "npm install && cd flamegraph-react && npm install",
