@@ -4,7 +4,7 @@ Profiling your code with Flamegraph is easy:
 
 1. Open a Python file in VS Code
 2. Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac) to open the command palette
-3. Start typing the command `Flamegraph: Profile active file with py-spy` and select it from the list
+3. Select the command `Flamegraph: Profile active file with py-spy`
 
 That's it!
 
