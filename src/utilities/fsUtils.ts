@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { Uri, Webview } from 'vscode';
 import { promisify } from 'util';
 import { exec, spawn } from 'child_process';
@@ -148,4 +149,28 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
             }
         );
     }
+}
+
+/**
+ * Prompts the user to open a folder.
+ *
+ * @param currentFile - The current file.
+ */
+export function promptUserToOpenFolder(currentFile?: vscode.Uri) {
+    vscode.window
+        .showErrorMessage(
+            currentFile
+                ? [
+                      `The file ${path.basename(currentFile.fsPath)} is not part of a workspace or folder.`,
+                      'Please open the folder containing the file.',
+                  ].join('\n')
+                : 'The Flamegraph extension requires a workspace or folder to be open in VS Code.',
+            { modal: true },
+            'Open Folder'
+        )
+        .then((selection) => {
+            if (selection === 'Open Folder') {
+                vscode.commands.executeCommand('workbench.action.files.openFolder');
+            }
+        });
 }
