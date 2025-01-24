@@ -34,7 +34,8 @@
             },
             {
                 "command": "flamegraph.runProfiler",
-                "title": "Flamegraph: Profile file with py-spy"
+                "title": "Flamegraph: Profile file with py-spy",
+                "icon": "$(flame)"
             },
             {
                 "command": "flamegraph.attachProfiler",
@@ -50,12 +51,25 @@
                 {
                     "when": "resourceExtname == .py",
                     "command": "flamegraph.runProfiler",
-                    "group": "navigation"
+                    "group": "Python"
                 },
                 {
                     "when": "resourceExtname == .pyspy",
                     "command": "flamegraph.loadProfile",
-                    "group": "navigation"
+                    "group": "Python"
+                }
+            ],
+            "editor/context": [
+                {
+                    "command": "flamegraph.toggleProfile",
+                    "group": "2_workspace"
+                }
+            ],
+            "editor/title/run": [
+                {
+                    "command": "flamegraph.runProfiler",
+                    "group": "navigation@2",
+                    "when": "resourceLangId == python && !isInDiffEditor && !virtualWorkspace && shellExecutionSupported"
                 }
             ]
         }
