@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed a bug on Windows where inline profile bars where not shown for all files even though profile data was available.
 
 ### Changed
-- The command `Profile active file with py-spy` now launches a VS Code task instead of a terminal.
+- The command `Profile file with py-spy` now launches a VS Code task instead of a terminal.
 
 ## [0.2.0] - 2024-12-10
 ### Added

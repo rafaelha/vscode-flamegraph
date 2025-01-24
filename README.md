@@ -4,7 +4,7 @@ Profiling your code with Flamegraph is easy:
 
 1. Open a Python file in VS Code
 2. Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac) to open the command palette
-3. Select the command `Flamegraph: Profile active file with py-spy`
+3. Select the command `Flamegraph: Profile file with py-spy`
 
 That's it!
 
@@ -46,7 +46,7 @@ The flamegraph and inline annotations complement each other: The flamegraph show
 
 ## Commands
 
--   `Flamegraph: Profile active file with py-spy` - Profile the active file with py-spy and display the results inline.
+-   `Flamegraph: Profile file with py-spy` - Profile the active file with py-spy and display the results inline.
 
 -   `Flamegraph: Load Profile` - Load a profile from a file. Currently only py-spy profiles are supported.
 
@@ -73,7 +73,7 @@ npm run build:webview
 Then, in VS Code
 
 1. Press `F5` to open a new Extension Development Host window
-2. Inside the host window, open the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac) and type `Flamegraph: Profile active file with py-spy`
+2. Inside the host window, open the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac) and type `Flamegraph: Profile file with py-spy`
 
 
 ### TODO
