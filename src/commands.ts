@@ -1,7 +1,13 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
-import { checkAndInstallProfiler, getPythonPath, selectProfileFile, readTextFile } from './utilities/fsUtils';
+import {
+    checkAndInstallProfiler,
+    getPythonPath,
+    selectProfileFile,
+    readTextFile,
+    promptUserToOpenFolder,
+} from './utilities/fsUtils';
 import { FlamegraphPanel } from './flamegraphPanel';
 import { extensionState } from './state';
 import { Flamegraph } from './flamegraph';
@@ -152,17 +158,7 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
         }
         const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
         if (!workspaceFolder) {
-            vscode.window
-                .showErrorMessage(
-                    `The file ${path.basename(editor.document.uri.fsPath)} is not part of a workspace or folder. Please open the folder containing the file.`,
-                    { modal: true },
-                    'Open Folder'
-                )
-                .then((selection) => {
-                    if (selection === 'Open Folder') {
-                        vscode.commands.executeCommand('workbench.action.files.openFolder');
-                    }
-                });
+            promptUserToOpenFolder(editor.document.uri);
             return;
         }
         const pythonPath = await getPythonPath();
@@ -187,7 +183,7 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
 export async function attach(context: vscode.ExtensionContext, flags: string) {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
-        vscode.window.showErrorMessage('Please open a workspace in VS Code.');
+        promptUserToOpenFolder();
         return;
     }
 
@@ -238,7 +234,7 @@ export function showFlamegraphCommand(context: vscode.ExtensionContext) {
     return vscode.commands.registerCommand('flamegraph.showFlamegraph', async () => {
         const { profileUri } = extensionState;
         if (!profileUri) {
-            vscode.window.showErrorMessage('No profile loaded. Please load a profile first.');
+            vscode.window.showErrorMessage('No profile loaded. Please record or load a profile first.');
             return;
         }
         if (!extensionState.currentFlamegraph) {
