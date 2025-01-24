@@ -1,6 +1,6 @@
 # Flamegraphs in VS Code - Visualizing Profiles from the py-spy profiler
 
-Profiling your code is easy after installing the Flamegraph extension:
+Profiling your code with Flamegraph is easy:
 
 1. Open a Python file in VS Code
 2. Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac) to open the command palette
