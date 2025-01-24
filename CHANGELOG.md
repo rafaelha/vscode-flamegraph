@@ -5,11 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [0.2.7] - 2025-01-23
 ### Added
-- Module filtering in the flamegraph. Modules in the flamegraph legend can now be checked and unchecked.
+- Module filtering in the flamegraph. Modules entries in the flamegraph legend can now be checked and unchecked.
 This will filter nodes in the flamegraph by their module. When a node is filtered out, its children are appended to its parent. A common use case is to check/uncheck the `process` module in multiprocessing applications. This will show the flamegraph resolved for all processes or combined for all processes.
-- Tighter integration with VS Code: The extension now provides context menu items in the file explorer for `.py` and `.pyspy` files. Additionally, the ▶️ icon in the editor title bar can now be switched to a 🔥 icon.
+- Tighter integration with VS Code: The extension now provides context menu items in the file explorer for `.py` and `.pyspy` files. Additionally, the ▶️ icon in the editor title bar can now be switched to a 🔥 icon which starts the py-spy profiler. Right-clicking on a python editor reveals the `Toggle Inline Profile` command.
 
 ### Changed
 - Py-spy profiles are now saved as `profile.pyspy` in the workspace directory.
