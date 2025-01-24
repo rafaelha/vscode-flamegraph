@@ -82,7 +82,8 @@
             "editor/context": [
                 {
                     "command": "flamegraph.toggleProfile",
-                    "group": "2_workspace"
+                    "group": "2_workspace",
+                    "when": "resourceLangId == python && !isInDiffEditor && !virtualWorkspace && shellExecutionSupported"
                 }
             ],
             "editor/title/run": [
