@@ -1,18 +1,38 @@
 {
     "name": "vscode-flamegraph",
     "displayName": "Flamegraph",
-    "description": "Inline profile results and flamegraphs in VS Code",
+    "description": "Py-spy profiling results and flamegraphs in VS Code",
     "icon": "assets/flame.png",
     "license": "Apache-2.0",
     "version": "0.2.6",
     "publisher": "rafaelha",
+    "homepage": "https://github.com/rafaelha/vscode-flamegraph",
     "repository": {
         "type": "git",
         "url": "https://github.com/rafaelha/vscode-flamegraph"
     },
+    "bugs": {
+        "url": "https://github.com/rafaelha/vscode-flamegraph/issues"
+    },
     "engines": {
         "vscode": "^1.95.0"
     },
+    "keywords": [
+        "py-spy",
+        "flamegraph",
+        "flame graph",
+        "profiler",
+        "profiling",
+        "python",
+        "performance",
+        "performance analysis",
+        "devtools"
+    ],
+    "categories": [
+        "Testing",
+        "Other"
+    ],
+    "enableTelemetry": false,
     "main": "./out/extension.js",
     "activationEvents": [
         "onCommand:flamegraph.loadProfile",
