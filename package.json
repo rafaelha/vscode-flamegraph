@@ -19,16 +19,17 @@
     },
     "keywords": [
         "py-spy",
-        "flamegraph",
+        "profile",
         "flame graph",
         "profiler",
         "profiling",
         "python",
         "performance",
         "performance analysis",
-        "devtools"
+        "speed"
     ],
     "categories": [
+        "Visualization",
         "Testing",
         "Other"
     ],
