@@ -87,3 +87,4 @@ Then, in VS Code
 - [ ] Memray memory profiles
 - [ ] Zoom animations in flamegraph
 - [ ] Select sampling interval
+- [ ] Jupyter notebook profiling. Currently, it is possible to attache to a running kernel process. But profile results cannot be displayed in the notebook.
