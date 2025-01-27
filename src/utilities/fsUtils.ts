@@ -3,6 +3,7 @@ import * as path from 'path';
 import { Uri, Webview } from 'vscode';
 import { promisify } from 'util';
 import { exec, spawn } from 'child_process';
+import { PythonExtension } from '@vscode/python-extension';
 
 const execAsync = promisify(exec);
 /**
@@ -56,14 +57,13 @@ export async function selectProfileFile(): Promise<vscode.Uri | undefined> {
  * @returns The Python path.
  */
 export async function getPythonPath(): Promise<string | undefined> {
-    // get the python path from the python extension
-    const pythonExtension = vscode.extensions.getExtension('ms-python.python');
-    if (pythonExtension) {
-        await pythonExtension.activate();
-        const details = await pythonExtension.exports.settings.getExecutionDetails();
-        return details.execCommand.join(' ');
+    const pythonApi: PythonExtension = await PythonExtension.api();
+    const { environments } = pythonApi;
+    const environmentPath = environments.getActiveEnvironmentPath();
+    const environment = await environments.resolveEnvironment(environmentPath);
+    if (environment) {
+        return environment.path;
     }
-    // otherwise fallback to the python path from the python config
     const pythonConfig = vscode.workspace.getConfiguration('python');
     return pythonConfig.get<string>('pythonPath');
 }

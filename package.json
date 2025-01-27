@@ -134,6 +134,7 @@
         "vscode-test": "^1.5.0"
     },
     "dependencies": {
-        "@types/mocha": "^10.0.10"
+        "@types/mocha": "^10.0.10",
+        "@vscode/python-extension": "^1.0.5"
     }
 }
