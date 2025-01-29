@@ -20,6 +20,8 @@ class ExtensionState {
 
     private _onUpdateUI: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
 
+    private _fileNameMap: Map<string, string> = new Map();
+
     public readonly onUpdateUI: vscode.Event<void> = this._onUpdateUI.event;
 
     // Private constructor to prevent instantiation
@@ -112,6 +114,22 @@ class ExtensionState {
     set profileUri(uri: vscode.Uri | undefined) {
         if (!this._context) return;
         this._context.workspaceState.update('profileUri', uri);
+    }
+
+    /**
+     * Gets the fileNameMap
+     * @returns The fileNameMap
+     */
+    get fileNameMap(): Map<string, string> {
+        return this._fileNameMap;
+    }
+
+    /**
+     * Sets the fileNameMap
+     * @param fileNameMap The new fileNameMap
+     */
+    set fileNameMap(fileNameMap: Map<string, string>) {
+        this._fileNameMap = fileNameMap;
     }
 
     /**

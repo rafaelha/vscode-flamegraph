@@ -46,6 +46,11 @@
                 "title": "Flamegraph: Show"
             },
             {
+                "command": "flamegraph.profileCell",
+                "title": "Flamegraph: Profile Cell",
+                "icon": "$(flame)"
+            },
+            {
                 "command": "flamegraph.loadProfile",
                 "title": "Flamegraph: Load Profile"
             },
@@ -84,14 +89,28 @@
                 {
                     "command": "flamegraph.toggleProfile",
                     "group": "2_workspace",
-                    "when": "resourceLangId == python && !isInDiffEditor && !virtualWorkspace && shellExecutionSupported"
+                    "when": "resourceLangId == python && !isInDiffEditor && !virtualWorkspace"
                 }
             ],
-            "editor/title/run": [
+            "notebook/cell/execute": [
+                {
+                    "command": "flamegraph.profileCell",
+                    "when": "notebookKernel =~ /^ms-toolsai.jupyter\\// && jupyter.ispythonnotebook && notebookCellType == code && isWorkspaceTrusted && resource not in jupyter.notebookeditor.debugDocuments || !notebookKernel && jupyter.ispythonnotebook && notebookCellType == code && isWorkspaceTrusted",
+                    "group": "jupyterCellExecute@0"
+                }
+            ],
+            "notebook/toolbar": [
                 {
                     "command": "flamegraph.runProfiler",
-                    "group": "navigation@2",
-                    "when": "resourceLangId == python && !isInDiffEditor && !virtualWorkspace && shellExecutionSupported"
+                    "group": "navigation/execute@5",
+                    "when": "notebookKernel =~ /^ms-toolsai.jupyter\\// && notebookType == 'jupyter-notebook' && isWorkspaceTrusted && jupyter.kernel.isjupyter"
+                }
+            ],
+            "notebook/cell/title": [
+                {
+                    "command": "flamegraph.profileCell",
+                    "when": "notebookKernel =~ /^ms-toolsai.jupyter\\// && notebookType == jupyter-notebook && jupyter.ispythonnotebook && notebookCellType == code && isWorkspaceTrusted && resource not in jupyter.notebookeditor.runByLineDocuments || !notebookKernel && notebookType == jupyter-notebook && jupyter.ispythonnotebook && notebookCellType == code && isWorkspaceTrusted",
+                    "group": "inline/cell@3"
                 }
             ]
         }
@@ -135,6 +154,7 @@
     },
     "dependencies": {
         "@types/mocha": "^10.0.10",
+        "@vscode/jupyter-extension": "^1.1.1",
         "@vscode/python-extension": "^1.0.5"
     }
 }

@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import { basename } from 'path';
 import { strToHue } from './utilities/colors';
 import { getModuleName, toUnixPath } from './utilities/pathUtils';
+import { extensionState } from './state';
 
 type FrameId = number;
 type FunctionId = number;
@@ -103,8 +104,14 @@ export class Flamegraph {
         const matches = frameString.match(frameRegex);
 
         if (!matches) return [undefined, undefined, undefined];
-        const [, functionName, filePath, lineNumberStr] = matches;
+        const [, functionName, filePath2, lineNumberStr] = matches;
         if (!functionName) return [undefined, undefined, undefined]; // A function name should always be defined
+        let filePath: string;
+        try {
+            filePath = extensionState.fileNameMap.get(toUnixPath(filePath2)) ?? filePath2;
+        } catch (error) {
+            filePath = filePath2;
+        }
 
         const line = lineNumberStr ? parseInt(lineNumberStr, 10) : undefined;
         const functionKey = `${functionName} ${filePath}`;

@@ -127,7 +127,29 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
         return;
     }
 
-    const filePath = toUnixPath(activeEditor.document.fileName);
+    let cellNumber: number | undefined;
+    const notebookEditor = vscode.window.visibleNotebookEditors.find(
+        (e) => e.notebook.uri.path === activeEditor.document.uri.path
+    );
+    if (notebookEditor) {
+        // get the notebook cell that contains the active editor
+        const numCells = notebookEditor?.notebook.cellCount;
+        for (let i = 0; i < numCells; i += 1) {
+            const cell = notebookEditor?.notebook.cellAt(i);
+            if (cell.document === activeEditor.document) {
+                cellNumber = i + 1;
+                break;
+            }
+        }
+    }
+    if (!notebookEditor && activeEditor.document.uri.fragment !== '') {
+        return;
+    }
+
+    let filePath = toUnixPath(activeEditor.document.fileName);
+    if (cellNumber) {
+        filePath = `${filePath}:<${cellNumber}>`;
+    }
 
     const decorations: vscode.DecorationOptions[] = [];
     const documentLines = activeEditor.document.lineCount;

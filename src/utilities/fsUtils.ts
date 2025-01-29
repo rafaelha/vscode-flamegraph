@@ -1,3 +1,4 @@
+/* eslint-disable import/no-extraneous-dependencies */
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { Uri, Webview } from 'vscode';
@@ -5,7 +6,7 @@ import { promisify } from 'util';
 import { exec, spawn } from 'child_process';
 import { PythonExtension } from '@vscode/python-extension';
 
-const execAsync = promisify(exec);
+export const execAsync = promisify(exec);
 /**
  *
  * A helper function which will get the webview URI of a given file or resource.
