@@ -41,7 +41,9 @@ export function FlameNode({
 
     if (!functionData) return null;
 
-    const { module, moduleHue, functionHue, fileName, functionName, shortFunctionName } = functionData;
+    const { module, moduleHue, functionHue, fileName, shortFilename, functionName, shortFunctionName } = functionData;
+    const fgFunctionName = shortFunctionName ?? functionName;
+    const fgFileName = shortFilename ?? fileName;
 
     const isHovered = hoveredLineId === frameId && !fileName?.startsWith('<') && fileName !== '';
     const isRelatedFunction = hoveredFunctionId === functionId && !fileName?.startsWith('<') && fileName !== '';
@@ -63,7 +65,7 @@ export function FlameNode({
     const percentageOfTotal = ((samples / rootValue) * 100).toFixed(1);
     const percentageOfFocus = ((samples / focusNodeValue) * 100).toFixed(1);
     const tooltipContent = [
-        fileName ? `${functionName} (${line ? `${fileName}:${line}` : fileName})` : functionName,
+        fgFileName ? `${fgFunctionName} (${line ? `${fgFileName}:${line}` : fgFileName})` : fgFunctionName,
         sourceCode,
         module,
         `${samples / 100}s / ${percentageOfTotal}% / ${percentageOfFocus}%`,
@@ -80,12 +82,7 @@ export function FlameNode({
             onMouseLeave={() => onNodeHover(null, null)}
             title={tooltipContent}
         >
-            <FlameNodeContent
-                sourceCode={sourceCode}
-                functionName={shortFunctionName || functionName}
-                fileName={fileName}
-                line={line}
-            />
+            <FlameNodeContent sourceCode={sourceCode} functionName={fgFunctionName} fileName={fgFileName} line={line} />
         </div>
     );
 }

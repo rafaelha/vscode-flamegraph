@@ -16,6 +16,7 @@ export type Function = {
     shortFunctionName?: string;
     filePath?: string;
     fileName?: string;
+    shortFilename?: string;
     module?: string;
     moduleHue: number; // for module name
     functionHue?: number; // for function name
@@ -27,6 +28,7 @@ export type Flamenode = {
     frameId: FrameId; // unique id for the frame, which is (functionName, filePath, lineNumber)
     functionId: FunctionId; // unique id for the function, which is (functionName, filePath)
     line?: LineNumber;
+    cell?: number;
     depth: number;
     samples: number;
     ownSamples: number;

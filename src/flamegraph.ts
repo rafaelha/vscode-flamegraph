@@ -13,6 +13,7 @@ export type Function = {
     shortFunctionName?: string;
     filePath?: string;
     fileName?: string;
+    shortFilename?: string;
     module?: string;
     moduleHue: number; // for module name
     functionHue?: number; // for function name
@@ -136,12 +137,14 @@ export class Flamegraph {
             const processRegex = /^process\s+(\d+)(?:\s+|:).+/;
             const processMatches = functionName.match(processRegex);
             const shortFunctionName = processMatches ? `process ${processMatches[1]}` : undefined;
+            const shortFilename = fileName?.includes('#') ? `${fileName.split('#')[0]}[${cell}]` : undefined;
 
             const func: Function = {
                 functionName,
                 shortFunctionName,
                 filePath,
                 fileName,
+                shortFilename,
                 module,
                 functionHue,
                 moduleHue,
