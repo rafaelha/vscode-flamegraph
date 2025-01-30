@@ -168,10 +168,10 @@ export function FlameGraph({
 
             // sort children by file name and line number
             node.children?.sort((a, b) => {
-                const aFile = functions[a.functionId]?.fileName || '';
-                const bFile = functions[b.functionId]?.fileName || '';
-                const aLine = a.line || 0;
-                const bLine = b.line || 0;
+                const aFile = functions[a.functionId]?.shortFilename ?? functions[a.functionId]?.fileName ?? '';
+                const bFile = functions[b.functionId]?.shortFilename ?? functions[b.functionId]?.fileName ?? '';
+                const aLine = a.line ?? 0;
+                const bLine = b.line ?? 0;
                 return aFile.localeCompare(bFile) || aLine - bLine;
             });
 
