@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { extensions, CancellationTokenSource, commands } from 'vscode';
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { Jupyter } from '@vscode/jupyter-extension';
 import * as path from 'path';
 import * as os from 'os';
@@ -17,47 +18,54 @@ import { extensionState } from './state';
 import { Flamegraph } from './flamegraph';
 
 async function executeCodeOnIPythonKernel(code: string): Promise<string | undefined> {
+    let decodedOutput: string | undefined;
     const jupyterExt = extensions.getExtension<Jupyter>('ms-toolsai.jupyter');
     if (!jupyterExt) {
         throw new Error('Jupyter Extension not installed');
     }
     if (!jupyterExt.isActive) {
-        jupyterExt.activate();
+        await jupyterExt.activate();
     }
     let kernel = await jupyterExt.exports.kernels.getKernel(vscode.window.activeNotebookEditor!.notebook.uri);
     if (!kernel) {
-        // vscode.window.showErrorMessage(
-        //     'No IPython kernel found. Please start a kernel by running a cell in the Jupyter notebook.'
-        // );
-        // return;
-        const promise = commands.executeCommand('jupyter.restartkernel');
-        await promise.then(
-            () => {},
-            () => {}
+        try {
+            await commands.executeCommand('jupyter.restartkernel');
+            kernel = await jupyterExt.exports.kernels.getKernel(vscode.window.activeNotebookEditor!.notebook.uri);
+        } catch (error) {
+            vscode.window.showErrorMessage('Failed to restart Jupyter kernel');
+            return undefined;
+        }
+    }
+    if (!kernel) {
+        vscode.window.showErrorMessage(
+            'No IPython kernel found. Please start a kernel by running a cell in the Jupyter notebook.'
         );
-        kernel = await jupyterExt.exports.kernels.getKernel(vscode.window.activeNotebookEditor!.notebook.uri);
+        return undefined;
     }
     const tokenSource = new CancellationTokenSource();
     const ErrorMimeType = vscode.NotebookCellOutputItem.error(new Error('')).mime;
     const textDecoder = new TextDecoder();
-    let decodedOutput: string;
     try {
         for await (const output of kernel.executeCode(code, tokenSource.token)) {
             for (const outputItem of output.items) {
                 if (outputItem.mime === ErrorMimeType) {
                     const error = JSON.parse(textDecoder.decode(outputItem.data)) as Error;
-                    console.log(`Error executing code ${error.name}: ${error.message},/n ${error.stack}`);
+                    vscode.window.showErrorMessage(
+                        `Error attaching the profiler to the running process: ${error.name}: ${error.message},/n ${error.stack}`
+                    );
                 } else {
                     decodedOutput = textDecoder.decode(outputItem.data);
-                    return decodedOutput;
+                    break;
                 }
             }
+            if (decodedOutput) break;
         }
     } catch (ex) {
-        console.error('Error executing code:', ex);
+        decodedOutput = undefined;
     } finally {
         tokenSource.dispose();
     }
+    return decodedOutput;
 }
 
 /**
