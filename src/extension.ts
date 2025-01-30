@@ -41,18 +41,37 @@ export function activate(context: ExtensionContext) {
     );
 
     // Register decoration listeners
-    context.subscriptions.push(
-        vscode.window.onDidChangeActiveTextEditor((editor) => {
-            updateDecorations(editor);
-        }),
-        vscode.workspace.onDidChangeTextDocument(() => {
-            updateDecorations(vscode.window.activeTextEditor);
-        }),
-        vscode.window.onDidChangeActiveColorTheme(() => {
+    // vscode.window.onDidChangeActiveTextEditor(
+    //     (editor) => {
+    //         updateDecorations(editor);
+    //     },
+    //     null,
+    //     context.subscriptions
+    // );
+    vscode.window.onDidChangeVisibleTextEditors(
+        () => {
             vscode.window.visibleTextEditors.forEach((editor) => {
                 updateDecorations(editor);
             });
-        })
+        },
+        null,
+        context.subscriptions
+    );
+    vscode.workspace.onDidChangeTextDocument(
+        () => {
+            updateDecorations(vscode.window.activeTextEditor);
+        },
+        null,
+        context.subscriptions
+    );
+    vscode.window.onDidChangeActiveColorTheme(
+        () => {
+            vscode.window.visibleTextEditors.forEach((editor) => {
+                updateDecorations(editor);
+            });
+        },
+        null,
+        context.subscriptions
     );
 }
 
