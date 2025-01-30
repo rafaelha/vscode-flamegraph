@@ -143,6 +143,8 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
         }
     }
     if (!notebookEditor && activeEditor.document.uri.fragment !== '') {
+        // This seems to be a bug in VS Code. Whenever a tab is opened, vscode.windows.visibleNotebookEditors is empty,
+        // even though the tab is a notebook.
         return;
     }
 

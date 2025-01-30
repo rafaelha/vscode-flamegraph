@@ -43,9 +43,7 @@ export function activate(context: ExtensionContext) {
     // Register decoration listeners
     context.subscriptions.push(
         vscode.window.onDidChangeActiveTextEditor((editor) => {
-            if (editor) {
-                updateDecorations(editor);
-            }
+            updateDecorations(editor);
         }),
         vscode.workspace.onDidChangeTextDocument(() => {
             updateDecorations(vscode.window.activeTextEditor);
