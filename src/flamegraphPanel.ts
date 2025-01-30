@@ -158,8 +158,8 @@ export class FlamegraphPanel {
                     case 'open-file':
                         try {
                             // Find the file in the workspace
-                            let fileUri: Uri = Uri.file(message.file);
-                            if (!path.isAbsolute(message.file)) {
+                            let fileUri: Uri = Uri.parse(message.file);
+                            if (!path.isAbsolute(fileUri.fsPath)) {
                                 const files = await workspace.findFiles(`**/${message.file}`);
                                 if (files.length === 0) return;
                                 [fileUri] = files;

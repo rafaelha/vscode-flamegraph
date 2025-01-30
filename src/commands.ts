@@ -16,6 +16,7 @@ import {
 import { FlamegraphPanel } from './flamegraphPanel';
 import { extensionState } from './state';
 import { Flamegraph } from './flamegraph';
+import { NotebookCellMap } from './types';
 
 async function executeCodeOnIPythonKernel(code: string): Promise<string | undefined> {
     let decodedOutput: string | undefined;
@@ -74,9 +75,13 @@ async function executeCodeOnIPythonKernel(code: string): Promise<string | undefi
  * @param context - The extension context.
  * @param profileUri - The URI of the profile file.
  */
-const handleProfileUpdate = async (context: vscode.ExtensionContext, profileUri: vscode.Uri) => {
+const handleProfileUpdate = async (
+    context: vscode.ExtensionContext,
+    profileUri: vscode.Uri,
+    cellFilenameMap?: NotebookCellMap
+) => {
     try {
-        extensionState.currentFlamegraph = new Flamegraph(await readTextFile(profileUri));
+        extensionState.currentFlamegraph = new Flamegraph(await readTextFile(profileUri), cellFilenameMap);
         extensionState.profileUri = profileUri;
         extensionState.focusNode = [0];
         extensionState.profileVisible = true;
@@ -152,7 +157,8 @@ async function runTask(
     context: vscode.ExtensionContext,
     workspaceFolder: vscode.WorkspaceFolder,
     command: string,
-    flags: string
+    flags: string,
+    cellFilenameMap?: NotebookCellMap
 ): Promise<void> {
     const profilePath = path.join(workspaceFolder.uri.fsPath, 'profile.pyspy');
     const profileUri = vscode.Uri.file(profilePath);
@@ -168,8 +174,12 @@ async function runTask(
         extensionState.activeProfileWatcher = watcher;
     }
 
-    extensionState.activeProfileWatcher.onDidCreate(async () => handleProfileUpdate(context, profileUri));
-    extensionState.activeProfileWatcher.onDidChange(async () => handleProfileUpdate(context, profileUri));
+    extensionState.activeProfileWatcher.onDidCreate(async () =>
+        handleProfileUpdate(context, profileUri, cellFilenameMap)
+    );
+    extensionState.activeProfileWatcher.onDidChange(async () =>
+        handleProfileUpdate(context, profileUri, cellFilenameMap)
+    );
 
     const sudo = os.platform() === 'darwin' ? 'sudo ' : '';
 
@@ -249,7 +259,12 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
  * @param flags - The flags to pass to py-spy, such as --subprocesses or --native.
  * @returns The command registration.
  */
-export async function attach(context: vscode.ExtensionContext, flags: string, pid?: string) {
+export async function attach(
+    context: vscode.ExtensionContext,
+    flags: string,
+    pid?: string,
+    cellFilenameMap?: NotebookCellMap
+) {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
         promptUserToOpenFolder();
@@ -268,7 +283,7 @@ export async function attach(context: vscode.ExtensionContext, flags: string, pi
         });
         if (!pid) return;
     }
-    runTask(context, workspaceFolder, `--pid ${pid}`, flags);
+    runTask(context, workspaceFolder, `--pid ${pid}`, flags, cellFilenameMap);
 }
 
 /**
@@ -324,10 +339,9 @@ export function profileCellCommand(context: vscode.ExtensionContext) {
             return;
         }
 
-        const notebookFileName = cell.notebook.uri.fsPath;
+        const numCells = cell.notebook.cellCount;
 
         let getFileNameCode = ``;
-        const numCells = cell.notebook.cellCount;
         for (let i = 0; i < numCells; i += 1) {
             const c = cell.notebook.cellAt(i);
             const code = c.document.getText();
@@ -347,24 +361,23 @@ export function profileCellCommand(context: vscode.ExtensionContext) {
             return;
         }
 
-        const fileNameMap: Map<string, string> = new Map();
+        const cellFilenameMap: NotebookCellMap = new Map();
 
         const pid = outputArray[0];
-        for (let i = 1; i < outputArray.length; i += 1) {
-            fileNameMap.set(toUnixPath(outputArray[i]), `${notebookFileName}:<${i}>`);
+        for (let i = 0; i < numCells; i += 1) {
+            cellFilenameMap.set(toUnixPath(outputArray[i + 1]), {
+                cellIndex: i,
+                cellUri: `${cell.notebook.cellAt(i).document.uri.toString()}`,
+                source: `${cell.notebook.cellAt(i).document.getText()}`,
+            });
         }
-        extensionState.fileNameMap = fileNameMap;
 
-        await attach(context, '--subprocesses', pid);
+        await attach(context, '--subprocesses', pid, cellFilenameMap);
 
-        const promise = commands.executeCommand(
+        await commands.executeCommand(
             'notebook.cell.execute',
             { start: cell.index, end: cell.index + 1 },
             cell.notebook.uri
-        );
-        await promise.then(
-            () => {},
-            () => {}
         );
 
         // send ctrl-c to terminal to stop py-spy

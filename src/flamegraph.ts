@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import { basename } from 'path';
 import { strToHue } from './utilities/colors';
 import { getModuleName, toUnixPath } from './utilities/pathUtils';
-import { extensionState } from './state';
+import { NotebookCellMap } from './types';
 
 type FrameId = number;
 type FunctionId = number;
@@ -24,6 +24,7 @@ export type Flamenode = {
     frameId: FrameId; // unique id for the frame, which is (functionName, filePath, lineNumber)
     functionId: FunctionId; // unique id for the function, which is (functionName, filePath)
     line?: LineNumber; // line number of the source code for this node
+    cell?: number; // cell number of the source code for this node, if the source code is in a jupyter notebook
     sourceCode?: string; // the string of source code for this line
     depth: number; // depth in the tree
     samples: number; // total number of samples for this node as recorded in the profile
@@ -47,7 +48,7 @@ type FileIndex = {
 };
 
 export class Flamegraph {
-    private frameCache: Map<string, [FrameId, FunctionId, LineNumber | undefined]>;
+    private frameCache: Map<string, [FrameId, FunctionId, LineNumber | undefined, number | undefined]>;
 
     private functionCache: Map<string, FunctionId>;
 
@@ -64,7 +65,7 @@ export class Flamegraph {
      * Constructor for the Flamegraph class.
      * @param data - The profile data to be parsed. This should be the raw output of py-spy as a string.
      */
-    constructor(data: string) {
+    constructor(data: string, cellFilenameMap?: NotebookCellMap) {
         this.functions = [{ functionName: 'all', moduleHue: 240, functionHue: 240 }];
         this.frameCache = new Map();
         this.functionCache = new Map();
@@ -81,7 +82,7 @@ export class Flamegraph {
         };
         this.nodes.push(this.root);
 
-        this.parseFlamegraph(data);
+        this.parseFlamegraph(data, cellFilenameMap);
         this.assignEulerTimes(this.root);
         this.buildIndex();
         this.addSourceCode();
@@ -92,7 +93,10 @@ export class Flamegraph {
      * @param frameString - The frame string to parse.
      * @returns A tuple containing the frame ID, function ID, and line number.
      */
-    private parseFrame(frameString: string): [number | undefined, number | undefined, number | undefined] {
+    private parseFrame(
+        frameString: string,
+        cellFilenameMap?: NotebookCellMap
+    ): [number | undefined, number | undefined, number | undefined, number | undefined] {
         if (this.frameCache.has(frameString)) {
             return this.frameCache.get(frameString)!;
         }
@@ -103,15 +107,18 @@ export class Flamegraph {
         const frameRegex = /^(.+?)(?:\s+\(([^)]+?)(?::(\d+))?\))?$/;
         const matches = frameString.match(frameRegex);
 
-        if (!matches) return [undefined, undefined, undefined];
-        const [, functionName, filePath2, lineNumberStr] = matches;
-        if (!functionName) return [undefined, undefined, undefined]; // A function name should always be defined
-        let filePath: string;
-        try {
-            filePath = extensionState.fileNameMap.get(toUnixPath(filePath2)) ?? filePath2;
-        } catch (error) {
-            filePath = filePath2;
-        }
+        if (!matches) return [undefined, undefined, undefined, undefined];
+        const [, functionName, filePathRaw, lineNumberStr] = matches;
+        if (!functionName) return [undefined, undefined, undefined, undefined];
+
+        // In a jupyter notebook, filePaathRaw is a temp directory and the filename is the hash of the cell.
+        // We need to map the hash to the actual filename
+        const filePath = filePathRaw
+            ? (cellFilenameMap?.get(toUnixPath(filePathRaw))?.cellUri ?? filePathRaw)
+            : undefined;
+        const cell: number | undefined = filePathRaw
+            ? (cellFilenameMap?.get(toUnixPath(filePathRaw))?.cellIndex ?? undefined)
+            : undefined;
 
         const line = lineNumberStr ? parseInt(lineNumberStr, 10) : undefined;
         const functionKey = `${functionName} ${filePath}`;
@@ -146,8 +153,8 @@ export class Flamegraph {
         }
 
         const frameId = this.frameCache.size;
-        this.frameCache.set(frameString, [frameId, functionId, line]);
-        return [frameId, functionId, line];
+        this.frameCache.set(frameString, [frameId, functionId, line, cell]);
+        return [frameId, functionId, line, cell];
     }
 
     /**
@@ -173,7 +180,7 @@ export class Flamegraph {
      * array.
      * @param flamegraphString - The flamegraph string to parse.
      */
-    public parseFlamegraph(flamegraphString: string): void {
+    public parseFlamegraph(flamegraphString: string, cellFilenameMap?: NotebookCellMap): void {
         const rows = flamegraphString.trim().split('\n');
 
         for (const row of rows) {
@@ -187,12 +194,17 @@ export class Flamegraph {
 
             // count the number of occurrences of each string in the stack trace
             const stackTraceCounts = new Map<number, number>();
-            const frames: { frameId: number; functionId: number; line: number | undefined }[] = [];
+            const frames: {
+                frameId: number;
+                functionId: number;
+                line: number | undefined;
+                cell: number | undefined;
+            }[] = [];
             for (const frameString of stackTrace) {
-                const [frameId, functionId, line] = this.parseFrame(frameString);
+                const [frameId, functionId, line, cell] = this.parseFrame(frameString, cellFilenameMap);
                 if (frameId === undefined || functionId === undefined) continue;
 
-                frames.push({ frameId, functionId, line });
+                frames.push({ frameId, functionId, line, cell });
                 stackTraceCounts.set(functionId, (stackTraceCounts.get(functionId) ?? 0) + 1);
             }
 
