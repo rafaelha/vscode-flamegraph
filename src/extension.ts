@@ -8,6 +8,7 @@ import {
     profileCellCommand,
     attachProfilerCommand,
     attachNativeProfilerCommand,
+    profileNotebookCommand,
 } from './commands';
 import { updateDecorations } from './render';
 import { extensionState } from './state';
@@ -28,7 +29,8 @@ export function activate(context: ExtensionContext) {
         attachProfilerCommand(context),
         attachNativeProfilerCommand(context),
         showFlamegraphCommand(context),
-        profileCellCommand(context)
+        profileCellCommand(context),
+        profileNotebookCommand(context)
     );
 
     // Register decoration visible changed listener

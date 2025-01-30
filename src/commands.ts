@@ -332,45 +332,54 @@ export function showFlamegraphCommand(context: vscode.ExtensionContext) {
     });
 }
 
+async function getPidAndCellFilenameMap(
+    notebook: vscode.NotebookDocument
+): Promise<{ pid: string; cellFilenameMap: NotebookCellMap } | undefined> {
+    const numCells = notebook.cellCount;
+
+    let getFileNameCode = ``;
+    for (let i = 0; i < numCells; i += 1) {
+        const c = notebook.cellAt(i);
+        const code = c.document.getText();
+        getFileNameCode += `get_file_name(${JSON.stringify(code)}),`;
+    }
+
+    const code = `import os; from ipykernel.compiler import get_file_name; print(os.getpid(),${getFileNameCode})`;
+    const output = await executeCodeOnIPythonKernel(code);
+    if (!output) {
+        return undefined;
+    }
+
+    const outputArray = output.split(' ').map((s) => s.trim());
+    if (outputArray.length !== numCells + 1) {
+        return undefined;
+    }
+
+    const cellFilenameMap: NotebookCellMap = new Map();
+
+    const pid = outputArray[0];
+    for (let i = 0; i < numCells; i += 1) {
+        cellFilenameMap.set(toUnixPath(outputArray[i + 1]), {
+            cellIndex: i,
+            cellUri: `${notebook.cellAt(i).document.uri.toString()}`,
+            source: `${notebook.cellAt(i).document.getText()}`,
+        });
+    }
+    return { pid, cellFilenameMap };
+}
+
 export function profileCellCommand(context: vscode.ExtensionContext) {
     return vscode.commands.registerCommand('flamegraph.profileCell', async (cell?: vscode.NotebookCell) => {
         if (!cell) {
             vscode.window.showErrorMessage('No cell selected for profiling');
             return;
         }
-
-        const numCells = cell.notebook.cellCount;
-
-        let getFileNameCode = ``;
-        for (let i = 0; i < numCells; i += 1) {
-            const c = cell.notebook.cellAt(i);
-            const code = c.document.getText();
-            getFileNameCode += `get_file_name(${JSON.stringify(code)}),`;
-        }
-
-        const code = `import os; from ipykernel.compiler import get_file_name; print(os.getpid(),${getFileNameCode})`;
-        const output = await executeCodeOnIPythonKernel(code);
-        if (!output) {
-            vscode.window.showErrorMessage('Failed to execute code');
+        const result = await getPidAndCellFilenameMap(cell.notebook);
+        if (!result) {
+            vscode.window.showErrorMessage('Failed to get PID and cell filename map');
             return;
         }
-
-        const outputArray = output.split(' ').map((s) => s.trim());
-        if (outputArray.length !== numCells + 1) {
-            vscode.window.showErrorMessage('Failed to execute code');
-            return;
-        }
-
-        const cellFilenameMap: NotebookCellMap = new Map();
-
-        const pid = outputArray[0];
-        for (let i = 0; i < numCells; i += 1) {
-            cellFilenameMap.set(toUnixPath(outputArray[i + 1]), {
-                cellIndex: i,
-                cellUri: `${cell.notebook.cellAt(i).document.uri.toString()}`,
-                source: `${cell.notebook.cellAt(i).document.getText()}`,
-            });
-        }
+        const { pid, cellFilenameMap } = result;
 
         await attach(context, '--subprocesses', pid, cellFilenameMap);
 
@@ -386,4 +395,37 @@ export function profileCellCommand(context: vscode.ExtensionContext) {
             terminal.sendText('\u0003');
         }
     });
+}
+
+export function profileNotebookCommand(context: vscode.ExtensionContext) {
+    return vscode.commands.registerCommand(
+        'flamegraph.profileNotebook',
+        async (args?: { notebookEditor: vscode.NotebookEditor }) => {
+            if (!args?.notebookEditor) {
+                vscode.window.showErrorMessage('No notebook selected for profiling');
+                return;
+            }
+            const notebookEditor = vscode.window.activeNotebookEditor;
+            if (!notebookEditor) {
+                vscode.window.showErrorMessage('No notebook selected for profiling');
+                return;
+            }
+            const result = await getPidAndCellFilenameMap(notebookEditor.notebook);
+            if (!result) {
+                vscode.window.showErrorMessage('Failed to get PID and cell filename map');
+                return;
+            }
+            const { pid, cellFilenameMap } = result;
+
+            await attach(context, '--subprocesses', pid, cellFilenameMap);
+
+            await commands.executeCommand('notebook.execute', notebookEditor.notebook.uri);
+
+            // send ctrl-c to terminal to stop py-spy
+            const terminal = vscode.window.terminals.find((t) => t.name === 'Py-spy profile');
+            if (terminal) {
+                terminal.sendText('\u0003');
+            }
+        }
+    );
 }

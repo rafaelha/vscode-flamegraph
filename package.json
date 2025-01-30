@@ -51,6 +51,11 @@
                 "icon": "$(flame)"
             },
             {
+                "command": "flamegraph.profileNotebook",
+                "title": "Profile",
+                "icon": "$(flame)"
+            },
+            {
                 "command": "flamegraph.loadProfile",
                 "title": "Flamegraph: Load Profile"
             },
@@ -101,7 +106,7 @@
             ],
             "notebook/toolbar": [
                 {
-                    "command": "flamegraph.runProfiler",
+                    "command": "flamegraph.profileNotebook",
                     "group": "navigation/execute@5",
                     "when": "notebookKernel =~ /^ms-toolsai.jupyter\\// && notebookType == 'jupyter-notebook' && isWorkspaceTrusted && jupyter.kernel.isjupyter"
                 }
