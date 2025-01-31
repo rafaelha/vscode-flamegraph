@@ -97,6 +97,13 @@
                     "when": "resourceLangId == python && !isInDiffEditor && !virtualWorkspace"
                 }
             ],
+            "editor/title/run": [
+                {
+                    "command": "flamegraph.runProfiler",
+                    "group": "navigation@2",
+                    "when": "resourceLangId == python && !isInDiffEditor && !virtualWorkspace && shellExecutionSupported"
+                }
+            ],
             "notebook/cell/execute": [
                 {
                     "command": "flamegraph.profileCell",
