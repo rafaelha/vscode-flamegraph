@@ -5,6 +5,7 @@ import { Uri, Webview } from 'vscode';
 import { promisify } from 'util';
 import { exec, spawn } from 'child_process';
 import { PythonExtension } from '@vscode/python-extension';
+import { Jupyter } from '@vscode/jupyter-extension';
 
 export const execAsync = promisify(exec);
 /**
@@ -174,4 +175,56 @@ export function promptUserToOpenFolder(currentFile?: vscode.Uri) {
                 vscode.commands.executeCommand('workbench.action.files.openFolder');
             }
         });
+}
+
+/**
+ * Executes code on the IPython kernel.
+ *
+ * @param code - The code to execute.
+ * @returns The output of the code.
+ */
+export async function executeCodeOnIPythonKernel(code: string): Promise<string | undefined> {
+    let decodedOutput: string | undefined;
+    const jupyterExt = vscode.extensions.getExtension<Jupyter>('ms-toolsai.jupyter');
+    if (!jupyterExt) {
+        vscode.window.showErrorMessage('Jupyter Extension not installed. Please install the Jupyter extension.');
+        return undefined;
+    }
+    if (!jupyterExt.isActive) {
+        await jupyterExt.activate();
+    }
+    let kernel = await jupyterExt.exports.kernels.getKernel(vscode.window.activeNotebookEditor!.notebook.uri);
+    if (!kernel) {
+        await vscode.commands.executeCommand('jupyter.restartkernel');
+        kernel = await jupyterExt.exports.kernels.getKernel(vscode.window.activeNotebookEditor!.notebook.uri);
+    }
+    if (!kernel) {
+        vscode.window.showErrorMessage('No IPython kernel found. Execute a cell in the notebook and try again.');
+        return undefined;
+    }
+    const tokenSource = new vscode.CancellationTokenSource();
+    const ErrorMimeType = vscode.NotebookCellOutputItem.error(new Error('')).mime;
+    const textDecoder = new TextDecoder();
+    try {
+        for await (const output of kernel.executeCode(code, tokenSource.token)) {
+            for (const outputItem of output.items) {
+                if (outputItem.mime === ErrorMimeType) {
+                    const error = JSON.parse(textDecoder.decode(outputItem.data)) as Error;
+                    vscode.window.showErrorMessage(
+                        `Could not get notebook kernel info:${error.name}. ${error.message},/n ${error.stack}`
+                    );
+                } else {
+                    decodedOutput = textDecoder.decode(outputItem.data);
+                    break;
+                }
+            }
+            if (decodedOutput) break;
+        }
+    } catch (ex) {
+        vscode.window.showErrorMessage(`Could not get notebook kernel info to start profiling: ${ex}`);
+        decodedOutput = undefined;
+    } finally {
+        tokenSource.dispose();
+    }
+    return decodedOutput;
 }

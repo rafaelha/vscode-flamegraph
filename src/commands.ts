@@ -1,10 +1,7 @@
 import * as vscode from 'vscode';
-import { extensions, CancellationTokenSource, commands } from 'vscode';
-// eslint-disable-next-line import/no-extraneous-dependencies
-import { Jupyter } from '@vscode/jupyter-extension';
+import { commands } from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
-import { TextDecoder } from 'util';
 import { toUnixPath } from './utilities/pathUtils';
 import {
     checkAndInstallProfiler,
@@ -12,62 +9,14 @@ import {
     selectProfileFile,
     readTextFile,
     promptUserToOpenFolder,
+    executeCodeOnIPythonKernel,
 } from './utilities/fsUtils';
 import { FlamegraphPanel } from './flamegraphPanel';
 import { extensionState } from './state';
 import { Flamegraph } from './flamegraph';
 import { NotebookCellMap } from './types';
 
-async function executeCodeOnIPythonKernel(code: string): Promise<string | undefined> {
-    let decodedOutput: string | undefined;
-    const jupyterExt = extensions.getExtension<Jupyter>('ms-toolsai.jupyter');
-    if (!jupyterExt) {
-        throw new Error('Jupyter Extension not installed');
-    }
-    if (!jupyterExt.isActive) {
-        await jupyterExt.activate();
-    }
-    let kernel = await jupyterExt.exports.kernels.getKernel(vscode.window.activeNotebookEditor!.notebook.uri);
-    if (!kernel) {
-        try {
-            await commands.executeCommand('jupyter.restartkernel');
-            kernel = await jupyterExt.exports.kernels.getKernel(vscode.window.activeNotebookEditor!.notebook.uri);
-        } catch (error) {
-            vscode.window.showErrorMessage('Failed to restart Jupyter kernel');
-            return undefined;
-        }
-    }
-    if (!kernel) {
-        vscode.window.showErrorMessage(
-            'No IPython kernel found. Please start a kernel by running a cell in the Jupyter notebook.'
-        );
-        return undefined;
-    }
-    const tokenSource = new CancellationTokenSource();
-    const ErrorMimeType = vscode.NotebookCellOutputItem.error(new Error('')).mime;
-    const textDecoder = new TextDecoder();
-    try {
-        for await (const output of kernel.executeCode(code, tokenSource.token)) {
-            for (const outputItem of output.items) {
-                if (outputItem.mime === ErrorMimeType) {
-                    const error = JSON.parse(textDecoder.decode(outputItem.data)) as Error;
-                    vscode.window.showErrorMessage(
-                        `Error attaching the profiler to the running process: ${error.name}: ${error.message},/n ${error.stack}`
-                    );
-                } else {
-                    decodedOutput = textDecoder.decode(outputItem.data);
-                    break;
-                }
-            }
-            if (decodedOutput) break;
-        }
-    } catch (ex) {
-        decodedOutput = undefined;
-    } finally {
-        tokenSource.dispose();
-    }
-    return decodedOutput;
-}
+const TASK_TERMINAL_NAME = 'Py-spy profile'; // Name of the terminal launched for the profiling task
 
 /**
  * Handles the profile update event. This is called when a new profile is written to the file system.
@@ -193,7 +142,7 @@ async function runTask(
     const task = new vscode.Task(
         taskDefinition,
         workspaceFolder,
-        'Py-spy profile',
+        TASK_TERMINAL_NAME,
         'py-spy',
         new vscode.ShellExecution(taskDefinition.command),
         []
@@ -368,64 +317,78 @@ async function getPidAndCellFilenameMap(
     return { pid, cellFilenameMap };
 }
 
+/**
+ * Helper function to handle notebook profiling logic
+ *
+ * @param context - The extension context.
+ * @param notebook - The notebook document.
+ * @param executeCommand - The command to execute after profiling.
+ */
+async function handleNotebookProfiling(
+    context: vscode.ExtensionContext,
+    notebook: vscode.NotebookDocument,
+    executeCommand: () => Promise<void>
+) {
+    const result = await getPidAndCellFilenameMap(notebook);
+    if (!result) return;
+
+    const { pid, cellFilenameMap } = result;
+
+    await attach(context, '--subprocesses', pid, cellFilenameMap);
+
+    // small delay to ensure py-spy is running
+    await new Promise((resolve) => {
+        setTimeout(resolve, 200);
+    });
+
+    await executeCommand();
+
+    // send ctrl-c to terminal to stop py-spy
+    const terminal = vscode.window.terminals.find((t) => t.name === TASK_TERMINAL_NAME);
+    if (terminal) {
+        terminal.sendText('\u0003');
+    }
+}
+
+/**
+ * Profiles the currently selected cell in the active notebook.
+ *
+ * @param context - The extension context.
+ * @returns The command registration.
+ */
 export function profileCellCommand(context: vscode.ExtensionContext) {
     return vscode.commands.registerCommand('flamegraph.profileCell', async (cell?: vscode.NotebookCell) => {
         if (!cell) {
             vscode.window.showErrorMessage('No cell selected for profiling');
             return;
         }
-        const result = await getPidAndCellFilenameMap(cell.notebook);
-        if (!result) {
-            vscode.window.showErrorMessage('Failed to get PID and cell filename map');
-            return;
-        }
-        const { pid, cellFilenameMap } = result;
 
-        await attach(context, '--subprocesses', pid, cellFilenameMap);
-
-        await commands.executeCommand(
-            'notebook.cell.execute',
-            { start: cell.index, end: cell.index + 1 },
-            cell.notebook.uri
+        await handleNotebookProfiling(context, cell.notebook, async () =>
+            commands.executeCommand(
+                'notebook.cell.execute',
+                { start: cell.index, end: cell.index + 1 },
+                cell.notebook.uri
+            )
         );
-
-        // send ctrl-c to terminal to stop py-spy
-        const terminal = vscode.window.terminals.find((t) => t.name === 'Py-spy profile');
-        if (terminal) {
-            terminal.sendText('\u0003');
-        }
     });
 }
 
+/**
+ * Profiles the currently active notebook.
+ *
+ * @param context - The extension context.
+ * @returns The command registration.
+ */
 export function profileNotebookCommand(context: vscode.ExtensionContext) {
-    return vscode.commands.registerCommand(
-        'flamegraph.profileNotebook',
-        async (args?: { notebookEditor: vscode.NotebookEditor }) => {
-            if (!args?.notebookEditor) {
-                vscode.window.showErrorMessage('No notebook selected for profiling');
-                return;
-            }
-            const notebookEditor = vscode.window.activeNotebookEditor;
-            if (!notebookEditor) {
-                vscode.window.showErrorMessage('No notebook selected for profiling');
-                return;
-            }
-            const result = await getPidAndCellFilenameMap(notebookEditor.notebook);
-            if (!result) {
-                vscode.window.showErrorMessage('Failed to get PID and cell filename map');
-                return;
-            }
-            const { pid, cellFilenameMap } = result;
-
-            await attach(context, '--subprocesses', pid, cellFilenameMap);
-
-            await commands.executeCommand('notebook.execute', notebookEditor.notebook.uri);
-
-            // send ctrl-c to terminal to stop py-spy
-            const terminal = vscode.window.terminals.find((t) => t.name === 'Py-spy profile');
-            if (terminal) {
-                terminal.sendText('\u0003');
-            }
+    return vscode.commands.registerCommand('flamegraph.profileNotebook', async () => {
+        const notebookEditor = vscode.window.activeNotebookEditor;
+        if (!notebookEditor) {
+            vscode.window.showErrorMessage('No notebook selected for profiling. Please open a notebook and try again.');
+            return;
         }
-    );
+
+        await handleNotebookProfiling(context, notebookEditor.notebook, async () =>
+            commands.executeCommand('notebook.execute', notebookEditor.notebook.uri)
+        );
+    });
 }
