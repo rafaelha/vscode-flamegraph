@@ -2,14 +2,13 @@ import * as vscode from 'vscode';
 import { commands } from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
-import { toUnixPath } from './utilities/pathUtils';
 import {
     checkAndInstallProfiler,
     getPythonPath,
     selectProfileFile,
     readTextFile,
     promptUserToOpenFolder,
-    executeCodeOnIPythonKernel,
+    getPidAndCellFilenameMap,
 } from './utilities/fsUtils';
 import { FlamegraphPanel } from './flamegraphPanel';
 import { extensionState } from './state';
@@ -281,44 +280,8 @@ export function showFlamegraphCommand(context: vscode.ExtensionContext) {
     });
 }
 
-async function getPidAndCellFilenameMap(
-    notebook: vscode.NotebookDocument
-): Promise<{ pid: string; cellFilenameMap: NotebookCellMap } | undefined> {
-    const numCells = notebook.cellCount;
-
-    let getFileNameCode = ``;
-    for (let i = 0; i < numCells; i += 1) {
-        const c = notebook.cellAt(i);
-        const code = c.document.getText();
-        getFileNameCode += `get_file_name(${JSON.stringify(code)}),`;
-    }
-
-    const code = `import os; from ipykernel.compiler import get_file_name; print(os.getpid(),${getFileNameCode})`;
-    const output = await executeCodeOnIPythonKernel(code);
-    if (!output) {
-        return undefined;
-    }
-
-    const outputArray = output.split(' ').map((s) => s.trim());
-    if (outputArray.length !== numCells + 1) {
-        return undefined;
-    }
-
-    const cellFilenameMap: NotebookCellMap = new Map();
-
-    const pid = outputArray[0];
-    for (let i = 0; i < numCells; i += 1) {
-        cellFilenameMap.set(toUnixPath(outputArray[i + 1]), {
-            cellIndex: i,
-            cellUri: `${toUnixPath(notebook.cellAt(i).document.uri.toString())}`,
-            source: `${notebook.cellAt(i).document.getText()}`,
-        });
-    }
-    return { pid, cellFilenameMap };
-}
-
 /**
- * Helper function to handle notebook profiling logic
+ * Helper function to handle notebook profiling logic.
  *
  * @param context - The extension context.
  * @param notebook - The notebook document.

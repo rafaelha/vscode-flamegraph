@@ -6,6 +6,8 @@ import { promisify } from 'util';
 import { exec, spawn } from 'child_process';
 import { PythonExtension } from '@vscode/python-extension';
 import { Jupyter } from '@vscode/jupyter-extension';
+import { NotebookCellMap } from '../types';
+import { toUnixPath } from './pathUtils';
 
 export const execAsync = promisify(exec);
 /**
@@ -227,4 +229,57 @@ export async function executeCodeOnIPythonKernel(code: string): Promise<string |
         tokenSource.dispose();
     }
     return decodedOutput;
+}
+
+/**
+ * Gets the PID and cell filename map for a notebook. When executing a notebook, the kernel generates temporary files
+ * for each notebook cell, with filenames given by the hash of the cell's content. This function does the following:
+ * 1. It retrieves the PID of the kernel.
+ * 2. It retrieves the filenames of the temporary files generated for each cell and maps them onto URIs of the actual
+ *    notebook cells.
+ *
+ * This is done by executing the following code on the IPython kernel:
+ *
+ * ```python
+ * import os; from ipykernel.compiler import get_file_name; print([os.getpid(),${getFileNameCode}])
+ * ```
+ *
+ * @param notebook - The notebook document.
+ * @returns The PID and cell filename map. This is a map from temporary filenames to the actual notebook cell URIs and
+ * cell indices.
+ */
+export async function getPidAndCellFilenameMap(
+    notebook: vscode.NotebookDocument
+): Promise<{ pid: string; cellFilenameMap: NotebookCellMap } | undefined> {
+    const numCells = notebook.cellCount;
+
+    let getFileNameCode = ``;
+    for (let i = 0; i < numCells; i += 1) {
+        const c = notebook.cellAt(i);
+        const code = c.document.getText();
+        getFileNameCode += `get_file_name(${JSON.stringify(code)}),`;
+    }
+
+    const code = `import os; from ipykernel.compiler import get_file_name; print(os.getpid(),${getFileNameCode})`;
+    const output = await executeCodeOnIPythonKernel(code);
+    if (!output) {
+        return undefined;
+    }
+
+    const outputArray = output.split(' ').map((s) => s.trim());
+    if (outputArray.length !== numCells + 1) {
+        return undefined;
+    }
+
+    const cellFilenameMap: NotebookCellMap = new Map();
+
+    const pid = outputArray[0];
+    for (let i = 0; i < numCells; i += 1) {
+        cellFilenameMap.set(toUnixPath(outputArray[i + 1]), {
+            cellIndex: i,
+            cellUri: `${toUnixPath(notebook.cellAt(i).document.uri.toString())}`,
+            source: `${notebook.cellAt(i).document.getText()}`,
+        });
+    }
+    return { pid, cellFilenameMap };
 }
