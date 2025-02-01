@@ -71,9 +71,7 @@ export function activate(context: ExtensionContext) {
     );
     vscode.window.onDidChangeActiveColorTheme(
         () => {
-            vscode.window.visibleTextEditors.forEach((editor) => {
-                updateDecorations(editor);
-            });
+            extensionState.updateUI();
         },
         null,
         context.subscriptions

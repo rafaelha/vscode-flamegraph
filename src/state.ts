@@ -22,6 +22,8 @@ class ExtensionState {
 
     private _fileNameMap: Map<string, string> = new Map();
 
+    private _decorationCache: Map<string, vscode.DecorationOptions[]> = new Map();
+
     public readonly onUpdateUI: vscode.Event<void> = this._onUpdateUI.event;
 
     // Private constructor to prevent instantiation
@@ -152,9 +154,25 @@ class ExtensionState {
     }
 
     /**
+     * Gets the decoration cache for a specific file
+     * @returns The decoration cache map
+     */
+    get decorationCache(): Map<string, vscode.DecorationOptions[]> {
+        return this._decorationCache;
+    }
+
+    /**
+     * Clears the decoration cache
+     */
+    public clearDecorationCache() {
+        this._decorationCache.clear();
+    }
+
+    /**
      * Triggers a UI update event
      */
     public updateUI() {
+        this.clearDecorationCache();
         this._onUpdateUI.fire();
     }
 
@@ -178,6 +196,7 @@ class ExtensionState {
         if (this._activeProfileWatcher) {
             this._activeProfileWatcher.dispose();
         }
+        this.clearDecorationCache();
     }
 }
 

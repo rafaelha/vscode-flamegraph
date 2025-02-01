@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { toUnixPath } from './utilities/pathUtils';
 import { Flamegraph, Flamenode } from './flamegraph';
 import { extensionState } from './state';
 
@@ -127,10 +126,18 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
         return;
     }
 
+    const filePath = activeEditor.document.uri.toString();
+
+    // Check if we have a valid cache for this file
+    const cachedDecorations = extensionState.decorationCache.get(filePath);
+    if (cachedDecorations && activeEditor.document.lineCount === cachedDecorations.length) {
+        activeEditor.setDecorations(lineColorDecorationType, cachedDecorations);
+        return;
+    }
+
     const decorations: vscode.DecorationOptions[] = [];
     const documentLines = activeEditor.document.lineCount;
 
-    const filePath = activeEditor.document.uri.toString();
     const lineProfiles = flamegraph.getFileProfile(filePath, focusNode);
 
     if (!lineProfiles) {
@@ -186,5 +193,7 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
     }
     for (; lastLine <= documentLines; lastLine += 1) decorations.push(emptyLineDecoration(lastLine));
 
+    // Update the cache with the new decorations
+    extensionState.decorationCache.set(filePath, decorations);
     activeEditor.setDecorations(lineColorDecorationType, decorations);
 }
