@@ -253,12 +253,10 @@ export async function getPidAndCellFilenameMap(
 ): Promise<{ pid: string; cellFilenameMap: NotebookCellMap } | undefined> {
     const numCells = notebook.cellCount;
 
-    let getFileNameCode = ``;
-    for (let i = 0; i < numCells; i += 1) {
-        const c = notebook.cellAt(i);
-        const code = c.document.getText();
-        getFileNameCode += `print(get_file_name(${JSON.stringify(code)}));`;
-    }
+    const getFileNameCode = Array.from({ length: numCells })
+        .map((_, i) => notebook.cellAt(i).document.getText())
+        .map((code) => `print(get_file_name(${JSON.stringify(code)}));`)
+        .join('');
 
     const code = `import os; from ipykernel.compiler import get_file_name; print(os.getpid());${getFileNameCode}`;
     const output = await executeCodeOnIPythonKernel(code);
@@ -268,6 +266,9 @@ export async function getPidAndCellFilenameMap(
 
     const outputArray = output.split('\n').map((s) => s.trim());
     if (outputArray.length < numCells + 1) {
+        if (outputArray.length >= 1) {
+            return { pid: outputArray[0], cellFilenameMap: new Map() };
+        }
         return undefined;
     }
 
