@@ -42,19 +42,22 @@ export function activate(context: ExtensionContext) {
         })
     );
 
-    // Register decoration listeners
-    // vscode.window.onDidChangeActiveTextEditor(
-    //     (editor) => {
-    //         updateDecorations(editor);
-    //     },
-    //     null,
-    //     context.subscriptions
-    // );
+    // Keep track of previously visible editors
+    let previousVisibleEditors = new Set<vscode.TextEditor>();
+
     vscode.window.onDidChangeVisibleTextEditors(
-        () => {
-            vscode.window.visibleTextEditors.forEach((editor) => {
-                updateDecorations(editor);
+        (visibleEditors) => {
+            const currentVisibleEditors = new Set(visibleEditors);
+
+            // Update decorations only for newly visible editors
+            visibleEditors.forEach((editor) => {
+                if (!previousVisibleEditors.has(editor)) {
+                    updateDecorations(editor);
+                }
             });
+
+            // Update the previous state
+            previousVisibleEditors = currentVisibleEditors;
         },
         null,
         context.subscriptions
