@@ -115,7 +115,7 @@ export class Flamegraph {
         // In a jupyter notebook, filePaathRaw is a temp directory and the filename is the hash of the cell.
         // We need to map the hash to the actual filename
         const filePath = filePathRaw
-            ? (cellFilenameMap?.get(toUnixPath(filePathRaw))?.cellUri ?? filePathRaw)
+            ? (cellFilenameMap?.get(toUnixPath(filePathRaw))?.cellUri ?? toUnixPath(filePathRaw))
             : undefined;
         const cell: number | undefined = filePathRaw
             ? (cellFilenameMap?.get(toUnixPath(filePathRaw))?.cellIndex ?? undefined)

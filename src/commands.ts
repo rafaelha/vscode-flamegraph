@@ -361,7 +361,7 @@ async function getPidAndCellFilenameMap(
     for (let i = 0; i < numCells; i += 1) {
         cellFilenameMap.set(toUnixPath(outputArray[i + 1]), {
             cellIndex: i,
-            cellUri: `${notebook.cellAt(i).document.uri.toString()}`,
+            cellUri: `${toUnixPath(notebook.cellAt(i).document.uri.toString())}`,
             source: `${notebook.cellAt(i).document.getText()}`,
         });
     }

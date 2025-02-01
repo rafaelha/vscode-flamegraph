@@ -11,7 +11,10 @@ import { Uri } from 'vscode';
  * @returns The normalized file path.
  */
 export function toUnixPath(filePath: string) {
-    return normalize(filePath).replace(/\\/g, '/').toLowerCase();
+    // First decode any existing URI-encoded spaces to ensure consistent starting point
+    const decodedPath = decodeURIComponent(filePath);
+    // Normalize the path, convert backslashes to forward slashes, and decode spaces
+    return normalize(decodedPath).replace(/\\/g, '/').replace('%20', ' ').toLowerCase();
 }
 
 const filenameCache = new Map<string, string>();
