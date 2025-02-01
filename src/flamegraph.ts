@@ -280,10 +280,10 @@ export class Flamegraph {
             const name = fileName.toLowerCase();
             this.index[name] ??= [];
             const fileIndex = this.index[name];
-            const i = fileIndex.findIndex((x) => x.filePath.toLowerCase() === filePath.toLowerCase());
+            const i = fileIndex.findIndex((x) => x.filePath === filePath);
             if (i === -1) {
                 const fileProfile = {
-                    filePath: filePath.toLowerCase(),
+                    filePath,
                     lineProfiles: [{ line, nodes: [node] }],
                 };
                 fileIndex.push(fileProfile);
@@ -319,7 +319,7 @@ export class Flamegraph {
         if (!fileIndex) return undefined;
 
         const i = fileIndex.findIndex((x) => {
-            const indexFilePath = toUnixPath(x.filePath);
+            const indexFilePath = toUnixPath(x.filePath).toLowerCase();
             return indexFilePath.endsWith(filePath) || filePath.endsWith(indexFilePath);
         });
         if (i === -1) return undefined;

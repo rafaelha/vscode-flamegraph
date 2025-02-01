@@ -132,7 +132,7 @@ export class FlamegraphPanel {
           <meta name="theme-color" content="#000000">
           <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
           <link rel="stylesheet" type="text/css" href="${stylesUri}">
-          <title>Hello World</title>
+          <title>Flamegraph</title>
         </head>
         <body>
           <noscript>You need to enable JavaScript to run this app.</noscript>
