@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased]
+### TODO
+- MacOs sudoer instructions
+- More integrations in context menus
+- Attach py-spy auto suggestions for pid
+- Windows testing
+
+### Added
+- Support for profiling jupyter notebooks. Notebooks can be profiled by clicking `Profile` button in the notebook toolbar. Profiling results will show up in all executed cells and python files. Individual cells can be profiled with the 🔥 button at the top of each cell.
+
+### Fixed
+- Fixed an issue where profiles were not rendered when the filepath contained spaces on Windows.
+
 ## [0.2.7] - 2025-01-23
 ### Added
 - Module filtering in the flamegraph. Modules entries in the flamegraph legend can now be checked and unchecked.
