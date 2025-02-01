@@ -257,17 +257,17 @@ export async function getPidAndCellFilenameMap(
     for (let i = 0; i < numCells; i += 1) {
         const c = notebook.cellAt(i);
         const code = c.document.getText();
-        getFileNameCode += `get_file_name(${JSON.stringify(code)}),`;
+        getFileNameCode += `print(get_file_name(${JSON.stringify(code)}));`;
     }
 
-    const code = `import os; from ipykernel.compiler import get_file_name; print(os.getpid(),${getFileNameCode})`;
+    const code = `import os; from ipykernel.compiler import get_file_name; print(os.getpid());${getFileNameCode}`;
     const output = await executeCodeOnIPythonKernel(code);
     if (!output) {
         return undefined;
     }
 
-    const outputArray = output.split(' ').map((s) => s.trim());
-    if (outputArray.length !== numCells + 1) {
+    const outputArray = output.split('\n').map((s) => s.trim());
+    if (outputArray.length < numCells + 1) {
         return undefined;
     }
 
