@@ -241,7 +241,11 @@ export async function executeCodeOnIPythonKernel(code: string): Promise<string |
  * This is done by executing the following code on the IPython kernel:
  *
  * ```python
- * import os; from ipykernel.compiler import get_file_name; print([os.getpid(),${getFileNameCode}])
+ * import os; from ipykernel.compiler import get_file_name
+ * print(os.getpid())
+ * print("<code of cell 0>")
+ * print("<code of cell 1>")
+ * ...
  * ```
  *
  * @param notebook - The notebook document.
