@@ -4,14 +4,14 @@ Profiling your code with *Flamegraph* is simple.
 
 In Jupyter notebooks, click the 🔥 button above the cell you want to profile:
 
-![Profile jupyter notebook](assets/screenshot-notebook.png)
+![Profile jupyter notebook](https://github.com/rafaelha/vscode-flamegraph/blob/a0f7c296fa3d9fa55fba485436ed31573d02c86f/assets/screenshot-notebook.png?raw=true)
 
 
 
 For Python scripts, select `Flamegraph: Profile file with py-spy` from the dropdown menu next to the ▶️ icon:
 
 
-![Profile python script](assets/screenshot-python.png)
+![Profile python script](https://github.com/rafaelha/vscode-flamegraph/blob/a0f7c296fa3d9fa55fba485436ed31573d02c86f/assets/screenshot-python.png?raw=true)
 
 Alternatively, open the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac) and type `Flamegraph: Profile file with py-spy`.
 
@@ -64,11 +64,11 @@ The flamegraph and inline annotations complement each other - the flamegraph sho
 git clone https://github.com/rafaelha/vscode-flamegraph.git
 ```
 
-2. Install dependencies for both the extension and webview UI source code
+2. Install dependencies for both the extension and the flamegraph-react UI
 ```bash
 npm run install:all
 ```
-3. Build webview UI source code
+3. Build webview UI source code, i.e. the flamegraph react component
 ```bash
 npm run build:webview
 ```
@@ -83,7 +83,7 @@ npm run build:webview
 - [ ] Unit tests
 - [ ] Performance tests
 - [x] Option to filter the flamegraph by module. Since processes are treated as a module, this would, e.g., allow to show the flamegraph resolved for all processes or combined for all processes.
-- [ ] Refactor flamegraph. Currently, the whole graph is recomputed on every mouse hover event.
+- [ ] Refactor flamegraph react component. Currently, the whole graph is recomputed on every mouse hover event.
 - [ ] Search in flamegraph
 - [ ] Profiling files without opening a workspace/folder. Currently, the extension requires a workspace/folder to be opened.
 - [ ] Memray memory profiles
