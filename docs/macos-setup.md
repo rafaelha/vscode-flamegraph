@@ -2,7 +2,7 @@
 
 ## Sudo Configuration
 
-To use the notebook profiling feature on macOS, you'll need to configure sudo to allow the `py-spy` profiler to run without a password prompt. This is required because `py-spy` needs root access to attach to Python processes.
+To use the notebook profiling feature on macOS, you'll need to configure sudo to allow the [py-spy](https://github.com/benfred/py-spy) profiler to run as root without a password prompt. This is required because `py-spy` needs root privileges to attach to Python processes.
 
 ### Steps to Configure Sudo
 
@@ -12,7 +12,7 @@ To use the notebook profiling feature on macOS, you'll need to configure sudo to
 which py-spy
 ```
 
-This will return the path to the `py-spy` executable. Note down this path.
+and note down the path to the `py-spy` executable.
 
 2. Run the command:
 
@@ -26,7 +26,7 @@ sudo visudo -f /private/etc/sudoers.d/myOverrides
 username ALL=(ALL) NOPASSWD: /path/to/py-spy
 ```
 
-Replace `username` with your actual username and `/path/to/py-spy` with the path to the `py-spy` executable.
+Replace `username` with your actual username and `/path/to/py-spy` with the path to the `py-spy` executable. This will allow you to run `sudo py-spy` without being prompted for a password.
 
 
 ### Security Note
