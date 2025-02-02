@@ -14,7 +14,7 @@ export function toUnixPath(filePath: string) {
     // First decode any existing URI-encoded spaces to ensure consistent starting point
     const decodedPath = decodeURIComponent(filePath);
     // Normalize the path, convert backslashes to forward slashes, and decode spaces
-    return normalize(decodedPath).replace(/\\/g, '/').replace('%20', ' ');
+    return normalize(decodedPath).replace(/\\/g, '/');
 }
 
 const filenameCache = new Map<string, string>();
@@ -58,7 +58,7 @@ function shortenFilename(filename: string): string {
 export function getModuleName(filePath: string | undefined): string | undefined {
     // check if the file path is absolute
     if (!filePath) return undefined;
-    if (filePath.startsWith('<') && filePath.includes('importlib')) return '<importlib>';
+    if (filePath.includes('frozen importlib')) return '<importlib>';
 
     let fileName = Uri.parse(filePath).fsPath;
     if (isAbsolute(fileName)) {

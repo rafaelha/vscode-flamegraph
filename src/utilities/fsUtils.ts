@@ -323,7 +323,7 @@ export async function executeCodeOnIPythonKernel(code: string): Promise<string |
  */
 export async function getPidAndCellFilenameMap(
     notebook: vscode.NotebookDocument
-): Promise<{ pid: string; cellFilenameMap: NotebookCellMap } | undefined> {
+): Promise<{ pid: string; filenameToJupyterCellMap: NotebookCellMap } | undefined> {
     const numCells = notebook.cellCount;
 
     const getFileNameCode = Array.from({ length: numCells })
@@ -340,20 +340,20 @@ export async function getPidAndCellFilenameMap(
     const outputArray = output.split('\n').map((s) => s.trim());
     if (outputArray.length < numCells + 1) {
         if (outputArray.length >= 1) {
-            return { pid: outputArray[0], cellFilenameMap: new Map() };
+            return { pid: outputArray[0], filenameToJupyterCellMap: new Map() };
         }
         return undefined;
     }
 
-    const cellFilenameMap: NotebookCellMap = new Map();
+    const filenameToJupyterCellMap: NotebookCellMap = new Map();
 
     const pid = outputArray[0];
     for (let i = 0; i < numCells; i += 1) {
-        cellFilenameMap.set(toUnixPath(outputArray[i + 1]), {
+        filenameToJupyterCellMap.set(toUnixPath(outputArray[i + 1]), {
             cellIndex: i,
             cellUri: `${toUnixPath(notebook.cellAt(i).document.uri.toString())}`,
             source: `${notebook.cellAt(i).document.getText()}`,
         });
     }
-    return { pid, cellFilenameMap };
+    return { pid, filenameToJupyterCellMap };
 }

@@ -67,7 +67,7 @@ export class Flamegraph {
      * Constructor for the Flamegraph class.
      * @param data - The profile data to be parsed. This should be the raw output of py-spy as a string.
      */
-    constructor(data: string, cellFilenameMap?: NotebookCellMap) {
+    constructor(data: string, filenameToJupyterCellMap?: NotebookCellMap) {
         this.functions = [{ functionName: 'all', moduleHue: 240, functionHue: 240 }];
         this.frameCache = new Map();
         this.functionCache = new Map();
@@ -84,7 +84,7 @@ export class Flamegraph {
         };
         this.nodes.push(this.root);
 
-        this.parseFlamegraph(data, cellFilenameMap);
+        this.parseFlamegraph(data, filenameToJupyterCellMap);
         this.assignEulerTimes(this.root);
         this.buildIndex();
         this.addSourceCode();
@@ -97,7 +97,7 @@ export class Flamegraph {
      */
     private parseFrame(
         frameString: string,
-        cellFilenameMap?: NotebookCellMap
+        filenameToJupyterCellMap?: NotebookCellMap
     ): [number | undefined, number | undefined, number | undefined, number | undefined] {
         if (this.frameCache.has(frameString)) {
             return this.frameCache.get(frameString)!;
@@ -119,11 +119,13 @@ export class Flamegraph {
         if (filePathRaw) {
             // In a jupyter notebook, filePathRaw is a temp directory and the filename is the hash of the cell.
             // We need to map the hash to the actual filename
-            const mappedFilePath = cellFilenameMap?.get(toUnixPath(filePathRaw));
-            if (mappedFilePath) {
-                cell = mappedFilePath.cellIndex;
-                filePath = mappedFilePath.cellUri;
+            const cellInfo = filenameToJupyterCellMap?.get(toUnixPath(filePathRaw));
+            if (cellInfo) {
+                cell = cellInfo.cellIndex;
+                filePath = cellInfo.cellUri;
             } else {
+                // If the file is not a jupyter notebook, then filePathRaw is the actual file path.
+                // Save it in URI format for consistency.
                 filePath = toUnixPath(Uri.file(filePathRaw).toString());
             }
         }
@@ -190,7 +192,7 @@ export class Flamegraph {
      * array.
      * @param flamegraphString - The flamegraph string to parse.
      */
-    public parseFlamegraph(flamegraphString: string, cellFilenameMap?: NotebookCellMap): void {
+    public parseFlamegraph(flamegraphString: string, filenameToJupyterCellMap?: NotebookCellMap): void {
         const rows = flamegraphString.trim().split('\n');
 
         for (const row of rows) {
@@ -211,7 +213,7 @@ export class Flamegraph {
                 cell: number | undefined;
             }[] = [];
             for (const frameString of stackTrace) {
-                const [frameId, functionId, line, cell] = this.parseFrame(frameString, cellFilenameMap);
+                const [frameId, functionId, line, cell] = this.parseFrame(frameString, filenameToJupyterCellMap);
                 if (frameId === undefined || functionId === undefined) continue;
 
                 frames.push({ frameId, functionId, line, cell });
@@ -389,7 +391,7 @@ export class Flamegraph {
                 if (!fileProfile.filePath.endsWith('.py')) continue;
                 try {
                     // Read file content once for all nodes in this file
-                    const fileContent = fs.readFileSync(fileProfile.filePath, 'utf-8');
+                    const fileContent = fs.readFileSync(Uri.parse(fileProfile.filePath).fsPath, 'utf-8');
                     const lines = fileContent.split('\n');
 
                     // Process all line profiles for this file

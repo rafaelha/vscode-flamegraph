@@ -26,10 +26,10 @@ const TASK_TERMINAL_NAME = 'Py-spy profile'; // Name of the terminal launched fo
 const handleProfileUpdate = async (
     context: vscode.ExtensionContext,
     profileUri: vscode.Uri,
-    cellFilenameMap?: NotebookCellMap
+    filenameToJupyterCellMap?: NotebookCellMap
 ) => {
     try {
-        extensionState.currentFlamegraph = new Flamegraph(await readTextFile(profileUri), cellFilenameMap);
+        extensionState.currentFlamegraph = new Flamegraph(await readTextFile(profileUri), filenameToJupyterCellMap);
         extensionState.profileUri = profileUri;
         extensionState.focusNode = [0];
         extensionState.profileVisible = true;
@@ -106,7 +106,7 @@ async function runTask(
     workspaceFolder: vscode.WorkspaceFolder,
     command: string,
     flags: string,
-    cellFilenameMap?: NotebookCellMap
+    filenameToJupyterCellMap?: NotebookCellMap
 ): Promise<void> {
     const profilePath = path.join(workspaceFolder.uri.fsPath, 'profile.pyspy');
     const profileUri = vscode.Uri.file(profilePath);
@@ -123,10 +123,10 @@ async function runTask(
     }
 
     extensionState.activeProfileWatcher.onDidCreate(async () =>
-        handleProfileUpdate(context, profileUri, cellFilenameMap)
+        handleProfileUpdate(context, profileUri, filenameToJupyterCellMap)
     );
     extensionState.activeProfileWatcher.onDidChange(async () =>
-        handleProfileUpdate(context, profileUri, cellFilenameMap)
+        handleProfileUpdate(context, profileUri, filenameToJupyterCellMap)
     );
 
     const sudo = os.platform() === 'darwin' ? 'sudo ' : '';
@@ -211,7 +211,7 @@ export async function attach(
     context: vscode.ExtensionContext,
     flags: string,
     pid?: string,
-    cellFilenameMap?: NotebookCellMap
+    filenameToJupyterCellMap?: NotebookCellMap
 ) {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
@@ -231,7 +231,7 @@ export async function attach(
         });
         if (!pid) return;
     }
-    runTask(context, workspaceFolder, `--pid ${pid}`, flags, cellFilenameMap);
+    runTask(context, workspaceFolder, `--pid ${pid}`, flags, filenameToJupyterCellMap);
 }
 
 /**
@@ -298,9 +298,9 @@ async function handleNotebookProfiling(
     const result = await getPidAndCellFilenameMap(notebook);
     if (!result) return;
 
-    const { pid, cellFilenameMap } = result;
+    const { pid, filenameToJupyterCellMap } = result;
 
-    await attach(context, '--subprocesses', pid, cellFilenameMap);
+    await attach(context, '--subprocesses', pid, filenameToJupyterCellMap);
 
     // small delay to ensure py-spy is running
     await new Promise((resolve) => {
