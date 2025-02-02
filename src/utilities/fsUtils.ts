@@ -1,11 +1,10 @@
-/* eslint-disable import/no-extraneous-dependencies */
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
+import { PythonExtension } from '@vscode/python-extension';
 import { Uri, Webview } from 'vscode';
 import { promisify } from 'util';
 import { exec, spawn } from 'child_process';
-import { PythonExtension } from '@vscode/python-extension';
 import { Jupyter } from '@vscode/jupyter-extension';
 import { NotebookCellMap } from '../types';
 import { toUnixPath } from './pathUtils';
@@ -62,12 +61,16 @@ export async function selectProfileFile(): Promise<vscode.Uri | undefined> {
  * @returns The Python path.
  */
 export async function getPythonPath(): Promise<string | undefined> {
-    const pythonApi: PythonExtension = await PythonExtension.api();
-    const { environments } = pythonApi;
-    const environmentPath = environments.getActiveEnvironmentPath();
-    const environment = await environments.resolveEnvironment(environmentPath);
-    if (environment) {
-        return environment.path;
+    const pythonExtension = vscode.extensions.getExtension<PythonExtension>('ms-python.python');
+    if (pythonExtension) {
+        await pythonExtension.activate();
+
+        const { environments } = pythonExtension.exports;
+        const environmentPath = environments.getActiveEnvironmentPath();
+        const environment = await environments.resolveEnvironment(environmentPath);
+        if (environment) {
+            return environment.path;
+        }
     }
     const pythonConfig = vscode.workspace.getConfiguration('python');
     return pythonConfig.get<string>('pythonPath');
