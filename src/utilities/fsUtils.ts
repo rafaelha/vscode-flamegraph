@@ -73,6 +73,15 @@ export async function getPythonPath(): Promise<string | undefined> {
     return pythonConfig.get<string>('pythonPath');
 }
 
+/**
+ * On MacOS, checks if py-spy is given passwordless sudo access in the sudoers file.
+ * Returns true on all other platforms. On MacOS the user will be prompted to add py-spy to the sudoers file
+ * if they don't have passwordless sudo access. The user will be given a link to
+ * https://github.com/rafaelha/vscode-flamegraph/blob/e5b38dc6c87fee310c5562fcc4a3c6178040bfb3/docs/macos-setup.md
+ *
+ * @param modal - Whether the VS Code error/info message should be modal.
+ * @returns Whether py-spy is installed and has passwordless sudo access.
+ */
 export async function checkSudoAccess(modal: boolean = true): Promise<boolean> {
     const permaLink =
         'https://github.com/rafaelha/vscode-flamegraph/blob/e5b38dc6c87fee310c5562fcc4a3c6178040bfb3/docs/macos-setup.md';

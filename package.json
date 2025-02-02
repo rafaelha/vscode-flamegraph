@@ -94,7 +94,7 @@
                 {
                     "command": "flamegraph.toggleProfile",
                     "group": "2_workspace",
-                    "when": "resourceLangId == python && !isInDiffEditor && !virtualWorkspace"
+                    "when": "editorLangId == python && !isInDiffEditor && !virtualWorkspace"
                 }
             ],
             "editor/title/run": [

@@ -325,7 +325,6 @@ async function handleNotebookProfiling(
 export function profileCellCommand(context: vscode.ExtensionContext) {
     return vscode.commands.registerCommand('flamegraph.profileCell', async (cell?: vscode.NotebookCell) => {
         if (!cell) {
-            vscode.window.showErrorMessage('No cell selected for profiling');
             return;
         }
 
