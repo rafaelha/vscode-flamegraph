@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2025-02-02
+### Fixed
+- Fixed broken release: The extension was not activating due to incorrect access of the Python extension API.
+
 ## [0.3.0] - 2025-02-02
 ### Added
 - Support for profiling Jupyter notebooks. Notebooks can be profiled by clicking `Profile` button in the notebook toolbar. Profiling results will show up in all executed cells and python files. Individual cells can be profiled with the 🔥 button at the top of each cell.
