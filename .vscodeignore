@@ -23,3 +23,11 @@ assets/*.gif
 **/test/**
 **/.git/**
 **/*.vsix
+*.cpuprofile
+*.heapprofile
+
+src/performance/*
+assets/draft/*
+assets/screenshot*
+out/performance/*
+docs/*
