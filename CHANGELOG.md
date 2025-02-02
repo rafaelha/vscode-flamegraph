@@ -5,15 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
-### TODO
-- MacOs sudoer instructions
-- More integrations in context menus
-- Attach py-spy auto suggestions for pid
-- Windows testing
-
+## [0.3.0] - 2025-02-02
 ### Added
 - Support for profiling jupyter notebooks. Notebooks can be profiled by clicking `Profile` button in the notebook toolbar. Profiling results will show up in all executed cells and python files. Individual cells can be profiled with the 🔥 button at the top of each cell.
+- Faster profile loading via caching.
 
 ### Fixed
 - Fixed an issue where profiles were not rendered when the filepath contained spaces on Windows.
