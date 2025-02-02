@@ -3,12 +3,12 @@ import { commands } from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
 import {
-    checkAndInstallProfiler,
     getPythonPath,
     selectProfileFile,
     readTextFile,
     promptUserToOpenFolder,
     getPidAndCellFilenameMap,
+    verifyPyspy,
 } from './utilities/fsUtils';
 import { FlamegraphPanel } from './flamegraphPanel';
 import { extensionState } from './state';
@@ -111,8 +111,8 @@ async function runTask(
     const profilePath = path.join(workspaceFolder.uri.fsPath, 'profile.pyspy');
     const profileUri = vscode.Uri.file(profilePath);
 
-    const pySpyInstalled = await checkAndInstallProfiler();
-    if (!pySpyInstalled) return;
+    const success = await verifyPyspy();
+    if (!success) return;
 
     // Setup file watcher
     if (!extensionState.activeProfileWatcher) {
@@ -292,6 +292,9 @@ async function handleNotebookProfiling(
     notebook: vscode.NotebookDocument,
     executeCommand: () => Promise<void>
 ) {
+    const success = await verifyPyspy(true);
+    if (!success) return;
+
     const result = await getPidAndCellFilenameMap(notebook);
     if (!result) return;
 

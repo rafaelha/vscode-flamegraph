@@ -1,6 +1,7 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as os from 'os';
 import { Uri, Webview } from 'vscode';
 import { promisify } from 'util';
 import { exec, spawn } from 'child_process';
@@ -70,6 +71,53 @@ export async function getPythonPath(): Promise<string | undefined> {
     }
     const pythonConfig = vscode.workspace.getConfiguration('python');
     return pythonConfig.get<string>('pythonPath');
+}
+
+export async function checkSudoAccess(modal: boolean = true): Promise<boolean> {
+    const permaLink =
+        'https://github.com/rafaelha/vscode-flamegraph/blob/e5b38dc6c87fee310c5562fcc4a3c6178040bfb3/docs/macos-setup.md';
+    // Check for passwordless sudo access to py-spy on macOS
+    if (os.platform() === 'darwin') {
+        try {
+            // Use -n flag to prevent sudo from asking for a password
+            await new Promise((resolve, reject) => {
+                exec('sudo -n py-spy --version', (error: any) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(undefined);
+                    }
+                });
+            });
+        } catch (error) {
+            if (modal) {
+                vscode.window
+                    .showErrorMessage(
+                        'Passwordless sudo access is required for py-spy to profile notebooks on MacOS. Please add py-spy to your sudoers file.',
+                        { modal },
+                        'See instructions'
+                    )
+                    .then((selection) => {
+                        if (selection === 'See instructions') {
+                            vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(permaLink));
+                        }
+                    });
+                return false;
+            }
+            vscode.window
+                .showInformationMessage(
+                    'Root access is required to run py-spy on MacOS. Please enter your password in the terminal. For a better experience, consider adding py-spy to your sudoers file.',
+                    { modal },
+                    'See instructions'
+                )
+                .then((selection) => {
+                    if (selection === 'See instructions') {
+                        vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(permaLink));
+                    }
+                });
+        }
+    }
+    return true;
 }
 
 /**
@@ -153,6 +201,18 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
             }
         );
     }
+}
+
+/**
+ * Checks if py-spy is installed and has sudo access on MacOs.
+ *
+ * @returns Whether py-spy is installed and has sudo access.
+ */
+export async function verifyPyspy(requireSudoAccess: boolean = false): Promise<boolean> {
+    const success = await checkAndInstallProfiler();
+    if (!success) return false;
+    const hasSudoAccess = await checkSudoAccess(requireSudoAccess);
+    return requireSudoAccess ? hasSudoAccess : true;
 }
 
 /**

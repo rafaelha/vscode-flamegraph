@@ -45,6 +45,8 @@ export function activate(context: ExtensionContext) {
     // Keep track of previously visible editors
     let previousVisibleEditors = new Set<vscode.TextEditor>();
 
+    // Decorations have to be re-rendered when the visible editors change, i.e. they are not persistent when the editor
+    // is hidden and then shown again. See https://github.com/microsoft/vscode/issues/136241
     vscode.window.onDidChangeVisibleTextEditors(
         (visibleEditors) => {
             const currentVisibleEditors = new Set(visibleEditors);
