@@ -26,7 +26,9 @@
         "python",
         "performance",
         "performance analysis",
-        "speed"
+        "speed",
+        "jupyter notebook",
+        "jupyter profiling"
     ],
     "categories": [
         "Visualization",
