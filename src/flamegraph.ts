@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import { basename } from 'path';
+import { Uri } from 'vscode';
 import { strToHue } from './utilities/colors';
 import { getModuleName, toUnixPath } from './utilities/pathUtils';
 import { NotebookCellMap } from './types';
@@ -112,14 +113,20 @@ export class Flamegraph {
         const [, functionName, filePathRaw, lineNumberStr] = matches;
         if (!functionName) return [undefined, undefined, undefined, undefined];
 
-        // In a jupyter notebook, filePaathRaw is a temp directory and the filename is the hash of the cell.
-        // We need to map the hash to the actual filename
-        const filePath = filePathRaw
-            ? (cellFilenameMap?.get(toUnixPath(filePathRaw))?.cellUri ?? toUnixPath(filePathRaw))
-            : undefined;
-        const cell: number | undefined = filePathRaw
-            ? (cellFilenameMap?.get(toUnixPath(filePathRaw))?.cellIndex ?? undefined)
-            : undefined;
+        let cell: number | undefined;
+        let filePath: string | undefined;
+
+        if (filePathRaw) {
+            // In a jupyter notebook, filePathRaw is a temp directory and the filename is the hash of the cell.
+            // We need to map the hash to the actual filename
+            const mappedFilePath = cellFilenameMap?.get(toUnixPath(filePathRaw));
+            if (mappedFilePath) {
+                cell = mappedFilePath.cellIndex;
+                filePath = mappedFilePath.cellUri;
+            } else {
+                filePath = toUnixPath(Uri.file(filePathRaw).toString());
+            }
+        }
 
         const line = lineNumberStr ? parseInt(lineNumberStr, 10) : undefined;
         const functionKey = `${functionName} ${filePath}`;
