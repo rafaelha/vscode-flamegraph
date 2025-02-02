@@ -304,7 +304,7 @@ async function handleNotebookProfiling(
 
     // small delay to ensure py-spy is running
     await new Promise((resolve) => {
-        setTimeout(resolve, 200);
+        setTimeout(resolve, 500);
     });
 
     await executeCommand();
