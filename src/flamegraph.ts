@@ -206,17 +206,29 @@ export class Flamegraph {
 
             // count the number of occurrences of each string in the stack trace
             const stackTraceCounts = new Map<number, number>();
+
+            // count the number of occurrences of each source code line (file-line) in the stack trace.
+            // This is because stack traces like `<module> (file.py:10); <listcomp> (file.py:10)` would otherwise
+            // double-assign sampling times to the same line of code, file.py:10.
+            const sameFileLineCounts = new Map<string, number>();
+
             const frames: {
                 frameId: number;
                 functionId: number;
                 line: number | undefined;
                 cell: number | undefined;
             }[] = [];
+
             for (const frameString of stackTrace) {
                 const [frameId, functionId, line, cell] = this.parseFrame(frameString, filenameToJupyterCellMap);
                 if (frameId === undefined || functionId === undefined) continue;
 
                 frames.push({ frameId, functionId, line, cell });
+
+                const fileUri = this.functions[functionId].filePath;
+                const fileKey = `${fileUri}:${line}`;
+                sameFileLineCounts.set(fileKey, (sameFileLineCounts.get(fileKey) ?? 0) + 1);
+
                 stackTraceCounts.set(functionId, (stackTraceCounts.get(functionId) ?? 0) + 1);
             }
 
@@ -230,12 +242,21 @@ export class Flamegraph {
                 const occurrences = stackTraceCounts.get(functionId) ?? 0;
                 if (occurrences > 1) stackTraceCounts.set(functionId, occurrences - 1);
 
+                const fileUri = this.functions[functionId].filePath;
+                const fileKey = `${fileUri}:${line}`;
+                const occurencesFileLine = sameFileLineCounts.get(fileKey) ?? 1;
+                let firstFileLineOccurence = false;
+                if (occurencesFileLine >= 1) {
+                    firstFileLineOccurence = true;
+                    sameFileLineCounts.set(fileKey, 0); // ensure that the next occurence is discarded
+                }
+
                 const existingChild = current.children.find((child) => child.frameId === frameId);
 
                 if (existingChild) {
                     current = existingChild;
                     current.samples += samples;
-                    if (occurrences === 1) current.ownSamples += samples;
+                    if (occurrences === 1 && firstFileLineOccurence) current.ownSamples += samples;
                 } else {
                     const newNode: Flamenode = {
                         uid: this.nodes.length,
@@ -245,7 +266,7 @@ export class Flamegraph {
                         line,
                         depth: current.depth + 1,
                         samples,
-                        ownSamples: occurrences === 1 ? samples : 0,
+                        ownSamples: occurrences === 1 && firstFileLineOccurence ? samples : 0,
                         children: [],
                     };
                     current.children.push(newNode);
@@ -278,9 +299,7 @@ export class Flamegraph {
         // filename -> [filePaths] -> [line] -> [nodes]
         this.index = {};
         for (const node of sortedNodes) {
-            const { filePath, fileName, functionName } = this.functions[node.functionId];
-
-            if (functionName.startsWith('<') && functionName.endsWith('>') && functionName !== '<module>') continue;
+            const { filePath, fileName } = this.functions[node.functionId];
 
             const { line } = node;
 
