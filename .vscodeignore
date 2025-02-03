@@ -18,16 +18,19 @@ flamegraph-react/tsconfig.json
 flamegraph-react/package-lock.json
 flamegraph-react/postcss.config.js
 flamegraph-react/tailwind.config.js
+flamegraph-react/yarn.lock
+flamegraph-react/build/flamegraph.json
 assets/*.gif
+assets/draft/*
+assets/screenshot*
 .eslintrc.json
 **/test/**
 **/.git/**
 **/*.vsix
 *.cpuprofile
 *.heapprofile
+format.md
 
 src/performance/*
-assets/draft/*
-assets/screenshot*
 out/performance/*
 docs/*
