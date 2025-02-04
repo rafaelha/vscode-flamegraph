@@ -199,7 +199,7 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
                     });
 
                     install.on('close', (code: number) => {
-                        if (code === 0 && errorOutput === '') {
+                        if (code === 0) {
                             vscode.window.showInformationMessage('py-spy installed successfully');
                             resolve(true);
                         } else {
