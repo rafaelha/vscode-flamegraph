@@ -139,7 +139,7 @@ export class Flamegraph {
         } else {
             const fileName = filePath ? basename(filePath) : undefined;
             const module = /process \d+/.test(functionName) ? 'process' : (getModuleName(filePath) ?? undefined);
-            const functionHue = strToHue(functionName);
+            const functionHue = strToHue(functionName.startsWith('<cell line') ? `<cell>` : functionName);
             const moduleHue = module ? strToHue(module) : functionHue;
 
             // Extract "process <number>" if the function name matches the pattern
