@@ -136,7 +136,8 @@
         "test:webview": "cd flamegraph-react && npm run test",
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
-        "test": "vscode-test",
+        "test": "jest",
+        "test:performance": "jest performance.test.ts",
         "watch": "tsc -watch -p ./",
         "pretest": "npm run compile && npm run lint",
         "lint": "eslint src --ext ts",
@@ -145,6 +146,7 @@
     },
     "devDependencies": {
         "@types/glob": "^8.0.1",
+        "@types/jest": "^29.5.14",
         "@types/node": "^12.11.7",
         "@types/vscode": "^1.95.0",
         "@typescript-eslint/eslint-plugin": "^8.15.0",
@@ -161,8 +163,9 @@
         "eslint-plugin-react": "^7.37.2",
         "eslint-plugin-react-hooks": "^4.6.2",
         "glob": "^11.0.0",
-        "mocha": "^11.0.1",
+        "jest": "^29.7.0",
         "prettier": "^3.3.3",
+        "ts-jest": "^29.2.5",
         "typescript": "^5.7.2",
         "vscode-test": "^1.5.0"
     },
@@ -171,7 +174,6 @@
         "ms-toolsai.jupyter"
     ],
     "dependencies": {
-        "@types/mocha": "^10.0.10",
         "@vscode/jupyter-extension": "^1.1.1",
         "@vscode/python-extension": "^1.0.5",
         "vscode-uri": "^3.1.0"

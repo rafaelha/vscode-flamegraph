@@ -6,7 +6,8 @@
         "lib": ["es6", "dom"],
         "sourceMap": true,
         "rootDir": "src",
-        "strict": true
+        "strict": true,
+        "types": ["jest", "node"]
     },
     "exclude": ["node_modules", ".vscode-test", "flamegraph-react"]
 }
