@@ -1,7 +1,7 @@
 import { isAbsolute, normalize } from 'path';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Uri } from 'vscode';
+import { URI } from 'vscode-uri';
 
 /**
  * Normalizes a file path to use forward slashes and lower case.
@@ -60,7 +60,7 @@ export function getModuleName(filePath: string | undefined): string | undefined 
     if (!filePath) return undefined;
     if (filePath.includes('frozen importlib')) return '<importlib>';
 
-    let fileName = Uri.parse(filePath).fsPath;
+    let fileName = URI.parse(filePath).fsPath;
     if (isAbsolute(fileName)) {
         fileName = shortenFilename(fileName);
     }

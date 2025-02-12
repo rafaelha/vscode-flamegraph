@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { basename } from 'path';
-import { Uri } from 'vscode';
+import { URI } from 'vscode-uri';
 import { strToHue } from './utilities/colors';
 import { getModuleName, toUnixPath } from './utilities/pathUtils';
 import { NotebookCellMap } from './types';
@@ -126,7 +126,7 @@ export class Flamegraph {
             } else {
                 // If the file is not a jupyter notebook, then filePathRaw is the actual file path.
                 // Save it in URI format for consistency.
-                filePath = toUnixPath(Uri.file(filePathRaw).toString());
+                filePath = toUnixPath(URI.file(filePathRaw).toString());
             }
         }
 
@@ -410,7 +410,7 @@ export class Flamegraph {
                 if (!fileProfile.filePath.endsWith('.py')) continue;
                 try {
                     // Read file content once for all nodes in this file
-                    const fileContent = fs.readFileSync(Uri.parse(fileProfile.filePath).fsPath, 'utf-8');
+                    const fileContent = fs.readFileSync(URI.parse(fileProfile.filePath).fsPath, 'utf-8');
                     const lines = fileContent.split('\n');
 
                     // Process all line profiles for this file
