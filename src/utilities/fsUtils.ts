@@ -160,9 +160,11 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
         'No'
     );
 
+    if (installPySpy !== 'Yes') return false;
+
     // get the python path for installying py-spy via the command
     // `global/path/python-m pip install py-spy`
-    // TODO: this section should be improved. Do we really want to install py-spy globally?
+    // TODO: improve the logic in this section
     let pythonPath = 'python3';
     try {
         execAsync('python3 --version'); // this should work for linux and macos
@@ -174,14 +176,11 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
             // otherwise fallback to the python path selected in the Python extension
             const interpreterPath = await getPythonPath();
             if (!interpreterPath) {
-                vscode.window.showErrorMessage('Please select a Python interpreter.');
                 return false;
             }
             pythonPath = interpreterPath;
         }
     }
-
-    if (installPySpy !== 'Yes') return false;
 
     return vscode.window.withProgress(
         {
@@ -215,7 +214,9 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
                         vscode.window.showInformationMessage('py-spy installed successfully.');
                         resolve(true);
                     } else {
-                        vscode.window.showErrorMessage(`Failed to install py-spy: ${errorOutput || 'Unknown error'}`);
+                        vscode.window.showErrorMessage(
+                            `Failed to install py-spy. Please install it manually with "pip install py-spy". ${errorOutput || 'Unknown error'}`
+                        );
                         resolve(false);
                     }
                 });
