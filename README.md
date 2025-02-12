@@ -19,9 +19,8 @@ Your code will be profiled using [py-spy](https://github.com/benfred/py-spy). Yo
 or wait for it to finish.
 The profiling results are then visualized next to your code and as a flamegraph in a new tab.
 
+To hide the inline annotions, right-click anywhere in the editors and select `Flamegraph: Toggle Inline Profile`.
 
-
-> **Note:** On macOS, `py-spy` requires root privileges for profiling Jupyter notebooks. You need to add `py-spy` to the sudoers file, as described [here](https://github.com/rafaelha/vscode-flamegraph/blob/e5b38dc6c87fee310c5562fcc4a3c6178040bfb3/docs/macos-setup.md).
 
 ## Usage
 
