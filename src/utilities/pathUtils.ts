@@ -1,7 +1,7 @@
 import { isAbsolute, normalize } from 'path';
 import * as fs from 'fs';
 import * as path from 'path';
-import { URI } from 'vscode-uri';
+import { URI } from './uri';
 
 /**
  * Normalizes a file path to use forward slashes and lower case.

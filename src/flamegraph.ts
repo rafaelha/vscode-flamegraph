@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { basename } from 'path';
-import { URI } from 'vscode-uri';
+import { URI } from './utilities/uri';
 import { strToHue } from './utilities/colors';
 import { getModuleName, toUnixPath } from './utilities/pathUtils';
 import { NotebookCellMap } from './types';
