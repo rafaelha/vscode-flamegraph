@@ -13,13 +13,11 @@ For Python scripts, select `Flamegraph: Profile file with py-spy` from the dropd
 
 ![Profile python script](https://github.com/rafaelha/vscode-flamegraph/blob/a0f7c296fa3d9fa55fba485436ed31573d02c86f/assets/screenshot-python.png?raw=true)
 
-Alternatively, open the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac) and type `Flamegraph: Profile file with py-spy`.
-
-Your code will be profiled using [py-spy](https://github.com/benfred/py-spy). You can interrupt the profiling anytime via `Ctrl+C`
+Your code will be profiled with [py-spy](https://github.com/benfred/py-spy). You can interrupt the profiling anytime via `Ctrl+C`
 or wait for it to finish.
 The profiling results are then visualized next to your code and as a flamegraph in a new tab.
 
-To hide the inline annotions, right-click anywhere in the editors and select `Flamegraph: Toggle Inline Profile`.
+To hide the inline annotions, right-click anywhere in the editor and select `Flamegraph: Toggle Inline Profile`.
 
 
 ## Usage
@@ -38,22 +36,18 @@ when you select an element in the flamegraph, the corresponding inline annotatio
 
 ![Interactive flamegraph demo](https://github.com/rafaelha/vscode-flamegraph/blob/main/assets/demo-interactive-flame-graph.gif?raw=true)
 
-The flamegraph and inline annotations complement each other - the flamegraph shows call-stack specific data, while inline annotations show aggregated function-level profile data.
+## Useful Commands
 
-## Commands
+Open the Command Palette (Command+Shift+P on Mac and Ctrl+Shift+P on Windows/Linux) and type in one of the following commands:
 
-
--   `Flamegraph: Profile file with py-spy` - Profile the active file with py-spy and display the results.
-
--   `Flamegraph: Load Profile` - Load a profile from a py-spy file.
-
--   `Flamegraph: Toggle Inline Profile` - Show or hide the inline annotations.
-
--   `Flamegraph: Show` - Open a new tab showing the flamegraph.
-
--   `Flamegraph: Attach py-spy to running process` - Attach py-spy to a running process and display the results. The extension will ask for a Process ID (PID) to attach to.
-
--   `Flamegraph: Attach py-spy to running process (native)` - Also collects profiling data from native (e.g. C++) extensions. This is not supported on all platforms. See this [blog post by Ben Frederickson](https://www.benfrederickson.com/profiling-native-python-extensions-with-py-spy/).
+| Command | Description |
+|---------|-------------|
+| `Flamegraph: Profile file with py-spy` | Profile the active file with py-spy and display the results |
+| `Flamegraph: Load Profile` | Load a profile from a py-spy file. You may also right-click on `.pyspy` files in the file explorer and select `Flamegraph: Load Profile`. |
+| `Flamegraph: Toggle Inline Profile` | Show or hide the inline annotations. This is also accessible via right-click on the editor. |
+| `Flamegraph: Show` | Open a new tab showing the flamegraph |
+| `Flamegraph: Attach py-spy to running process` | Attach py-spy to a running process and display the results. The extension will ask for a Process ID (PID) to attach to |
+| `Flamegraph: Attach py-spy to running process (native)` | Attach py-spy, and also collect profiling data from native (e.g. C++) extensions. This is not supported on all platforms. See this [blog post by Ben Frederickson](https://www.benfrederickson.com/profiling-native-python-extensions-with-py-spy/) |
 
 ## Contributing
 
