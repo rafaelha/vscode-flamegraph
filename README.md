@@ -81,12 +81,12 @@ npm run build:webview
 ### TODO
 
 - [ ] Unit tests
-- [ ] Performance tests
-- [x] Option to filter the flamegraph by module. Since processes are treated as a module, this would, e.g., allow to show the flamegraph resolved for all processes or combined for all processes.
+- [x] Performance tests
+- [x] Option to filter the flamegraph by module.
 - [ ] Refactor flamegraph react component. Currently, the whole graph is recomputed on every mouse hover event.
 - [ ] Search in flamegraph
 - [ ] Profiling files without opening a workspace/folder. Currently, the extension requires a workspace/folder to be opened.
 - [ ] Memray memory profiles
 - [ ] Zoom animations in flamegraph
 - [ ] Select sampling interval
-- [x] Jupyter notebook profiling. Currently, it is possible to attache to a running kernel process. But profile results cannot be displayed in the notebook.
+- [x] Jupyter notebook profiling.
