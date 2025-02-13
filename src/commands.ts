@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { commands } from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
-import { exec } from 'child_process';
 import {
     getPythonPath,
     selectProfileFile,
@@ -10,6 +9,7 @@ import {
     promptUserToOpenFolder,
     getPidAndCellFilenameMap,
     verifyPyspy,
+    getPythonProcesses,
 } from './utilities/fsUtils';
 import { FlamegraphPanel } from './flamegraphPanel';
 import { extensionState } from './state';
@@ -202,36 +202,6 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
 }
 
 /**
- * Gets a list of running Python processes.
- * @returns Promise<Array<{pid: string, command: string}>>
- */
-async function getPythonProcesses(): Promise<Array<{ pid: string; command: string }>> {
-    return new Promise((resolve, reject) => {
-        const command =
-            "ps -eo pid,%cpu,command | grep python | grep -v grep | sort -k2 -nr | awk '{print $1, $3, $4, $5, $6, $7, $8, $9, $10}'";
-        exec(command, (error: any, stdout: string) => {
-            if (error && error.code !== 1) {
-                // exit code 1 means no processes found
-                reject(error);
-                return;
-            }
-
-            const processes = stdout
-                .split('\n')
-                .filter((line) => line.trim())
-                .map((line) => {
-                    const [pid, ...commandParts] = line.trim().split(' ');
-                    return {
-                        pid,
-                        command: commandParts.join(' '),
-                    };
-                });
-            resolve(processes);
-        });
-    });
-}
-
-/**
  * Attaches py-spy to the running process.
  *
  * @param context - The extension context.
@@ -255,23 +225,31 @@ export async function attach(
             const processes = await getPythonProcesses();
 
             if (processes.length === 0) {
-                vscode.window.showErrorMessage('No Python processes found.');
-                return;
+                // Prompt user for PID
+                pid = await vscode.window.showInputBox({
+                    prompt: 'Enter the Process ID (PID) to attach py-spy to:',
+                    placeHolder: '1234',
+                    validateInput: (value) => {
+                        // Validate that input is a number
+                        return /^\d+$/.test(value) ? null : 'Please enter a valid process ID (numbers only)';
+                    },
+                });
+                if (!pid) return;
+            } else {
+                // Create QuickPick items from processes
+                const items = processes.map((proc) => ({
+                    label: proc.pid,
+                    description: proc.command,
+                }));
+
+                const selected = await vscode.window.showQuickPick(items, {
+                    placeHolder: 'Select a Python process to attach py-spy to',
+                    title: 'Python Processes',
+                });
+
+                if (!selected) return;
+                pid = selected.label;
             }
-
-            // Create QuickPick items from processes
-            const items = processes.map((proc) => ({
-                label: proc.pid,
-                description: proc.command,
-            }));
-
-            const selected = await vscode.window.showQuickPick(items, {
-                placeHolder: 'Select a Python process to attach py-spy to',
-                title: 'Python Processes',
-            });
-
-            if (!selected) return;
-            pid = selected.label;
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to get Python processes: ${error}`);
             return;

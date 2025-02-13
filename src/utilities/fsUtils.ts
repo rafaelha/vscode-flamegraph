@@ -370,3 +370,58 @@ export async function getPidAndCellFilenameMap(
     }
     return { pid, filenameToJupyterCellMap };
 }
+
+/**
+ * Gets the command to list running Python processes for the current platform.
+ * @returns The command to list running Python processes.
+ */
+function getProcessListCommand(): string {
+    switch (process.platform) {
+        case 'darwin': // macOS
+            return `ps -eo pid,%cpu,command | grep python | grep -v grep | sort -k2 -nr | awk '{print $1, $3, $4, $5, $6, $7, $8, $9, $10}'`;
+        case 'linux':
+            return `ps -eo pid,%cpu,cmd --sort=-%cpu | grep python | grep -v grep | awk '{ $2=""; print $0 }'`;
+        case 'win32': // Windows
+            return `powershell.exe -Command "Get-WmiObject Win32_Process | Where-Object { $_.Name -match 'python' } | Sort-Object CPU -Descending | Select-Object ProcessId, CommandLine"`;
+        default:
+            return '';
+    }
+}
+
+/**
+ * Gets a list of running Python processes.
+ * @returns Promise<Array<{pid: string, command: string}>>
+ */
+export async function getPythonProcesses(): Promise<Array<{ pid: string; command: string }>> {
+    return new Promise((resolve, reject) => {
+        const command = getProcessListCommand();
+        if (command === '') {
+            resolve([]);
+            return;
+        }
+        exec(command, (error: any, stdout: string) => {
+            if (error && error.code !== 1) {
+                // exit code 1 means no processes found
+                reject(error);
+                return;
+            }
+
+            const processes = stdout
+                .split('\n')
+                .filter((line) => line.trim())
+                .map((line) => {
+                    const [pid, ...commandParts] = line.trim().split(' ');
+                    // Only return the process if pid is a valid number
+                    if (!Number.isNaN(Number(pid))) {
+                        return {
+                            pid,
+                            command: commandParts.join(' '),
+                        };
+                    }
+                    return null;
+                })
+                .filter((process): process is { pid: string; command: string } => process !== null);
+            resolve(processes);
+        });
+    });
+}
