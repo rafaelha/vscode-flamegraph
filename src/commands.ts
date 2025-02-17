@@ -381,10 +381,29 @@ export function profileNotebookCommand(context: vscode.ExtensionContext) {
     });
 }
 
-export function topCommand(context: vscode.ExtensionContext) {
+export function topCommand() {
     return vscode.commands.registerCommand('flamegraph.top', async () => {
         const pid = await selectPid();
         if (!pid) return;
-        await attach(context, '--subprocesses', pid);
+
+        const sudo = os.platform() === 'darwin' || os.platform() === 'linux' ? 'sudo ' : '';
+
+        // Create task definition
+        const taskDefinition: vscode.TaskDefinition = {
+            type: 'shell',
+            command: `${sudo}py-spy top --pid ${pid}`,
+        };
+        // Create the task
+        const task = new vscode.Task(
+            taskDefinition,
+            vscode.workspace.workspaceFolders![0],
+            TASK_TERMINAL_NAME,
+            'py-spy',
+            new vscode.ShellExecution(taskDefinition.command),
+            []
+        );
+
+        // Execute the task
+        await vscode.tasks.executeTask(task);
     });
 }

@@ -86,6 +86,10 @@
             {
                 "command": "flamegraph.runPytestFile",
                 "title": "Flamegraph: Profile unit tests in file with pytest"
+            },
+            {
+                "command": "flamegraph.top",
+                "title": "Flamegraph: Show py-spy top"
             }
         ],
         "menus": {
