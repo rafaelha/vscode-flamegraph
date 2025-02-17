@@ -173,12 +173,7 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
             execAsync('python --version'); // this should work for windows
             pythonPath = 'python';
         } catch {
-            // otherwise fallback to the python path selected in the Python extension
-            const interpreterPath = await getPythonPath();
-            if (!interpreterPath) {
-                return false;
-            }
-            pythonPath = interpreterPath;
+            return false;
         }
     }
 
@@ -215,7 +210,7 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
                         resolve(true);
                     } else {
                         vscode.window.showErrorMessage(
-                            `Failed to install py-spy. Please install it manually with "pip install py-spy". ${errorOutput || 'Unknown error'}`
+                            `Failed to install py-spy. Please install it manually into your global python environment with "pip install py-spy". ${errorOutput || 'Unknown error'}`
                         );
                         resolve(false);
                     }
@@ -391,37 +386,86 @@ function getProcessListCommand(): string {
 /**
  * Gets a list of running Python processes.
  * @returns Promise<Array<{pid: string, command: string}>>
+ * @throws Error if platform is unsupported or command fails
  */
 export async function getPythonProcesses(): Promise<Array<{ pid: string; command: string }>> {
-    return new Promise((resolve, reject) => {
-        const command = getProcessListCommand();
-        if (command === '') {
-            resolve([]);
-            return;
-        }
-        exec(command, (error: any, stdout: string) => {
-            if (error && error.code !== 1) {
-                // exit code 1 means no processes found
-                reject(error);
-                return;
-            }
+    const command = getProcessListCommand();
+    if (command === '') {
+        throw new Error('Unsupported platform');
+    }
 
-            const processes = stdout
-                .split('\n')
-                .filter((line) => line.trim())
-                .map((line) => {
-                    const [pid, ...commandParts] = line.trim().split(' ');
-                    // Only return the process if pid is a valid number
-                    if (!Number.isNaN(Number(pid))) {
-                        return {
-                            pid,
-                            command: commandParts.join(' '),
-                        };
-                    }
-                    return null;
-                })
-                .filter((process): process is { pid: string; command: string } => process !== null);
-            resolve(processes);
-        });
+    try {
+        const { stdout } = await execAsync(command);
+        return stdout
+            .split('\n')
+            .filter((line) => line.trim())
+            .map((line) => {
+                const [pid, ...commandParts] = line.trim().split(' ');
+                // Only return the process if pid is a valid number
+                if (!Number.isNaN(Number(pid))) {
+                    return {
+                        pid,
+                        command: commandParts.join(' '),
+                    };
+                }
+                return null;
+            })
+            .filter((process): process is { pid: string; command: string } => process !== null);
+    } catch (error) {
+        // exit code 1 means no processes found, return empty array
+        if (error instanceof Error && (error as any).code === 1) {
+            return [];
+        }
+        throw error;
+    }
+}
+
+/**
+ * Prompts the user to enter a process ID.
+ * @returns The entered PID or undefined if cancelled
+ */
+export async function promptForPid(): Promise<string | undefined> {
+    return vscode.window.showInputBox({
+        prompt: 'Enter the Process ID (PID) to attach py-spy to:',
+        placeHolder: '1234',
+        validateInput: (value) => {
+            return /^\d+$/.test(value) ? null : 'Please enter a valid process ID (numbers only)';
+        },
     });
+}
+
+/**
+ * Prompts user to select a Python process ID either from running processes or manual entry.
+ * @returns Promise<string | undefined> Selected PID or undefined if selection was cancelled
+ */
+export async function selectPid(): Promise<string | undefined> {
+    const processes = await getPythonProcesses();
+
+    // If no processes found, fallback to manual entry
+    if (processes.length === 0) {
+        return promptForPid();
+    }
+
+    // Create QuickPick items from processes
+    const items = [
+        ...processes.map((proc) => ({
+            label: proc.pid,
+            description: proc.command,
+        })),
+        {
+            label: 'Other PID',
+            description: 'Enter a process ID manually',
+        },
+    ];
+
+    const selected = await vscode.window.showQuickPick(items, {
+        placeHolder: 'Select a Python process to attach py-spy',
+        title: 'Python Processes',
+    });
+
+    if (!selected) {
+        return undefined;
+    }
+
+    return selected.label === 'Other PID' ? promptForPid() : selected.label;
 }

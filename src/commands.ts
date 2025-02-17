@@ -9,7 +9,7 @@ import {
     promptUserToOpenFolder,
     getPidAndCellFilenameMap,
     verifyPyspy,
-    getPythonProcesses,
+    selectPid,
 } from './utilities/fsUtils';
 import { FlamegraphPanel } from './flamegraphPanel';
 import { extensionState } from './state';
@@ -206,6 +206,8 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
  *
  * @param context - The extension context.
  * @param flags - The flags to pass to py-spy, such as --subprocesses or --native.
+ * @param pid - The process ID (PID) to attach py-spy to.
+ * @param filenameToJupyterCellMap - A map of filenames to Jupyter cell indices.
  * @returns The command registration.
  */
 export async function attach(
@@ -219,43 +221,9 @@ export async function attach(
         promptUserToOpenFolder();
         return;
     }
-
     if (!pid) {
-        try {
-            const processes = await getPythonProcesses();
-
-            if (processes.length === 0) {
-                // Prompt user for PID
-                pid = await vscode.window.showInputBox({
-                    prompt: 'Enter the Process ID (PID) to attach py-spy to:',
-                    placeHolder: '1234',
-                    validateInput: (value) => {
-                        // Validate that input is a number
-                        return /^\d+$/.test(value) ? null : 'Please enter a valid process ID (numbers only)';
-                    },
-                });
-                if (!pid) return;
-            } else {
-                // Create QuickPick items from processes
-                const items = processes.map((proc) => ({
-                    label: proc.pid,
-                    description: proc.command,
-                }));
-
-                const selected = await vscode.window.showQuickPick(items, {
-                    placeHolder: 'Select a Python process to attach py-spy to',
-                    title: 'Python Processes',
-                });
-
-                if (!selected) return;
-                pid = selected.label;
-            }
-        } catch (error) {
-            vscode.window.showErrorMessage(`Failed to get Python processes: ${error}`);
-            return;
-        }
+        pid = await selectPid();
     }
-
     runTask(context, workspaceFolder, `--pid ${pid}`, flags, filenameToJupyterCellMap);
 }
 
@@ -380,5 +348,14 @@ export function profileNotebookCommand(context: vscode.ExtensionContext) {
         await handleNotebookProfiling(context, notebookEditor.notebook, async () =>
             commands.executeCommand('notebook.execute', notebookEditor.notebook.uri)
         );
+    });
+}
+
+
+export function topCommand() {
+    return vscode.commands.registerCommand('flamegraph.top', async () => {
+        const pid = await selectPid();
+        if (!pid) return;
+        await attach(context, '--subprocesses', pid);
     });
 }
