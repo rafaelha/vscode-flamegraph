@@ -76,6 +76,7 @@ npm run build:webview
 
 ### TODO
 
+- [ ] Switch to `speedscope` format
 - [ ] Unit tests
 - [x] Performance tests
 - [x] Option to filter the flamegraph by module.
