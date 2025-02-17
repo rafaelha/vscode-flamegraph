@@ -76,11 +76,11 @@ npm run build:webview
 
 ### TODO
 
-- [ ] Switch to `speedscope` format
+- [ ] Switch to `speedscope` format. Eventually, this extension should be refactored to be compatible with all profilers that output `speedscope` files. Currently, only left-heavy profile view is supported.
 - [ ] Unit tests
 - [x] Performance tests
 - [x] Option to filter the flamegraph by module.
-- [ ] Refactor flamegraph react component. Currently, the whole graph is recomputed on every mouse hover event.
+- [ ] Refactor flamegraph react component. Currently, the whole graph is recomputed on every mouse hover event. We could consider using `speedscope` npm package to render the flamegraph.
 - [ ] Search in flamegraph
 - [ ] Profiling files without opening a workspace/folder. Currently, the extension requires a workspace/folder to be opened.
 - [ ] Memray memory profiles
