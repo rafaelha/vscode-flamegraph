@@ -78,6 +78,14 @@
             {
                 "command": "flamegraph.attachNativeProfiler",
                 "title": "Flamegraph: Attach py-spy to running process (native)"
+            },
+            {
+                "command": "flamegraph.runAllPytests",
+                "title": "Flamegraph: Profile all unit tests with pytest"
+            },
+            {
+                "command": "flamegraph.runPytestFile",
+                "title": "Flamegraph: Profile unit tests in file with pytest"
             }
         ],
         "menus": {

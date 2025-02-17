@@ -152,16 +152,15 @@ async function runTask(
     await vscode.tasks.executeTask(task);
 }
 
-/**
- * Runs the profiler on the active file.
- *
- * @param context - The extension context.
- * @returns The command registration.
- */
-export function runProfilerCommand(context: vscode.ExtensionContext) {
-    return vscode.commands.registerCommand('flamegraph.runProfiler', async (fileUri?: vscode.Uri) => {
-        // If called with a file URI, use that file. Otherwise, use the uri from the active editor
-        let targetUri: vscode.Uri;
+async function runCommand(
+    context: vscode.ExtensionContext,
+    fileUri?: vscode.Uri,
+    requireUri: boolean = true,
+    option: string = ''
+) {
+    // If called with a file URI, use that file. Otherwise, use the uri from the active editor
+    let targetUri: vscode.Uri | undefined;
+    if (requireUri || fileUri) {
         if (fileUri) {
             targetUri = fileUri;
         } else {
@@ -181,27 +180,53 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
             );
             return;
         }
+    }
 
-        const workspaceFolder = vscode.workspace.getWorkspaceFolder(targetUri);
-        if (!workspaceFolder) {
-            promptUserToOpenFolder(targetUri);
-            return;
-        }
+    const workspaceFolder = targetUri
+        ? vscode.workspace.getWorkspaceFolder(targetUri)
+        : vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) {
+        promptUserToOpenFolder(targetUri);
+        return;
+    }
 
-        const pythonPath = await getPythonPath();
-        if (!pythonPath) {
-            vscode.window.showErrorMessage('No Python interpreter selected. Please select a Python interpreter.');
-            return;
-        }
+    const pythonPath = await getPythonPath();
+    if (!pythonPath) {
+        vscode.window.showErrorMessage('No Python interpreter selected. Please select a Python interpreter.');
+        return;
+    }
 
-        const needsSudoAccess = os.platform() === 'darwin';
-        const success = await verifyPyspy(needsSudoAccess, false);
-        if (!success) return;
+    const needsSudoAccess = os.platform() === 'darwin';
+    const success = await verifyPyspy(needsSudoAccess, false);
+    if (!success) return;
 
-        const filePath = targetUri.fsPath;
-        const command = `"${pythonPath}" "${filePath}"`;
-        const flags = '--subprocesses';
-        runTask(context, workspaceFolder, command, flags, needsSudoAccess);
+    const filePath = targetUri?.fsPath ?? '';
+    const command = `-- "${pythonPath}" ${option} "${filePath}"`;
+    const flags = '--subprocesses';
+    runTask(context, workspaceFolder, command, flags, needsSudoAccess);
+}
+
+/**
+ * Runs the profiler on the active file.
+ *
+ * @param context - The extension context.
+ * @returns The command registration.
+ */
+export function runProfilerCommand(context: vscode.ExtensionContext) {
+    return vscode.commands.registerCommand('flamegraph.runProfiler', async (fileUri?: vscode.Uri) => {
+        await runCommand(context, fileUri);
+    });
+}
+
+export function runPytestFileCommand(context: vscode.ExtensionContext) {
+    return vscode.commands.registerCommand('flamegraph.runPytestFile', async (fileUri?: vscode.Uri) => {
+        await runCommand(context, fileUri, true, '-m pytest');
+    });
+}
+
+export function runAllPytestsCommand(context: vscode.ExtensionContext) {
+    return vscode.commands.registerCommand('flamegraph.runAllPytests', async () => {
+        await runCommand(context, undefined, false, '-m pytest');
     });
 }
 
@@ -356,10 +381,10 @@ export function profileNotebookCommand(context: vscode.ExtensionContext) {
     });
 }
 
-// export function topCommand() {
-//     return vscode.commands.registerCommand('flamegraph.top', async () => {
-//         const pid = await selectPid();
-//         if (!pid) return;
-//         await attach(context, '--subprocesses', pid);
-//     });
-// }
+export function topCommand(context: vscode.ExtensionContext) {
+    return vscode.commands.registerCommand('flamegraph.top', async () => {
+        const pid = await selectPid();
+        if (!pid) return;
+        await attach(context, '--subprocesses', pid);
+    });
+}

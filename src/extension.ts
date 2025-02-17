@@ -9,6 +9,8 @@ import {
     attachProfilerCommand,
     attachNativeProfilerCommand,
     profileNotebookCommand,
+    runAllPytestsCommand,
+    runPytestFileCommand,
 } from './commands';
 import { updateDecorations } from './render';
 import { extensionState } from './state';
@@ -30,7 +32,9 @@ export function activate(context: ExtensionContext) {
         attachNativeProfilerCommand(context),
         showFlamegraphCommand(context),
         profileCellCommand(context),
-        profileNotebookCommand(context)
+        profileNotebookCommand(context),
+        runAllPytestsCommand(context),
+        runPytestFileCommand(context)
     );
 
     // Register decoration visible changed listener
