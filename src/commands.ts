@@ -100,6 +100,8 @@ export function toggleProfileCommand() {
  * @param workspaceFolder - The workspace folder.
  * @param command - The command to run.
  * @param flags - The flags to pass to py-spy.
+ * @param withSudo - Whether to run the command with sudo.
+ * @param filenameToJupyterCellMap - A map of filenames to Jupyter cell indices.
  * @returns The command registration.
  */
 async function runTask(
@@ -107,13 +109,11 @@ async function runTask(
     workspaceFolder: vscode.WorkspaceFolder,
     command: string,
     flags: string,
+    useSudo: boolean,
     filenameToJupyterCellMap?: NotebookCellMap
 ): Promise<void> {
     const profilePath = path.join(workspaceFolder.uri.fsPath, 'profile.pyspy');
     const profileUri = vscode.Uri.file(profilePath);
-
-    const success = await verifyPyspy();
-    if (!success) return;
 
     // Setup file watcher
     if (!extensionState.activeProfileWatcher) {
@@ -130,7 +130,7 @@ async function runTask(
         handleProfileUpdate(context, profileUri, filenameToJupyterCellMap)
     );
 
-    const sudo = os.platform() === 'darwin' ? 'sudo ' : '';
+    const sudo = useSudo ? 'sudo ' : '';
 
     // Create task definition
     const taskDefinition: vscode.TaskDefinition = {
@@ -194,10 +194,14 @@ export function runProfilerCommand(context: vscode.ExtensionContext) {
             return;
         }
 
+        const needsSudoAccess = os.platform() === 'darwin';
+        const success = await verifyPyspy(needsSudoAccess, false);
+        if (!success) return;
+
         const filePath = targetUri.fsPath;
         const command = `"${pythonPath}" "${filePath}"`;
         const flags = '--subprocesses';
-        runTask(context, workspaceFolder, command, flags);
+        runTask(context, workspaceFolder, command, flags, needsSudoAccess);
     });
 }
 
@@ -221,10 +225,14 @@ export async function attach(
         promptUserToOpenFolder();
         return;
     }
+    const needsSudoAccess = os.platform() === 'darwin' || os.platform() === 'linux';
+    const success = await verifyPyspy(needsSudoAccess, needsSudoAccess);
+    if (!success) return;
+
     if (!pid) {
         pid = await selectPid();
     }
-    runTask(context, workspaceFolder, `--pid ${pid}`, flags, filenameToJupyterCellMap);
+    runTask(context, workspaceFolder, `--pid ${pid}`, flags, needsSudoAccess, filenameToJupyterCellMap);
 }
 
 /**
@@ -285,9 +293,6 @@ async function handleNotebookProfiling(
     notebook: vscode.NotebookDocument,
     executeCommand: () => Promise<void>
 ) {
-    const success = await verifyPyspy(true);
-    if (!success) return;
-
     const result = await getPidAndCellFilenameMap(notebook);
     if (!result) return;
 
@@ -351,11 +356,10 @@ export function profileNotebookCommand(context: vscode.ExtensionContext) {
     });
 }
 
-
-export function topCommand() {
-    return vscode.commands.registerCommand('flamegraph.top', async () => {
-        const pid = await selectPid();
-        if (!pid) return;
-        await attach(context, '--subprocesses', pid);
-    });
-}
+// export function topCommand() {
+//     return vscode.commands.registerCommand('flamegraph.top', async () => {
+//         const pid = await selectPid();
+//         if (!pid) return;
+//         await attach(context, '--subprocesses', pid);
+//     });
+// }

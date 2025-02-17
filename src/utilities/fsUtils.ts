@@ -89,7 +89,7 @@ export async function checkSudoAccess(modal: boolean = true): Promise<boolean> {
     const permaLink =
         'https://github.com/rafaelha/vscode-flamegraph/blob/e5b38dc6c87fee310c5562fcc4a3c6178040bfb3/docs/macos-setup.md';
     // Check for passwordless sudo access to py-spy on macOS
-    if (os.platform() === 'darwin') {
+    if (os.platform() === 'darwin' || os.platform() === 'linux') {
         try {
             // Use -n flag to prevent sudo from asking for a password
             await new Promise((resolve, reject) => {
@@ -105,7 +105,7 @@ export async function checkSudoAccess(modal: boolean = true): Promise<boolean> {
             if (modal) {
                 vscode.window
                     .showErrorMessage(
-                        'Passwordless sudo access is required for py-spy to profile notebooks on MacOS. Please add py-spy to your sudoers file.',
+                        'Passwordless sudo access is required for py-spy to profile notebooks. Please add py-spy to your sudoers file.',
                         { modal },
                         'See instructions'
                     )
@@ -118,7 +118,7 @@ export async function checkSudoAccess(modal: boolean = true): Promise<boolean> {
             }
             vscode.window
                 .showInformationMessage(
-                    'Root access is required to run py-spy on MacOS. Please enter your password in the terminal. For a better experience, consider adding py-spy to your sudoers file.',
+                    'Root access is required to run py-spy. Please enter your password in the terminal. For a better experience, consider adding py-spy to your sudoers file.',
                     { modal },
                     'See instructions'
                 )
@@ -225,11 +225,17 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
  *
  * @returns Whether py-spy is installed and has sudo access.
  */
-export async function verifyPyspy(requireSudoAccess: boolean = false): Promise<boolean> {
+export async function verifyPyspy(
+    recommendSudoAccess: boolean = false,
+    requireSudoAccess: boolean = false
+): Promise<boolean> {
     const success = await checkAndInstallProfiler();
     if (!success) return false;
-    const hasSudoAccess = await checkSudoAccess(requireSudoAccess);
-    return requireSudoAccess ? hasSudoAccess : true;
+    if (recommendSudoAccess) {
+        const hasSudoAccess = await checkSudoAccess(requireSudoAccess);
+        return hasSudoAccess || !requireSudoAccess;
+    }
+    return true;
 }
 
 /**
