@@ -163,7 +163,7 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
     if (installPySpy !== 'Yes') return false;
 
     // get the python path for installying py-spy via the command
-    // `global/path/python-m pip install py-spy`
+    // `global/path/python -m pip install py-spy`
     // TODO: improve the logic in this section
     let pythonPath = 'python3';
     try {
