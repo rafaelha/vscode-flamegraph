@@ -8,7 +8,7 @@ import {
     readTextFile,
     promptUserToOpenFolder,
     getPidAndCellFilenameMap,
-    verifyPyspy,
+    getOrInstallPySpyWithSudo,
     selectPid,
 } from './utilities/fsUtils';
 import { FlamegraphPanel } from './flamegraphPanel';
@@ -98,15 +98,17 @@ export function toggleProfileCommand() {
  *
  * @param context - The extension context.
  * @param workspaceFolder - The workspace folder.
+ * @param pySpyPath - The path to py-spy.
  * @param command - The command to run.
  * @param flags - The flags to pass to py-spy.
- * @param withSudo - Whether to run the command with sudo.
+ * @param useSudo - Whether to run the command with sudo.
  * @param filenameToJupyterCellMap - A map of filenames to Jupyter cell indices.
  * @returns The command registration.
  */
 async function runTask(
     context: vscode.ExtensionContext,
     workspaceFolder: vscode.WorkspaceFolder,
+    pySpyPath: string,
     command: string,
     flags: string,
     useSudo: boolean,
@@ -135,7 +137,7 @@ async function runTask(
     // Create task definition
     const taskDefinition: vscode.TaskDefinition = {
         type: 'shell',
-        command: `${sudo}py-spy record --output profile.pyspy --format raw --full-filenames ${flags} ${command}`,
+        command: `${sudo}${pySpyPath} record --output profile.pyspy --format raw --full-filenames ${flags} ${command}`,
     };
 
     // Create the task
@@ -197,13 +199,13 @@ async function runCommand(
     }
 
     const needsSudoAccess = os.platform() === 'darwin';
-    const success = await verifyPyspy(needsSudoAccess, false);
-    if (!success) return;
+    const pySpyPath = await getOrInstallPySpyWithSudo(needsSudoAccess, false);
+    if (!pySpyPath) return;
 
     const filePath = targetUri?.fsPath ?? '';
     const command = `-- "${pythonPath}" ${option} "${filePath}"`;
     const flags = '--subprocesses';
-    runTask(context, workspaceFolder, command, flags, needsSudoAccess);
+    runTask(context, workspaceFolder, pySpyPath, command, flags, needsSudoAccess);
 }
 
 /**
@@ -243,21 +245,23 @@ export async function attach(
     context: vscode.ExtensionContext,
     flags: string,
     pid?: string,
-    filenameToJupyterCellMap?: NotebookCellMap
-) {
+    filenameToJupyterCellMap?: NotebookCellMap,
+    requireSudoAccess: boolean = false
+): Promise<boolean> {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
         promptUserToOpenFolder();
-        return;
+        return false;
     }
     const needsSudoAccess = os.platform() === 'darwin' || os.platform() === 'linux';
-    const success = await verifyPyspy(needsSudoAccess, needsSudoAccess);
-    if (!success) return;
+    const pySpyPath = await getOrInstallPySpyWithSudo(needsSudoAccess, requireSudoAccess);
+    if (!pySpyPath) return false;
 
     if (!pid) {
         pid = await selectPid();
     }
-    runTask(context, workspaceFolder, `--pid ${pid}`, flags, needsSudoAccess, filenameToJupyterCellMap);
+    runTask(context, workspaceFolder, pySpyPath, `--pid ${pid}`, flags, needsSudoAccess, filenameToJupyterCellMap);
+    return true;
 }
 
 /**
@@ -323,7 +327,8 @@ async function handleNotebookProfiling(
 
     const { pid, filenameToJupyterCellMap } = result;
 
-    await attach(context, '--subprocesses', pid, filenameToJupyterCellMap);
+    const success = await attach(context, '--subprocesses', pid, filenameToJupyterCellMap, true);
+    if (!success) return;
 
     // small delay to ensure py-spy is running
     await new Promise((resolve) => {
@@ -386,12 +391,16 @@ export function topCommand() {
         const pid = await selectPid();
         if (!pid) return;
 
-        const sudo = os.platform() === 'darwin' || os.platform() === 'linux' ? 'sudo ' : '';
+        const needsSudoAccess = os.platform() === 'darwin' || os.platform() === 'linux';
+        const pySpyPath = await getOrInstallPySpyWithSudo(needsSudoAccess, false);
+        if (!pySpyPath) return;
+
+        const sudo = needsSudoAccess ? 'sudo ' : '';
 
         // Create task definition
         const taskDefinition: vscode.TaskDefinition = {
             type: 'shell',
-            command: `${sudo}py-spy top --pid ${pid}`,
+            command: `${sudo}${pySpyPath} top --pid ${pid}`,
         };
         // Create the task
         const task = new vscode.Task(
