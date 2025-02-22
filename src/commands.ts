@@ -93,6 +93,13 @@ export function toggleProfileCommand() {
     });
 }
 
+function escapeSpaces(input: string): string {
+    if (os.platform() != 'win32') return input;
+    return input.replace(/"([^"]*)"/g, (match) => {
+        return match.replace(/ /g, '` ');
+    });
+}
+
 /**
  * Create a new vscode task to run py-spy and monitor the profile file.
  *
@@ -114,7 +121,8 @@ async function runTask(
     useSudo: boolean,
     filenameToJupyterCellMap?: NotebookCellMap
 ): Promise<void> {
-    const profilePath = path.join(workspaceFolder.uri.fsPath, 'profile.pyspy');
+    const profileFileName = 'profile.pyspy';
+    const profilePath = path.join(workspaceFolder.uri.fsPath, profileFileName);
     const profileUri = vscode.Uri.file(profilePath);
 
     // Setup file watcher
@@ -138,7 +146,9 @@ async function runTask(
     // Create task definition
     const taskDefinition: vscode.TaskDefinition = {
         type: 'shell',
-        command: `${ampersand}${sudo}"${pySpyPath}" record --output "${profilePath}" --format raw --full-filenames ${flags} ${command}`,
+        command: escapeSpaces(
+            `${ampersand}${sudo}"${pySpyPath}" record --output ${profileFileName} --format raw --full-filenames ${flags} ${command}`
+        ),
     };
 
     const task = new vscode.Task(
@@ -403,7 +413,7 @@ export function topCommand() {
         // Create task definition
         const taskDefinition: vscode.TaskDefinition = {
             type: 'shell',
-            command: `${ampersand}${sudo}"${pySpyPath}" top --pid ${pid}`,
+            command: escapeSpaces(`${ampersand}${sudo}"${pySpyPath}" top --pid ${pid}`),
         };
         // Create the task
         const task = new vscode.Task(
