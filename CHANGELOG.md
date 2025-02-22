@@ -6,9 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
+### Fixed
+- Fixed issue where profiles were not rendered in Jupyter cells with CRLF line endings
+
 ### Changed
 - Improved py-spy installation process. Now, py-spy installations in the currently selected virtual environment
 are used if no global installation is found.
+
 
 ## [0.3.4] - 2025-02-17
 ### Added

@@ -367,7 +367,8 @@ export async function getPidAndCellFilenameMap(
     const numCells = notebook.cellCount;
 
     const getFileNameCode = Array.from({ length: numCells })
-        .map((_, i) => notebook.cellAt(i).document.getText())
+        // make sure to replace CRLF line endings with LF
+        .map((_, i) => notebook.cellAt(i).document.getText().replace(/\r\n/g, '\n'))
         .map((code) => `print(get_file_name(${JSON.stringify(code)}));`)
         .join('');
 
