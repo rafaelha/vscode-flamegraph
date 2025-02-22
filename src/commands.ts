@@ -133,20 +133,23 @@ async function runTask(
     );
 
     const sudo = useSudo ? 'sudo ' : '';
+    const ampersand = os.platform() === 'win32' ? '& ' : '';
 
     // Create task definition
     const taskDefinition: vscode.TaskDefinition = {
         type: 'shell',
-        command: `${sudo}${pySpyPath} record --output profile.pyspy --format raw --full-filenames ${flags} ${command}`,
+        command: `${ampersand}${sudo}"${pySpyPath}" record --output "${profilePath}" --format raw --full-filenames ${flags} ${command}`,
     };
 
-    // Create the task
     const task = new vscode.Task(
         taskDefinition,
         workspaceFolder,
         TASK_TERMINAL_NAME,
         'py-spy',
-        new vscode.ShellExecution(taskDefinition.command),
+        // Create the task with PowerShell on Windows Unix-like terminal (git bash) will cause errors
+        new vscode.ShellExecution(taskDefinition.command, {
+            executable: os.platform() === 'win32' ? 'powershell.exe' : undefined,
+        }),
         []
     );
 
@@ -396,11 +399,11 @@ export function topCommand() {
         if (!pySpyPath) return;
 
         const sudo = needsSudoAccess ? 'sudo ' : '';
-
+        const ampersand = os.platform() === 'win32' ? '& ' : '';
         // Create task definition
         const taskDefinition: vscode.TaskDefinition = {
             type: 'shell',
-            command: `${sudo}${pySpyPath} top --pid ${pid}`,
+            command: `${ampersand}${sudo}"${pySpyPath}" top --pid ${pid}`,
         };
         // Create the task
         const task = new vscode.Task(
@@ -408,7 +411,9 @@ export function topCommand() {
             vscode.workspace.workspaceFolders![0],
             TASK_TERMINAL_NAME,
             'py-spy',
-            new vscode.ShellExecution(taskDefinition.command),
+            new vscode.ShellExecution(taskDefinition.command, {
+                executable: os.platform() === 'win32' ? 'powershell.exe' : undefined,
+            }),
             []
         );
 

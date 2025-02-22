@@ -87,13 +87,13 @@ export async function getPythonPath(): Promise<string | undefined> {
  * @returns Whether py-spy is installed and has passwordless sudo access.
  */
 export async function checkSudoAccess(pySpyPath: string, modal: boolean = true): Promise<boolean> {
-    const permaLink = 'https://github.com/rafaelha/vscode-flamegraph/blob/main/docs/macos-setup.md';
+    const permaLink = `https://www.rafaelha.dev/sudoers?path=${pySpyPath}&os=${os.platform()}`;
     // Check for passwordless sudo access to py-spy on macOS
     if (os.platform() === 'darwin' || os.platform() === 'linux') {
         try {
             // Use -n flag to prevent sudo from asking for a password
             await new Promise((resolve, reject) => {
-                exec(`sudo -n ${pySpyPath} --version`, (error: any) => {
+                exec(`sudo -n "${pySpyPath}" --version`, (error: any) => {
                     if (error) {
                         reject(error);
                     } else {
@@ -105,7 +105,7 @@ export async function checkSudoAccess(pySpyPath: string, modal: boolean = true):
             if (modal) {
                 vscode.window
                     .showErrorMessage(
-                        `Passwordless sudo access is required for py-spy to profile notebooks. Please add py-spy (${pySpyPath}) to your sudoers file.`,
+                        `Passwordless sudo access is required for py-spy to profile notebooks. Please add py-spy to your sudoers file.`,
                         { modal },
                         'See instructions'
                     )
@@ -118,7 +118,7 @@ export async function checkSudoAccess(pySpyPath: string, modal: boolean = true):
             }
             vscode.window
                 .showInformationMessage(
-                    `Root access is required to run py-spy. Please enter your password in the terminal. For a better experience, consider adding py-spy (${pySpyPath}) to your sudoers file.`,
+                    `Root access is required to run py-spy. Please enter your password in the terminal. For a better experience, consider adding py-spy to your sudoers file.`,
                     { modal },
                     'See instructions'
                 )
@@ -149,7 +149,7 @@ async function getPySpyPath(): Promise<string | undefined> {
             const pythonPath = await getPythonPath();
             if (!pythonPath) return undefined;
             const pySpyPath = path.join(path.dirname(pythonPath), 'py-spy');
-            await execAsync(`${pySpyPath} --version`);
+            await execAsync(`"${pySpyPath}" --version`);
             return pySpyPath;
         } catch {
             return undefined;
@@ -176,22 +176,24 @@ export async function getOrInstallPySpy(): Promise<string | undefined> {
 
     if (installPySpy !== 'Yes') return undefined;
 
-    // get the python path for installying py-spy via the command
+    // Try to get the global python path
     let pythonPath: string | undefined;
     try {
-        execAsync('python3 --version'); // this should work for linux and macos
+        // Check specifically for pip availability
+        await execAsync('python3 -m pip --version'); // this should work for linux and macos
         pythonPath = 'python3';
     } catch {
         try {
-            execAsync('python --version'); // this should work for windows
+            // Fix typo in pip check and ensure pip is available
+            await execAsync('python -m pip --version'); // this should work for windows
             pythonPath = 'python';
         } catch {
             // If the above approaches fail, try to get the python path from the python extension
             // This may be a virtual environment
             pythonPath = await getPythonPath();
-            if (!pythonPath) return undefined;
         }
     }
+    if (!pythonPath) return undefined;
 
     // Install py-spy using the command
     // `path/to/python -m pip install py-spy`
