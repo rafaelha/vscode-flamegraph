@@ -77,23 +77,28 @@ export async function getPythonPath(): Promise<string | undefined> {
 }
 
 /**
- * On MacOS, checks if py-spy is given passwordless sudo access in the sudoers file.
- * Returns true on all other platforms. On MacOS the user will be prompted to add py-spy to the sudoers file
- * if they don't have passwordless sudo access. The user will be given a link to
- * https://github.com/rafaelha/vscode-flamegraph/blob/e5b38dc6c87fee310c5562fcc4a3c6178040bfb3/docs/macos-setup.md
+ * On MacOS or Linux, checks if py-spy is given passwordless sudo access in the sudoers file.
+ * Returns true on all other platforms. The user will be prompted to add py-spy to the sudoers file
+ * if they don't have passwordless sudo access. The user will be given a link to the setup instructions
+ * https://github.com/rafaelha/vscode-flamegraph/blob/main/docs/macos-setup.md
  *
+ * @param pySpyPath - The path to py-spy.
  * @param modal - Whether the VS Code error/info message should be modal.
  * @returns Whether py-spy is installed and has passwordless sudo access.
  */
-export async function checkSudoAccess(modal: boolean = true): Promise<boolean> {
-    const permaLink =
-        'https://github.com/rafaelha/vscode-flamegraph/blob/e5b38dc6c87fee310c5562fcc4a3c6178040bfb3/docs/macos-setup.md';
+export async function checkSudoAccess(pySpyPath: string, modal: boolean = true): Promise<boolean> {
     // Check for passwordless sudo access to py-spy on macOS
     if (os.platform() === 'darwin' || os.platform() === 'linux') {
+        // get user name by running `whoami`
+        const userName = await execAsync('whoami');
+        if (pySpyPath === 'py-spy') {
+            pySpyPath = (await execAsync('which py-spy')).stdout.trim();
+        }
+        const permaLink = `https://www.rafaelha.dev/sudoers?path=${pySpyPath.replace(/ /g, '\\ ')}&os=${os.platform()}&username=${userName.stdout.trim()}`;
         try {
             // Use -n flag to prevent sudo from asking for a password
             await new Promise((resolve, reject) => {
-                exec('sudo -n py-spy --version', (error: any) => {
+                exec(`sudo -n "${pySpyPath}" --version`, (error: any) => {
                     if (error) {
                         reject(error);
                     } else {
@@ -105,7 +110,7 @@ export async function checkSudoAccess(modal: boolean = true): Promise<boolean> {
             if (modal) {
                 vscode.window
                     .showErrorMessage(
-                        'Passwordless sudo access is required for py-spy to profile notebooks. Please add py-spy to your sudoers file.',
+                        `Passwordless sudo access is required for py-spy to profile notebooks. Please add py-spy to your sudoers file.`,
                         { modal },
                         'See instructions'
                     )
@@ -118,7 +123,7 @@ export async function checkSudoAccess(modal: boolean = true): Promise<boolean> {
             }
             vscode.window
                 .showInformationMessage(
-                    'Root access is required to run py-spy. Please enter your password in the terminal. For a better experience, consider adding py-spy to your sudoers file.',
+                    `Root access is required to run py-spy. Please enter your password in the terminal. For a better experience, consider adding py-spy to your sudoers file.`,
                     { modal },
                     'See instructions'
                 )
@@ -133,26 +138,40 @@ export async function checkSudoAccess(modal: boolean = true): Promise<boolean> {
 }
 
 /**
- * Checks if py-spy is installed.
+ * Checks if py-spy is installed and returns the path to it. It will first be checked if py-spy is installed in the
+ * global python environment. If not, it will be checked if py-spy is installed in the currently selected virtual
+ * environment.
  *
- * @returns Whether py-spy is installed.
+ * @returns The path to py-spy or undefined if it is not installed.
  */
-async function isPySpyInstalled(): Promise<boolean> {
+async function getPySpyPath(): Promise<string | undefined> {
     try {
         await execAsync('py-spy --version');
-        return true;
+        return 'py-spy';
     } catch {
-        return false;
+        try {
+            // get python path
+            const pythonPath = await getPythonPath();
+            if (!pythonPath) return undefined;
+            const pySpyPath = path.join(path.dirname(pythonPath), 'py-spy');
+            await execAsync(`"${pySpyPath}" --version`);
+            return pySpyPath;
+        } catch {
+            return undefined;
+        }
     }
 }
+
 /**
- * Guides user through installing py-spy if it is not installed.
+ * Get the path to py-spy. If py-spy is not found, the user will be guided to install it.
+ * The global python environment will be checked first, then the currently selected virtual environment.
+ * For installation py-spy, the global python environment is preferred
  *
- * @returns Whether py-spy was installed.
+ * @returns The path to py-spy or undefined if installation is aborted or fails.
  */
-export async function checkAndInstallProfiler(): Promise<boolean> {
-    const isInstalled = await isPySpyInstalled();
-    if (isInstalled) return true;
+export async function getOrInstallPySpy(): Promise<string | undefined> {
+    let pySpyPath = await getPySpyPath();
+    if (pySpyPath) return pySpyPath;
 
     const installPySpy = await vscode.window.showInformationMessage(
         'py-spy is not installed. Would you like to install it?',
@@ -160,23 +179,29 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
         'No'
     );
 
-    if (installPySpy !== 'Yes') return false;
+    if (installPySpy !== 'Yes') return undefined;
 
-    // get the python path for installying py-spy via the command
-    // `global/path/python -m pip install py-spy`
-    // TODO: improve the logic in this section
-    let pythonPath = 'python3';
+    // Try to get the global python path
+    let pythonPath: string | undefined;
     try {
-        execAsync('python3 --version'); // this should work for linux and macos
+        // Check specifically for pip availability
+        await execAsync('python3 -m pip --version'); // this should work for linux and macos
+        pythonPath = 'python3';
     } catch {
         try {
-            execAsync('python --version'); // this should work for windows
+            // Fix typo in pip check and ensure pip is available
+            await execAsync('python -m pip --version'); // this should work for windows
             pythonPath = 'python';
         } catch {
-            return false;
+            // If the above approaches fail, try to get the python path from the python extension
+            // This may be a virtual environment
+            pythonPath = await getPythonPath();
         }
     }
+    if (!pythonPath) return undefined;
 
+    // Install py-spy using the command
+    // `path/to/python -m pip install py-spy`
     return vscode.window.withProgress(
         {
             location: vscode.ProgressLocation.Notification,
@@ -184,7 +209,7 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
             cancellable: true,
         },
         async (progress) => {
-            return new Promise<boolean>((resolve) => {
+            return new Promise<string | undefined>((resolve) => {
                 const install = spawn(pythonPath, ['-m', 'pip', 'install', 'py-spy']);
                 let errorOutput = '';
 
@@ -201,18 +226,20 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
 
                 install.on('error', (error) => {
                     errorOutput += error;
-                    resolve(false);
+                    resolve(undefined);
                 });
 
                 install.on('close', async () => {
-                    if (await isPySpyInstalled()) {
+                    // check if py-spy was installed successfully
+                    pySpyPath = await getPySpyPath();
+                    if (pySpyPath) {
                         vscode.window.showInformationMessage('py-spy installed successfully.');
-                        resolve(true);
+                        resolve(pySpyPath);
                     } else {
                         vscode.window.showErrorMessage(
                             `Failed to install py-spy. Please install it manually into your global python environment with "pip install py-spy". ${errorOutput || 'Unknown error'}`
                         );
-                        resolve(false);
+                        resolve(undefined);
                     }
                 });
             });
@@ -223,19 +250,23 @@ export async function checkAndInstallProfiler(): Promise<boolean> {
 /**
  * Checks if py-spy is installed and has sudo access on MacOs.
  *
- * @returns Whether py-spy is installed and has sudo access.
+ * @param recommendSudoAccess - Whether to recommend sudo access.
+ * @param requireSudoAccess - Whether to require sudo access.
+ * @returns The path to py-spy or undefined if it is not installed or sudo access is required but not granted.
  */
-export async function verifyPyspy(
+export async function getOrInstallPySpyWithSudo(
     recommendSudoAccess: boolean = false,
     requireSudoAccess: boolean = false
-): Promise<boolean> {
-    const success = await checkAndInstallProfiler();
-    if (!success) return false;
+): Promise<string | undefined> {
+    // First get the path to py-spy (or prompt the user to install it)
+    const pySpyPath = await getOrInstallPySpy();
+    if (!pySpyPath) return undefined;
+
     if (recommendSudoAccess) {
-        const hasSudoAccess = await checkSudoAccess(requireSudoAccess);
-        return hasSudoAccess || !requireSudoAccess;
+        const hasSudoAccess = await checkSudoAccess(pySpyPath, requireSudoAccess);
+        if (!hasSudoAccess && requireSudoAccess) return undefined;
     }
-    return true;
+    return pySpyPath;
 }
 
 /**
@@ -341,7 +372,8 @@ export async function getPidAndCellFilenameMap(
     const numCells = notebook.cellCount;
 
     const getFileNameCode = Array.from({ length: numCells })
-        .map((_, i) => notebook.cellAt(i).document.getText())
+        // make sure to replace CRLF line endings with LF
+        .map((_, i) => notebook.cellAt(i).document.getText().replace(/\r\n/g, '\n'))
         .map((code) => `print(get_file_name(${JSON.stringify(code)}));`)
         .join('');
 

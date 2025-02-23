@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased]
+### Fixed
+- Fixed issue where profiles were not rendered in Jupyter cells with CRLF line endings
+- Fix issue where py-spy was not found when the file path contained spaces.
+
+### Changed
+- Improved py-spy installation process. Now, py-spy installations in the currently selected virtual environment
+are used if no global installation is found.
+- On windows, the VS Code taks will now always use `powershell`.
+- Improved instructions on how to add py-spy to the sudoers file on macOS and Linux.
+
+
 ## [0.3.4] - 2025-02-17
 ### Added
 - Added `Flamegraph: Show py-spy top` command. This command will display a `top`-like view of functions consuming CPU using py-spy.

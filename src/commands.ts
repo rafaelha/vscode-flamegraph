@@ -8,13 +8,14 @@ import {
     readTextFile,
     promptUserToOpenFolder,
     getPidAndCellFilenameMap,
-    verifyPyspy,
+    getOrInstallPySpyWithSudo,
     selectPid,
 } from './utilities/fsUtils';
 import { FlamegraphPanel } from './flamegraphPanel';
 import { extensionState } from './state';
 import { Flamegraph } from './flamegraph';
 import { NotebookCellMap } from './types';
+import { escapeSpaces } from './utilities/pathUtils';
 
 const TASK_TERMINAL_NAME = 'Py-spy profile'; // Name of the terminal launched for the profiling task
 
@@ -98,21 +99,24 @@ export function toggleProfileCommand() {
  *
  * @param context - The extension context.
  * @param workspaceFolder - The workspace folder.
+ * @param pySpyPath - The path to py-spy.
  * @param command - The command to run.
  * @param flags - The flags to pass to py-spy.
- * @param withSudo - Whether to run the command with sudo.
+ * @param useSudo - Whether to run the command with sudo.
  * @param filenameToJupyterCellMap - A map of filenames to Jupyter cell indices.
  * @returns The command registration.
  */
 async function runTask(
     context: vscode.ExtensionContext,
     workspaceFolder: vscode.WorkspaceFolder,
+    pySpyPath: string,
     command: string,
     flags: string,
     useSudo: boolean,
     filenameToJupyterCellMap?: NotebookCellMap
 ): Promise<void> {
-    const profilePath = path.join(workspaceFolder.uri.fsPath, 'profile.pyspy');
+    const profileFileName = 'profile.pyspy';
+    const profilePath = path.join(workspaceFolder.uri.fsPath, profileFileName);
     const profileUri = vscode.Uri.file(profilePath);
 
     // Setup file watcher
@@ -131,20 +135,25 @@ async function runTask(
     );
 
     const sudo = useSudo ? 'sudo ' : '';
+    const ampersand = os.platform() === 'win32' ? '& ' : '';
 
     // Create task definition
     const taskDefinition: vscode.TaskDefinition = {
         type: 'shell',
-        command: `${sudo}py-spy record --output profile.pyspy --format raw --full-filenames ${flags} ${command}`,
+        command: escapeSpaces(
+            `${ampersand}${sudo}"${pySpyPath}" record --output ${profileFileName} --format raw --full-filenames ${flags} ${command}`
+        ),
     };
 
-    // Create the task
     const task = new vscode.Task(
         taskDefinition,
         workspaceFolder,
         TASK_TERMINAL_NAME,
         'py-spy',
-        new vscode.ShellExecution(taskDefinition.command),
+        // Create the task with PowerShell on Windows Unix-like terminal (git bash) will cause errors
+        new vscode.ShellExecution(taskDefinition.command, {
+            executable: os.platform() === 'win32' ? 'powershell.exe' : undefined,
+        }),
         []
     );
 
@@ -197,13 +206,13 @@ async function runCommand(
     }
 
     const needsSudoAccess = os.platform() === 'darwin';
-    const success = await verifyPyspy(needsSudoAccess, false);
-    if (!success) return;
+    const pySpyPath = await getOrInstallPySpyWithSudo(needsSudoAccess, false);
+    if (!pySpyPath) return;
 
     const filePath = targetUri?.fsPath ?? '';
     const command = `-- "${pythonPath}" ${option} "${filePath}"`;
     const flags = '--subprocesses';
-    runTask(context, workspaceFolder, command, flags, needsSudoAccess);
+    runTask(context, workspaceFolder, pySpyPath, command, flags, needsSudoAccess);
 }
 
 /**
@@ -243,21 +252,23 @@ export async function attach(
     context: vscode.ExtensionContext,
     flags: string,
     pid?: string,
-    filenameToJupyterCellMap?: NotebookCellMap
-) {
+    filenameToJupyterCellMap?: NotebookCellMap,
+    requireSudoAccess: boolean = false
+): Promise<boolean> {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
         promptUserToOpenFolder();
-        return;
+        return false;
     }
     const needsSudoAccess = os.platform() === 'darwin' || os.platform() === 'linux';
-    const success = await verifyPyspy(needsSudoAccess, needsSudoAccess);
-    if (!success) return;
+    const pySpyPath = await getOrInstallPySpyWithSudo(needsSudoAccess, requireSudoAccess);
+    if (!pySpyPath) return false;
 
     if (!pid) {
         pid = await selectPid();
     }
-    runTask(context, workspaceFolder, `--pid ${pid}`, flags, needsSudoAccess, filenameToJupyterCellMap);
+    runTask(context, workspaceFolder, pySpyPath, `--pid ${pid}`, flags, needsSudoAccess, filenameToJupyterCellMap);
+    return true;
 }
 
 /**
@@ -323,7 +334,8 @@ async function handleNotebookProfiling(
 
     const { pid, filenameToJupyterCellMap } = result;
 
-    await attach(context, '--subprocesses', pid, filenameToJupyterCellMap);
+    const success = await attach(context, '--subprocesses', pid, filenameToJupyterCellMap, true);
+    if (!success) return;
 
     // small delay to ensure py-spy is running
     await new Promise((resolve) => {
@@ -386,12 +398,16 @@ export function topCommand() {
         const pid = await selectPid();
         if (!pid) return;
 
-        const sudo = os.platform() === 'darwin' || os.platform() === 'linux' ? 'sudo ' : '';
+        const needsSudoAccess = os.platform() === 'darwin' || os.platform() === 'linux';
+        const pySpyPath = await getOrInstallPySpyWithSudo(needsSudoAccess, false);
+        if (!pySpyPath) return;
 
+        const sudo = needsSudoAccess ? 'sudo ' : '';
+        const ampersand = os.platform() === 'win32' ? '& ' : '';
         // Create task definition
         const taskDefinition: vscode.TaskDefinition = {
             type: 'shell',
-            command: `${sudo}py-spy top --pid ${pid}`,
+            command: escapeSpaces(`${ampersand}${sudo}"${pySpyPath}" top --pid ${pid}`),
         };
         // Create the task
         const task = new vscode.Task(
@@ -399,7 +415,9 @@ export function topCommand() {
             vscode.workspace.workspaceFolders![0],
             TASK_TERMINAL_NAME,
             'py-spy',
-            new vscode.ShellExecution(taskDefinition.command),
+            new vscode.ShellExecution(taskDefinition.command, {
+                executable: os.platform() === 'win32' ? 'powershell.exe' : undefined,
+            }),
             []
         );
 

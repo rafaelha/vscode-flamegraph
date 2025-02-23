@@ -1,6 +1,7 @@
 import { isAbsolute, normalize } from 'path';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import { URI } from './uri';
 
 /**
@@ -15,6 +16,19 @@ export function toUnixPath(filePath: string) {
     const decodedPath = decodeURIComponent(filePath);
     // Normalize the path, convert backslashes to forward slashes, and decode spaces
     return normalize(decodedPath).replace(/\\/g, '/');
+}
+
+/**
+ * Escapes spaces in a string for Windows by replacing them with '` ' (backtick space).
+ *
+ * @param input - The input string to escape.
+ * @returns The escaped string.
+ */
+export function escapeSpaces(input: string): string {
+    if (os.platform() !== 'win32') return input;
+    return input.replace(/"([^"]*)"/g, (match) => {
+        return match.replace(/ /g, '` ');
+    });
 }
 
 const filenameCache = new Map<string, string>();
