@@ -15,6 +15,7 @@ import { FlamegraphPanel } from './flamegraphPanel';
 import { extensionState } from './state';
 import { Flamegraph } from './flamegraph';
 import { NotebookCellMap } from './types';
+import { escapeSpaces } from './utilities/pathUtils';
 
 const TASK_TERMINAL_NAME = 'Py-spy profile'; // Name of the terminal launched for the profiling task
 
@@ -90,13 +91,6 @@ export function toggleProfileCommand() {
             extensionState.profileVisible = true;
         }
         extensionState.updateUI();
-    });
-}
-
-function escapeSpaces(input: string): string {
-    if (os.platform() != 'win32') return input;
-    return input.replace(/"([^"]*)"/g, (match) => {
-        return match.replace(/ /g, '` ');
     });
 }
 

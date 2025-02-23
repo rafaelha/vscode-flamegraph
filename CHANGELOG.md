@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [unreleased]
 ### Fixed
 - Fixed issue where profiles were not rendered in Jupyter cells with CRLF line endings
+- Fix issue where py-spy was not found when the file path contained spaces.
 
 ### Changed
 - Improved py-spy installation process. Now, py-spy installations in the currently selected virtual environment
