@@ -87,9 +87,14 @@ export async function getPythonPath(): Promise<string | undefined> {
  * @returns Whether py-spy is installed and has passwordless sudo access.
  */
 export async function checkSudoAccess(pySpyPath: string, modal: boolean = true): Promise<boolean> {
-    const permaLink = `https://www.rafaelha.dev/sudoers?path=${pySpyPath}&os=${os.platform()}`;
     // Check for passwordless sudo access to py-spy on macOS
     if (os.platform() === 'darwin' || os.platform() === 'linux') {
+        // get user name by running `whoami`
+        const userName = await execAsync('whoami');
+        if (pySpyPath === 'py-spy') {
+            pySpyPath = (await execAsync('which py-spy')).stdout.trim();
+        }
+        const permaLink = `https://www.rafaelha.dev/sudoers?path=${pySpyPath.replace(/ /g, '\\ ')}&os=${os.platform()}&username=${userName.stdout.trim()}`;
         try {
             // Use -n flag to prevent sudo from asking for a password
             await new Promise((resolve, reject) => {

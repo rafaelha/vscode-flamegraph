@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Improved py-spy installation process. Now, py-spy installations in the currently selected virtual environment
 are used if no global installation is found.
+- On windows, the VS Code taks will now always use `powershell`.
+- Improved instructions on how to add py-spy to the sudoers file on macOS and Linux.
 
 
 ## [0.3.4] - 2025-02-17
