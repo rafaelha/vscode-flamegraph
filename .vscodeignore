@@ -30,6 +30,8 @@ assets/screenshot*
 *.cpuprofile
 *.heapprofile
 format.md
+jest.config.js
+*.zip
 
 src/performance/*
 out/performance/*
