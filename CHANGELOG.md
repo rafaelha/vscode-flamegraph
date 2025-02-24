@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 are used if no global installation is found.
 - On windows, the VS Code taks will now always use `powershell`.
 - Improved instructions on how to add py-spy to the sudoers file on macOS and Linux.
+- The flamegraph does not show source code anymore to improve load time. This features will be added back in a future release.
 
 
 ## [0.3.4] - 2025-02-17

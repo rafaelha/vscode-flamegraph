@@ -87,7 +87,7 @@ export class Flamegraph {
         this.parseFlamegraph(data, filenameToJupyterCellMap);
         this.assignEulerTimes(this.root);
         this.buildIndex();
-        this.addSourceCode();
+        // this.addSourceCode();  // TODO: refactor this to use lazy loading and put back in
     }
 
     /**
