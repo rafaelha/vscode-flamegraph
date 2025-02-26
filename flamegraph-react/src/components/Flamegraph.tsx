@@ -143,7 +143,6 @@ export function FlameGraph({
     }
 
     function renderNodes(): React.ReactNode[] {
-        console.log('render nodes');
         const nodes: React.ReactNode[] = [];
 
         // Render parents (full width)
