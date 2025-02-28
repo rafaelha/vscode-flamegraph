@@ -267,6 +267,7 @@ export async function attach(
     if (!pid) {
         pid = await selectPid();
     }
+    if (!pid) return false;
     runTask(context, workspaceFolder, pySpyPath, `--pid ${pid}`, flags, needsSudoAccess, filenameToJupyterCellMap);
     return true;
 }
