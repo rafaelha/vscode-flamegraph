@@ -415,7 +415,7 @@ function getProcessListCommand(): string {
         case 'linux':
             return `ps -eo pid,%cpu,cmd --sort=-%cpu | grep python | grep -v grep | awk '{ $2=""; print $0 }'`;
         case 'win32': // Windows
-            return `powershell.exe -Command "Get-WmiObject Win32_Process | Where-Object { $_.Name -match 'python' } | Sort-Object CPU -Descending | Select-Object ProcessId, CommandLine"`;
+            return `powershell.exe -Command "Get-WmiObject Win32_Process | Where-Object { $_.Name -match 'python' } | Sort-Object CreationDate -Descending | Select-Object ProcessId, CommandLine"`;
         default:
             return '';
     }
