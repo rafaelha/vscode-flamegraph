@@ -80,8 +80,16 @@ export class FlamegraphPanel {
         }
         FlamegraphPanel.currentPanel._panel.webview.postMessage({
             type: 'profile-data',
-            data: { root: flamegraph.root, functions: flamegraph.functions },
+            data: { root: flamegraph.root, functions: flamegraph.functions, sourceCode: extensionState.sourceCode },
             focusUid: extensionState.focusNode,
+        });
+    }
+
+    public static postSourceCode(sourceCode: string[]) {
+        if (!FlamegraphPanel.currentPanel) return;
+        FlamegraphPanel.currentPanel._panel.webview.postMessage({
+            type: 'source-code',
+            data: sourceCode,
         });
     }
 

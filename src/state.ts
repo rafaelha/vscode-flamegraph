@@ -19,6 +19,8 @@ class ExtensionState {
 
     private _focusNode: number[] = [0];
 
+    private _sourceCode?: string[];
+
     private _activeProfileWatcher?: vscode.FileSystemWatcher;
 
     private _onUpdateUI: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
@@ -104,6 +106,14 @@ class ExtensionState {
     }
 
     /**
+     * Gets the source code
+     * @returns The source code
+     */
+    get sourceCode(): string[] | undefined {
+        return this._sourceCode;
+    }
+
+    /**
      * Gets the profile URI from the workspaceState
      * @returns The profile URI or undefined if not set
      */
@@ -183,8 +193,20 @@ class ExtensionState {
             this.profileUri = profileUri;
             this.focusNode = [0];
             this.profileVisible = true;
+            this._sourceCode = undefined;
             this.updateUI();
             FlamegraphPanel.render(context.extensionUri);
+
+            // Load source code asynchronously without blocking the main thread
+            this.currentFlamegraph
+                .readSourceCode()
+                .then((sourceCode) => {
+                    this._sourceCode = sourceCode;
+                    FlamegraphPanel.postSourceCode(sourceCode);
+                })
+                .catch(() => {
+                    // Silently ignore any errors during source code loading
+                });
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to open profile: ${error}`);
         }

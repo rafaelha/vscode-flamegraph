@@ -397,36 +397,49 @@ export class Flamegraph {
     }
 
     /**
-     * Adds source code to the nodes in the flamegraph. For efficiency this can only be called after the index has been
-     * built. Then source code files are read once for each file, and the relevant lines are added to the nodes.
+     * Reads the source code for all nodes in the flamegraph.
+     * @returns A promise that resolves to an array of source code strings.
      */
-    public addSourceCode(): void {
+    public async readSourceCode(): Promise<string[]> {
         // Process one file at a time
+        const sourceCode: string[] = new Array(this.nodes.length).fill('');
+        const fileReadPromises: Promise<void>[] = [];
+
         for (const fileName in this.index) {
             if (!Object.prototype.hasOwnProperty.call(this.index, fileName)) continue;
             const fileProfiles = this.index[fileName];
 
             for (const fileProfile of fileProfiles) {
                 if (!fileProfile.filePath.endsWith('.py')) continue;
-                try {
-                    // Read file content once for all nodes in this file
-                    const fileContent = fs.readFileSync(URI.parse(fileProfile.filePath).fsPath, 'utf-8');
-                    const lines = fileContent.split('\n');
 
-                    // Process all line profiles for this file
-                    for (const lineProfile of fileProfile.lineProfiles) {
-                        const sourceLine = lines[lineProfile.line - 1]?.trim() || '';
+                // Create a promise for each file read operation
+                const fileReadPromise = (async () => {
+                    try {
+                        // Read file content asynchronously
+                        const fileContent = await fs.promises.readFile(URI.parse(fileProfile.filePath).fsPath, 'utf-8');
+                        const lines = fileContent.split('\n');
 
-                        // Add source code to all nodes for this line
-                        for (const node of lineProfile.nodes) {
-                            node.sourceCode = sourceLine;
+                        // Process all line profiles for this file
+                        for (const lineProfile of fileProfile.lineProfiles) {
+                            const sourceLine = lines[lineProfile.line - 1]?.trim() || '';
+
+                            // Add source code to all nodes for this line
+                            for (const node of lineProfile.nodes) {
+                                sourceCode[node.uid] = sourceLine;
+                            }
                         }
+                    } catch (error) {
+                        // Just continue if there's an error reading a file
                     }
-                } catch (error) {
-                    continue;
-                }
+                })();
+
+                fileReadPromises.push(fileReadPromise);
             }
         }
+
+        // Wait for all file read operations to complete
+        await Promise.all(fileReadPromises);
+        return sourceCode;
     }
 
     /**
