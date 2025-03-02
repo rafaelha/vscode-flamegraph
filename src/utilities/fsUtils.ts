@@ -144,7 +144,7 @@ export async function checkSudoAccess(pySpyPath: string, modal: boolean = true):
  *
  * @returns The path to py-spy or undefined if it is not installed.
  */
-async function getPySpyPath(): Promise<string | undefined> {
+export async function getPySpyPath(): Promise<string | undefined> {
     try {
         await execAsync('py-spy --version');
         return 'py-spy';
@@ -245,28 +245,6 @@ export async function getOrInstallPySpy(): Promise<string | undefined> {
             });
         }
     );
-}
-
-/**
- * Checks if py-spy is installed and has sudo access on MacOs.
- *
- * @param recommendSudoAccess - Whether to recommend sudo access.
- * @param requireSudoAccess - Whether to require sudo access.
- * @returns The path to py-spy or undefined if it is not installed or sudo access is required but not granted.
- */
-export async function getOrInstallPySpyWithSudo(
-    recommendSudoAccess: boolean = false,
-    requireSudoAccess: boolean = false
-): Promise<string | undefined> {
-    // First get the path to py-spy (or prompt the user to install it)
-    const pySpyPath = await getOrInstallPySpy();
-    if (!pySpyPath) return undefined;
-
-    if (recommendSudoAccess) {
-        const hasSudoAccess = await checkSudoAccess(pySpyPath, requireSudoAccess);
-        if (!hasSudoAccess && requireSudoAccess) return undefined;
-    }
-    return pySpyPath;
 }
 
 /**
@@ -506,4 +484,110 @@ export async function selectPid(): Promise<string | undefined> {
     }
 
     return selected.label === 'Other PID' ? promptForPid() : selected.label;
+}
+
+/**
+ * Verifies the user's environment and returns the requested information.
+ *
+ * @param options - The options to verify.
+ * @param options.requireUri - Whether to require a file URI.
+ * @param options.requirePython - Whether to require a Python interpreter.
+ * @param options.recommendSudo - Whether to recommend sudo access.
+ * @param options.requireSudo - Whether to require sudo access.
+ * @param options.requirePid - Whether to require a process ID (PID).
+ * @param options.fileUri - The file URI to verify.
+ * @param options.pid - The process ID (PID) to verify.
+ * @returns The requested information or false if verification fails.
+ */
+export async function verify({
+    requireUri,
+    requirePython,
+    recommendSudo,
+    requireSudo,
+    requirePid,
+    fileUri,
+    pid,
+}: {
+    requireUri: boolean;
+    requirePython: boolean;
+    recommendSudo: boolean;
+    requireSudo: boolean;
+    requirePid: boolean;
+    fileUri?: vscode.Uri;
+    pid?: string;
+}): Promise<
+    | false
+    | {
+          uri?: vscode.Uri;
+          pythonPath?: string;
+          pySpyPath: string;
+          workspaceFolder: vscode.WorkspaceFolder;
+          pid?: string;
+      }
+> {
+    // Step 1: Verify that we have a file URI and that it is pointing to a Python file
+    if (requireUri) {
+        if (!fileUri) {
+            vscode.window.showErrorMessage(
+                'No file is currently selected. Please open a Python file in an editor tab and try again.'
+            );
+            return false;
+        }
+        if (!fileUri.fsPath.endsWith('.py')) {
+            vscode.window.showErrorMessage(
+                'Only Python files are supported. Please open a Python file in an editor tab and try again.'
+            );
+            return false;
+        }
+    }
+
+    // Step 2: Verify that we have a workspace folder
+    const workspaceFolder = fileUri
+        ? vscode.workspace.getWorkspaceFolder(fileUri)
+        : vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) {
+        promptUserToOpenFolder(fileUri);
+        return false;
+    }
+
+    // Step 3: Verify that we have a Python interpreter
+    let pythonPath: string | undefined;
+    if (requirePython) {
+        pythonPath = await getPythonPath();
+        if (!pythonPath) {
+            vscode.window.showErrorMessage('No Python interpreter selected. Please select a Python interpreter.');
+            return false;
+        }
+    } else {
+        pythonPath = (await getPythonPath()) || '';
+    }
+
+    // Step 4: Verify that we have py-spy
+    const pySpyPath = await getOrInstallPySpy();
+    if (!pySpyPath) {
+        return false;
+    }
+
+    // Step 5: Verify that we have sudo access
+    if (recommendSudo) {
+        const hasSudoAccess = await checkSudoAccess(pySpyPath, requireSudo);
+        if (!hasSudoAccess && requireSudo) return false;
+    }
+
+    // Step 6: Verify that we have a PID
+    if (requirePid) {
+        if (!pid) {
+            pid = await selectPid();
+        }
+        if (!pid) return false;
+    }
+
+    // If all checks pass, return the requested information
+    return {
+        uri: fileUri,
+        pythonPath,
+        pySpyPath,
+        workspaceFolder,
+        pid,
+    };
 }

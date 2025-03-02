@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { ExtensionContext } from 'vscode';
 import {
     loadProfileCommand,
@@ -15,6 +16,8 @@ import {
 } from './commands';
 import { updateDecorations } from './render';
 import { extensionState } from './state';
+import { FlamegraphTaskProvider, PROFILE_FILENAME } from './taskProvider';
+
 /**
  * Activates the extension.
  *
@@ -24,19 +27,43 @@ export function activate(context: ExtensionContext) {
     // Initialize extension state
     extensionState.setContext(context);
 
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) {
+        return;
+    }
+
+    const profilePath = path.join(workspaceFolder.uri.fsPath, PROFILE_FILENAME);
+    const profileUri = vscode.Uri.file(profilePath);
+
+    // Setup file watcher
+    extensionState.activeProfileWatcher = vscode.workspace.createFileSystemWatcher(
+        new vscode.RelativePattern(workspaceFolder, PROFILE_FILENAME)
+    );
+    extensionState.activeProfileWatcher.onDidCreate(async () =>
+        extensionState.handleProfileUpdate(context, profileUri)
+    );
+    extensionState.activeProfileWatcher.onDidChange(async () =>
+        extensionState.handleProfileUpdate(context, profileUri)
+    );
+
     // Register all commands
     context.subscriptions.push(
         loadProfileCommand(context),
         toggleProfileCommand(),
-        runProfilerCommand(context),
-        attachProfilerCommand(context),
-        attachNativeProfilerCommand(context),
+        runProfilerCommand(),
+        attachProfilerCommand(),
+        attachNativeProfilerCommand(),
         showFlamegraphCommand(context),
-        profileCellCommand(context),
-        profileNotebookCommand(context),
-        runAllPytestsCommand(context),
-        runPytestFileCommand(context),
+        profileCellCommand(),
+        profileNotebookCommand(),
+        runAllPytestsCommand(),
+        runPytestFileCommand(),
         topCommand()
+    );
+
+    // Register task provider
+    context.subscriptions.push(
+        vscode.tasks.registerTaskProvider(FlamegraphTaskProvider.taskType, new FlamegraphTaskProvider())
     );
 
     // Register decoration visible changed listener
