@@ -1,48 +1,13 @@
 import * as vscode from 'vscode';
 import { commands } from 'vscode';
-import * as path from 'path';
 import * as os from 'os';
-import {
-    getPythonPath,
-    selectProfileFile,
-    readTextFile,
-    promptUserToOpenFolder,
-    getPidAndCellFilenameMap,
-    getOrInstallPySpyWithSudo,
-    selectPid,
-} from './utilities/fsUtils';
+import { selectProfileFile, readTextFile, getPidAndCellFilenameMap, verify } from './utilities/fsUtils';
 import { FlamegraphPanel } from './flamegraphPanel';
 import { extensionState } from './state';
 import { Flamegraph } from './flamegraph';
-import { NotebookCellMap } from './types';
-import { escapeSpaces } from './utilities/pathUtils';
+import { createProfileTask } from './taskProvider';
 
 const TASK_TERMINAL_NAME = 'Py-spy profile'; // Name of the terminal launched for the profiling task
-
-/**
- * Handles the profile update event. This is called when a new profile is written to the file system.
- *
- * @param context - The extension context.
- * @param profileUri - The URI of the profile file.
- */
-const handleProfileUpdate = async (
-    context: vscode.ExtensionContext,
-    profileUri: vscode.Uri,
-    filenameToJupyterCellMap?: NotebookCellMap
-) => {
-    try {
-        extensionState.currentFlamegraph = new Flamegraph(await readTextFile(profileUri), filenameToJupyterCellMap);
-        extensionState.profileUri = profileUri;
-        extensionState.focusNode = [0];
-        extensionState.profileVisible = true;
-        extensionState.updateUI();
-        FlamegraphPanel.render(context.extensionUri);
-    } catch (error) {
-        vscode.window.showErrorMessage(`Failed to open profile: ${error}`);
-    }
-    // Cleanup watcher after profile is loaded
-    extensionState.activeProfileWatcher = undefined;
-};
 
 /**
  * Loads a profile from a file specified by the user.
@@ -95,204 +60,155 @@ export function toggleProfileCommand() {
 }
 
 /**
- * Create a new vscode task to run py-spy and monitor the profile file.
+ * Runs the profiler on the active file.
  *
- * @param context - The extension context.
- * @param workspaceFolder - The workspace folder.
- * @param pySpyPath - The path to py-spy.
- * @param command - The command to run.
- * @param flags - The flags to pass to py-spy.
- * @param useSudo - Whether to run the command with sudo.
- * @param filenameToJupyterCellMap - A map of filenames to Jupyter cell indices.
  * @returns The command registration.
  */
-async function runTask(
-    context: vscode.ExtensionContext,
-    workspaceFolder: vscode.WorkspaceFolder,
-    pySpyPath: string,
-    command: string,
-    flags: string,
-    useSudo: boolean,
-    filenameToJupyterCellMap?: NotebookCellMap
-): Promise<void> {
-    const profileFileName = 'profile.pyspy';
-    const profilePath = path.join(workspaceFolder.uri.fsPath, profileFileName);
-    const profileUri = vscode.Uri.file(profilePath);
+export function runProfilerCommand() {
+    return vscode.commands.registerCommand('flamegraph.runProfiler', async (fileUri?: vscode.Uri) => {
+        const result = await verify({
+            requireUri: true,
+            requirePython: true,
+            recommendSudo: true,
+            requireSudo: false,
+            requirePid: false,
+            fileUri: fileUri || vscode.window.activeTextEditor?.document.uri,
+        });
+        if (!result) return;
 
-    // Setup file watcher
-    if (!extensionState.activeProfileWatcher) {
-        const watcher = vscode.workspace.createFileSystemWatcher(
-            new vscode.RelativePattern(workspaceFolder, 'profile.pyspy')
-        );
-        extensionState.activeProfileWatcher = watcher;
-    }
+        const { uri, pythonPath, pySpyPath, workspaceFolder } = result;
 
-    extensionState.activeProfileWatcher.onDidCreate(async () =>
-        handleProfileUpdate(context, profileUri, filenameToJupyterCellMap)
-    );
-    extensionState.activeProfileWatcher.onDidChange(async () =>
-        handleProfileUpdate(context, profileUri, filenameToJupyterCellMap)
-    );
-
-    const sudo = useSudo ? 'sudo ' : '';
-    const ampersand = os.platform() === 'win32' ? '& ' : '';
-
-    // Create task definition
-    const taskDefinition: vscode.TaskDefinition = {
-        type: 'shell',
-        command: escapeSpaces(
-            `${ampersand}${sudo}"${pySpyPath}" record --output ${profileFileName} --format raw --full-filenames ${flags} ${command}`
-        ),
-    };
-
-    const task = new vscode.Task(
-        taskDefinition,
-        workspaceFolder,
-        TASK_TERMINAL_NAME,
-        'py-spy',
-        // Create the task with PowerShell on Windows Unix-like terminal (git bash) will cause errors
-        new vscode.ShellExecution(taskDefinition.command, {
-            executable: os.platform() === 'win32' ? 'powershell.exe' : undefined,
-        }),
-        []
-    );
-
-    // Execute the task
-    await vscode.tasks.executeTask(task);
-}
-
-async function runCommand(
-    context: vscode.ExtensionContext,
-    fileUri?: vscode.Uri,
-    requireUri: boolean = true,
-    option: string = ''
-) {
-    // If called with a file URI, use that file. Otherwise, use the uri from the active editor
-    let targetUri: vscode.Uri | undefined;
-    if (requireUri || fileUri) {
-        if (fileUri) {
-            targetUri = fileUri;
-        } else {
-            const editor = vscode.window.activeTextEditor;
-            if (!editor) {
-                vscode.window.showErrorMessage(
-                    'No file is currently selected. Please open a Python file in an editor tab and try again.'
-                );
-                return;
-            }
-            targetUri = editor.document.uri;
-        }
-
-        if (!targetUri.fsPath.endsWith('.py')) {
-            vscode.window.showErrorMessage(
-                'Only Python files are supported. Please open a Python file in an editor tab and try again.'
-            );
-            return;
-        }
-    }
-
-    const workspaceFolder = targetUri
-        ? vscode.workspace.getWorkspaceFolder(targetUri)
-        : vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) {
-        promptUserToOpenFolder(targetUri);
-        return;
-    }
-
-    const pythonPath = await getPythonPath();
-    if (!pythonPath) {
-        vscode.window.showErrorMessage('No Python interpreter selected. Please select a Python interpreter.');
-        return;
-    }
-
-    const needsSudoAccess = os.platform() === 'darwin';
-    const pySpyPath = await getOrInstallPySpyWithSudo(needsSudoAccess, false);
-    if (!pySpyPath) return;
-
-    const filePath = targetUri?.fsPath ?? '';
-    const command = `-- "${pythonPath}" ${option} "${filePath}"`;
-    const flags = '--subprocesses';
-    runTask(context, workspaceFolder, pySpyPath, command, flags, needsSudoAccess);
+        const task = createProfileTask(workspaceFolder, {
+            type: 'flamegraph',
+            file: uri!.fsPath,
+            pythonPath,
+            profilerPath: pySpyPath,
+        });
+        await vscode.tasks.executeTask(task);
+    });
 }
 
 /**
- * Runs the profiler on the active file.
+ * Profiles all pytests in the active file.
  *
- * @param context - The extension context.
  * @returns The command registration.
  */
-export function runProfilerCommand(context: vscode.ExtensionContext) {
-    return vscode.commands.registerCommand('flamegraph.runProfiler', async (fileUri?: vscode.Uri) => {
-        await runCommand(context, fileUri);
-    });
-}
-
-export function runPytestFileCommand(context: vscode.ExtensionContext) {
+export function runPytestFileCommand() {
     return vscode.commands.registerCommand('flamegraph.runPytestFile', async (fileUri?: vscode.Uri) => {
-        await runCommand(context, fileUri, true, '-m pytest');
+        const result = await verify({
+            requireUri: true,
+            requirePython: true,
+            recommendSudo: true,
+            requireSudo: false,
+            requirePid: false,
+            fileUri: fileUri || vscode.window.activeTextEditor?.document.uri,
+        });
+        if (!result) return;
+
+        const { uri, pythonPath, pySpyPath, workspaceFolder } = result;
+
+        const task = createProfileTask(workspaceFolder, {
+            type: 'flamegraph',
+            pythonPath,
+            profilerPath: pySpyPath,
+            command: ['-m', 'pytest', uri!.fsPath],
+        });
+        await vscode.tasks.executeTask(task);
     });
 }
 
-export function runAllPytestsCommand(context: vscode.ExtensionContext) {
+/**
+ * Runs all pytests in the workspace.
+ *
+ * @returns The command registration.
+ */
+export function runAllPytestsCommand() {
     return vscode.commands.registerCommand('flamegraph.runAllPytests', async () => {
-        await runCommand(context, undefined, false, '-m pytest');
+        const result = await verify({
+            requireUri: false,
+            requirePython: true,
+            recommendSudo: true,
+            requireSudo: false,
+            requirePid: false,
+        });
+        if (!result) return;
+
+        const { pythonPath, pySpyPath, workspaceFolder } = result;
+
+        const task = createProfileTask(workspaceFolder, {
+            type: 'flamegraph',
+            pythonPath,
+            pySpyPath,
+            command: ['-m', 'pytest'],
+        });
+        await vscode.tasks.executeTask(task);
     });
 }
 
 /**
  * Attaches py-spy to the running process.
  *
- * @param context - The extension context.
- * @param flags - The flags to pass to py-spy, such as --subprocesses or --native.
  * @param pid - The process ID (PID) to attach py-spy to.
- * @param filenameToJupyterCellMap - A map of filenames to Jupyter cell indices.
+ * @param subprocesses - Whether to attach py-spy to subprocesses.
+ * @param native - Whether to attach py-spy to the native process.
+ * @param requireSudoAccess - Whether to require sudo access.
  * @returns The command registration.
  */
 export async function attach(
-    context: vscode.ExtensionContext,
-    flags: string,
     pid?: string,
-    filenameToJupyterCellMap?: NotebookCellMap,
-    requireSudoAccess: boolean = false
+    subprocesses: boolean = true,
+    native: boolean = false,
+    requireSudoAccess: boolean = false,
+    silent: boolean = false
 ): Promise<boolean> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) {
-        promptUserToOpenFolder();
-        return false;
-    }
-    const needsSudoAccess = os.platform() === 'darwin' || os.platform() === 'linux';
-    const pySpyPath = await getOrInstallPySpyWithSudo(needsSudoAccess, requireSudoAccess);
-    if (!pySpyPath) return false;
+    const result = await verify({
+        requireUri: false,
+        requirePython: false,
+        recommendSudo: os.platform() === 'darwin' || os.platform() === 'linux',
+        requireSudo: requireSudoAccess,
+        requirePid: true,
+        pid,
+    });
+    if (!result) return false;
 
-    if (!pid) {
-        pid = await selectPid();
-    }
-    if (!pid) return false;
-    runTask(context, workspaceFolder, pySpyPath, `--pid ${pid}`, flags, needsSudoAccess, filenameToJupyterCellMap);
+    const { pid: verifiedPid, pySpyPath, workspaceFolder } = result;
+
+    const task = createProfileTask(
+        workspaceFolder,
+        {
+            type: 'flamegraph',
+            profilerPath: pySpyPath,
+            pid: verifiedPid,
+            native,
+            subprocesses,
+            sudo: requireSudoAccess,
+        },
+        TASK_TERMINAL_NAME,
+        silent
+    );
+    await vscode.tasks.executeTask(task);
     return true;
 }
 
 /**
  * Attaches py-spy to the running process with the --subprocesses flag.
  *
- * @param context - The extension context.
  * @returns The command registration.
  */
-export function attachProfilerCommand(context: vscode.ExtensionContext) {
+export function attachProfilerCommand() {
     return vscode.commands.registerCommand('flamegraph.attachProfiler', async () => {
-        await attach(context, '--subprocesses');
+        await attach();
     });
 }
 
 /**
  * Attaches py-spy to the running process with the --native flag.
  *
- * @param context - The extension context.
  * @returns The command registration.
  */
-export function attachNativeProfilerCommand(context: vscode.ExtensionContext) {
+export function attachNativeProfilerCommand() {
     return vscode.commands.registerCommand('flamegraph.attachNativeProfiler', async () => {
-        await attach(context, '--native');
+        await attach(undefined, false, true);
     });
 }
 
@@ -321,21 +237,17 @@ export function showFlamegraphCommand(context: vscode.ExtensionContext) {
 /**
  * Helper function to handle notebook profiling logic.
  *
- * @param context - The extension context.
  * @param notebook - The notebook document.
  * @param executeCommand - The command to execute after profiling.
  */
-async function handleNotebookProfiling(
-    context: vscode.ExtensionContext,
-    notebook: vscode.NotebookDocument,
-    executeCommand: () => Promise<void>
-) {
+async function handleNotebookProfiling(notebook: vscode.NotebookDocument, executeCommand: () => Promise<void>) {
     const result = await getPidAndCellFilenameMap(notebook);
     if (!result) return;
 
-    const { pid, filenameToJupyterCellMap } = result;
+    const { pid } = result;
+    extensionState.filenameToJupyterCellMap = result.filenameToJupyterCellMap;
 
-    const success = await attach(context, '--subprocesses', pid, filenameToJupyterCellMap, true);
+    const success = await attach(pid, true, false, true, true);
     if (!success) return;
 
     // small delay to ensure py-spy is running
@@ -355,16 +267,15 @@ async function handleNotebookProfiling(
 /**
  * Profiles the currently selected cell in the active notebook.
  *
- * @param context - The extension context.
  * @returns The command registration.
  */
-export function profileCellCommand(context: vscode.ExtensionContext) {
+export function profileCellCommand() {
     return vscode.commands.registerCommand('flamegraph.profileCell', async (cell?: vscode.NotebookCell) => {
         if (!cell) {
             return;
         }
 
-        await handleNotebookProfiling(context, cell.notebook, async () =>
+        await handleNotebookProfiling(cell.notebook, async () =>
             commands.executeCommand(
                 'notebook.cell.execute',
                 { start: cell.index, end: cell.index + 1 },
@@ -377,10 +288,9 @@ export function profileCellCommand(context: vscode.ExtensionContext) {
 /**
  * Profiles the currently active notebook.
  *
- * @param context - The extension context.
  * @returns The command registration.
  */
-export function profileNotebookCommand(context: vscode.ExtensionContext) {
+export function profileNotebookCommand() {
     return vscode.commands.registerCommand('flamegraph.profileNotebook', async () => {
         const notebookEditor = vscode.window.activeNotebookEditor;
         if (!notebookEditor) {
@@ -388,41 +298,37 @@ export function profileNotebookCommand(context: vscode.ExtensionContext) {
             return;
         }
 
-        await handleNotebookProfiling(context, notebookEditor.notebook, async () =>
+        await handleNotebookProfiling(notebookEditor.notebook, async () =>
             commands.executeCommand('notebook.execute', notebookEditor.notebook.uri)
         );
     });
 }
 
+/**
+ * Attaches py-spy to a pid and show a top-like view in the task terminal.
+ *
+ * @returns The command registration.
+ */
 export function topCommand() {
     return vscode.commands.registerCommand('flamegraph.top', async () => {
-        const pid = await selectPid();
-        if (!pid) return;
+        const result = await verify({
+            requireUri: false,
+            requirePython: false,
+            recommendSudo: os.platform() === 'darwin' || os.platform() === 'linux',
+            requireSudo: false,
+            requirePid: true,
+        });
+        if (!result) return false;
 
-        const needsSudoAccess = os.platform() === 'darwin' || os.platform() === 'linux';
-        const pySpyPath = await getOrInstallPySpyWithSudo(needsSudoAccess, false);
-        if (!pySpyPath) return;
+        const { pid: verifiedPid, pySpyPath, workspaceFolder } = result;
 
-        const sudo = needsSudoAccess ? 'sudo ' : '';
-        const ampersand = os.platform() === 'win32' ? '& ' : '';
-        // Create task definition
-        const taskDefinition: vscode.TaskDefinition = {
-            type: 'shell',
-            command: escapeSpaces(`${ampersand}${sudo}"${pySpyPath}" top --pid ${pid}`),
-        };
-        // Create the task
-        const task = new vscode.Task(
-            taskDefinition,
-            vscode.workspace.workspaceFolders![0],
-            TASK_TERMINAL_NAME,
-            'py-spy',
-            new vscode.ShellExecution(taskDefinition.command, {
-                executable: os.platform() === 'win32' ? 'powershell.exe' : undefined,
-            }),
-            []
-        );
-
-        // Execute the task
+        const task = createProfileTask(workspaceFolder, {
+            type: 'flamegraph',
+            profilerPath: pySpyPath,
+            pid: verifiedPid,
+            mode: 'top',
+        });
         await vscode.tasks.executeTask(task);
+        return true;
     });
 }

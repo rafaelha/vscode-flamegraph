@@ -1,5 +1,8 @@
 import * as vscode from 'vscode';
 import { Flamegraph } from './flamegraph';
+import { NotebookCellMap } from './types';
+import { FlamegraphPanel } from './flamegraphPanel';
+import { readTextFile } from './utilities/fsUtils';
 
 /**
  * Singleton class to manage the state of the VSCode extension
@@ -20,7 +23,7 @@ class ExtensionState {
 
     private _onUpdateUI: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
 
-    private _fileNameMap: Map<string, string> = new Map();
+    private _filenameToJupyterCellMap: NotebookCellMap = new Map();
 
     private _decorationCache: Map<string, vscode.DecorationOptions[]> = new Map();
 
@@ -119,19 +122,19 @@ class ExtensionState {
     }
 
     /**
-     * Gets the fileNameMap
-     * @returns The fileNameMap
+     * Gets the fileNameToJupyterCellMap
+     * @returns The fileNameToJupyterCellMap
      */
-    get fileNameMap(): Map<string, string> {
-        return this._fileNameMap;
+    get filenameToJupyterCellMap(): NotebookCellMap {
+        return this._filenameToJupyterCellMap;
     }
 
     /**
-     * Sets the fileNameMap
-     * @param fileNameMap The new fileNameMap
+     * Sets the filenameToJupyterCellMap
+     * @param filenameToJupyterCellMap The new filenameToJupyterCellMap
      */
-    set fileNameMap(fileNameMap: Map<string, string>) {
-        this._fileNameMap = fileNameMap;
+    set filenameToJupyterCellMap(filenameToJupyterCellMap: NotebookCellMap) {
+        this._filenameToJupyterCellMap = filenameToJupyterCellMap;
     }
 
     /**
@@ -167,6 +170,25 @@ class ExtensionState {
     public clearDecorationCache() {
         this._decorationCache.clear();
     }
+
+    /**
+     * Handles the profile update event. This is called when a new profile is written to the file system.
+     *
+     * @param context - The extension context.
+     * @param profileUri - The URI of the profile file.
+     */
+    public handleProfileUpdate = async (context: vscode.ExtensionContext, profileUri: vscode.Uri) => {
+        try {
+            this.currentFlamegraph = new Flamegraph(await readTextFile(profileUri), this.filenameToJupyterCellMap);
+            this.profileUri = profileUri;
+            this.focusNode = [0];
+            this.profileVisible = true;
+            this.updateUI();
+            FlamegraphPanel.render(context.extensionUri);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to open profile: ${error}`);
+        }
+    };
 
     /**
      * Triggers a UI update event

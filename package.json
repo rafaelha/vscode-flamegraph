@@ -92,6 +92,56 @@
                 "title": "Flamegraph: Show py-spy top"
             }
         ],
+        "taskDefinitions": [
+            {
+                "type": "flamegraph",
+                "properties": {
+                    "mode": {
+                        "type": "string",
+                        "description": "The mode of the task (should be 'record' or 'top')",
+                        "default": "record",
+                        "enum": [
+                            "record",
+                            "top"
+                        ]
+                    },
+                    "file": {
+                        "type": "string",
+                        "description": "The file to profile (optional)"
+                    },
+                    "pid": {
+                        "type": "string",
+                        "description": "The process ID (PID) to attach to, if no file is provided (optional)"
+                    },
+                    "subprocesses": {
+                        "type": "boolean",
+                        "description": "Profile subprocesses (optional)",
+                        "default": true
+                    },
+                    "native": {
+                        "type": "boolean",
+                        "description": "Use native profiling (optional)",
+                        "default": false
+                    },
+                    "args": {
+                        "type": "array",
+                        "description": "The arguments to pass to the profiler (optional)",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "pythonPath": {
+                        "type": "string",
+                        "description": "The path to the Python interpreter. If not provided, the path will be retrieved from currently active environment selected in the VS Code Python extension."
+                    },
+                    "profilerPath": {
+                        "type": "string",
+                        "description": "The path to py-spy. If not provided, either the global py-spy installation will be used or the py-spy found in the currently active environment."
+                    }
+                },
+                "when": "shellExecutionSupported"
+            }
+        ],
         "menus": {
             "explorer/context": [
                 {
