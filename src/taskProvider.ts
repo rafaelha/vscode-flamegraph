@@ -57,6 +57,11 @@ export interface FlamegraphTaskDefinition extends vscode.TaskDefinition {
      * The path to the profiler (optional)
      */
     profilerPath?: string;
+
+    /**
+     * Whether to run the task with sudo (optional)
+     */
+    sudo?: boolean;
 }
 
 /**
@@ -79,7 +84,7 @@ export function createProfileTask(
     profilerPath: string | undefined = undefined
 ): vscode.Task {
     let command = '';
-    const sudo = os.platform() === 'darwin' ? 'sudo ' : '';
+    const sudo = definition.sudo || os.platform() === 'darwin' ? 'sudo ' : '';
     const ampersand = os.platform() === 'win32' ? '& ' : '';
     const mode = definition.mode || 'record';
 
@@ -104,7 +109,7 @@ export function createProfileTask(
         definition,
         workspaceFolder,
         name,
-        'py-spy',
+        'Flamegraph',
         new vscode.ShellExecution(command, {
             executable: os.platform() === 'win32' ? 'powershell.exe' : undefined,
         }),
