@@ -52,6 +52,89 @@ Open the Command Palette (Command+Shift+P on Mac and Ctrl+Shift+P on Windows/Lin
 | `Flamegraph: Profile unit tests in file with pytest` | Run and profile the `pytest` command on the active file |
 | `Flamegraph: Show py-spy top` | Displays a top like view of functions consuming CPU using py-spy |
 
+
+
+## Using Tasks
+
+The extension allows you to run profiling tasks directly from VS Code's task system. This makes it easy to integrate profiling into your workflow and configure custom tasks.
+
+### Using the Task Explorer
+
+1. Open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on macOS)
+2. Type "Tasks: Run Task" and select "flamegraph"
+3. Choose one of the available flamegraph tasks or click the gear icon to customize the task.
+
+### Creating a tasks.json File
+
+You can also create a `tasks.json` file in your `.vscode` folder to customize the tasks. For example, the following task
+
+
+
+```json
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "flamegraph",
+			"file": "${file}",
+			"args": [
+				"--my-custom-arg1",
+				"value",
+			],
+			"label": "Flamegraph: My custom profile command"
+		}
+	]
+}
+```
+
+will execute the command
+
+```py-spy <py-spy-args> -- python <current-file> --my-custom-arg1 value```.
+
+As another example, we can profile a specific unit test with the following task definition:
+
+
+```json
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "flamegraph",
+			"args": [
+				"-m",
+				"pytest",
+				"path/to/my_test_file.py::test_my_function",
+			],
+			"subprocesses": false,
+			"native": true,
+			"label": "Flamegraph: Profile my_test_function"
+		}
+	]
+}
+```
+
+Notice that we additionally configured the py-spy subprocess and native options. This will execute the command
+
+```py-spy <py-spy-args> --native -- python -m pytest path/to/my_test_file.py::test_my_function```
+
+
+
+### Setting custom keyboard shortcuts
+
+You can bind tasks to keyboard shortcuts by adding entries to your `keybindings.json` file:
+
+1. Open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on macOS)
+2. Type "Preferences: Open Keyboard Shortcuts (JSON)" and select it
+3. Add entries like the following:
+
+```json
+{
+    "key": "ctrl+shift+enter",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Flamegraph: My custom profile command"
+}
+```
+
 ## Contributing
 
 ### Development
