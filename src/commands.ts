@@ -181,6 +181,7 @@ export async function attach(
             pid: verifiedPid,
             native,
             subprocesses,
+            sudo: requireSudoAccess,
         },
         TASK_TERMINAL_NAME,
         silent
