@@ -56,7 +56,7 @@ Open the Command Palette (Command+Shift+P on Mac and Ctrl+Shift+P on Windows/Lin
 
 ## Using Tasks
 
-The extension allows you to run profiling tasks directly from VS Code's task system. This makes it easy to integrate profiling into your workflow and configure custom tasks.
+The extension allows you to run the py-spy profiler from VS Code's task system. This makes it easy to integrate profiling into your workflow and configure custom tasks.
 
 ### Using the Task Explorer
 
@@ -66,7 +66,7 @@ The extension allows you to run profiling tasks directly from VS Code's task sys
 
 ### Creating a tasks.json File
 
-You can also create a `tasks.json` file in your `.vscode` folder to customize the tasks. For example, the following task
+You can also create a `tasks.json` file in your `.vscode` folder to customize the tasks. For example, the task
 
 
 
@@ -91,7 +91,7 @@ will execute the command
 
 ```py-spy <py-spy-args> -- python <current-file> --my-custom-arg1 value```.
 
-As another example, we can profile a specific unit test with the following task definition:
+Or, you can profile a specific unit test (via `pytest`) with the following task definition:
 
 
 ```json

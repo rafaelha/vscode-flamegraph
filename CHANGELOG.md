@@ -5,12 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [0.3.6] - 2025-03-02
 ### Added
-- Added support for VS Code task API. Now users can add their custom task definitions to the `tasks.json` file. See README for details.
+- Added support for VS Code task API. Now users can add their custom task definitions to their `tasks.json` file. See README for details.
 
 ### Changed
 - Reintroduced source code display in the flamegraph.
+- When profiling Jupyter notebooks, the task terminal will now remain in the background.
 
 ## [0.3.5] - 2025-02-24
 ### Fixed
