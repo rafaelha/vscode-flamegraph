@@ -114,6 +114,14 @@ class ExtensionState {
     }
 
     /**
+     * Sets the source code
+     *  @param sourceCode The new source code
+     */
+    set sourceCode(sourceCode: string[] | undefined) {
+        this._sourceCode = sourceCode;
+    }
+
+    /**
      * Gets the profile URI from the workspaceState
      * @returns The profile URI or undefined if not set
      */
@@ -193,7 +201,7 @@ class ExtensionState {
             this.profileUri = profileUri;
             this.focusNode = [0];
             this.profileVisible = true;
-            this._sourceCode = undefined;
+            this.sourceCode = undefined;
             this.updateUI();
             FlamegraphPanel.render(context.extensionUri);
 
@@ -201,7 +209,7 @@ class ExtensionState {
             this.currentFlamegraph
                 .readSourceCode()
                 .then((sourceCode) => {
-                    this._sourceCode = sourceCode;
+                    this.sourceCode = sourceCode;
                     FlamegraphPanel.postSourceCode(sourceCode);
                 })
                 .catch(() => {

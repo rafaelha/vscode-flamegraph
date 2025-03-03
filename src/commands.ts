@@ -24,13 +24,7 @@ export function loadProfileCommand(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('No profile file selected.');
             return;
         }
-
-        extensionState.currentFlamegraph = new Flamegraph(await readTextFile(fileUri));
-        extensionState.profileUri = fileUri;
-        extensionState.focusNode = [0];
-        extensionState.profileVisible = true;
-        extensionState.updateUI();
-        FlamegraphPanel.render(context.extensionUri);
+        extensionState.handleProfileUpdate(context, fileUri);
     });
 }
 
