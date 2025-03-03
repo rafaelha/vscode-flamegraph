@@ -111,7 +111,7 @@ export function runPytestFileCommand() {
             type: 'flamegraph',
             pythonPath,
             profilerPath: pySpyPath,
-            command: ['-m', 'pytest', uri!.fsPath],
+            args: ['-m', 'pytest', uri!.fsPath],
         });
         await vscode.tasks.executeTask(task);
     });
@@ -138,8 +138,8 @@ export function runAllPytestsCommand() {
         const task = createProfileTask(workspaceFolder, {
             type: 'flamegraph',
             pythonPath,
-            pySpyPath,
-            command: ['-m', 'pytest'],
+            profilerPath: pySpyPath,
+            args: ['-m', 'pytest'],
         });
         await vscode.tasks.executeTask(task);
     });
@@ -247,7 +247,7 @@ async function handleNotebookProfiling(notebook: vscode.NotebookDocument, execut
     const { pid } = result;
     extensionState.filenameToJupyterCellMap = result.filenameToJupyterCellMap;
 
-    const success = await attach(pid, true, false, true, true);
+    const success = await attach(pid, true, false, os.platform() == 'darwin' || os.platform() == 'linux', true);
     if (!success) return;
 
     // small delay to ensure py-spy is running
