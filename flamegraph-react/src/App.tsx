@@ -85,15 +85,6 @@ export default function Home() {
                 // Update the nodes with source code in place
                 updateNodesWithSourceCode(originalRoot, sourceCodeArray);
 
-                // Update the state with the modified data, maintaining the current focus
-                setParsedData((prevData) => {
-                    if (!prevData) return null;
-                    return {
-                        root: getNodeWithUid(originalRoot, prevData.root?.uid ?? 0) || originalRoot,
-                        functions: prevData.functions,
-                    };
-                });
-
                 // Increment the version to force a re-render
                 setSourceCodeVersion((prev) => prev + 1);
             }
