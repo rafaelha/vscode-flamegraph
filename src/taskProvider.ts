@@ -87,14 +87,16 @@ export function createProfileTask(
     const sudo = definition.sudo || os.platform() === 'darwin' ? 'sudo ' : '';
     const ampersand = os.platform() === 'win32' ? '& ' : '';
     const mode = definition.mode || 'record';
+    const subprocesses = definition.subprocesses || true;
+    const native = definition.native || false;
 
     const pySpyArgs = [
         `${ampersand}${sudo}"${profilerPath || definition.profilerPath}" ${mode}`,
         mode === 'record' ? `--output ${PROFILE_FILENAME}` : '',
         mode === 'record' ? '--format raw' : '',
         mode === 'record' ? '--full-filenames' : '',
-        definition.subprocesses ? '--subprocesses' : '',
-        definition.native ? '--native' : '',
+        subprocesses ? '--subprocesses' : '',
+        native ? '--native' : '',
         definition.pid ? `--pid ${definition.pid}` : '',
         definition.pythonPath || pythonPath ? `-- "${definition.pythonPath || pythonPath}"` : '',
         definition.file ? `"${definition.file}"` : '',
@@ -118,7 +120,7 @@ export function createProfileTask(
 
     if (silent) {
         task.presentationOptions = {
-            reveal: vscode.TaskRevealKind.Silent,
+            reveal: vscode.TaskRevealKind.Never,
             panel: vscode.TaskPanelKind.Shared,
             clear: false,
         };
