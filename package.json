@@ -92,6 +92,47 @@
                 "title": "Flamegraph: Show py-spy top"
             }
         ],
+        "configuration": {
+            "title": "Flamegraph",
+            "properties": {
+                "flamegraph.py-spy.subprocesses": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Profile subprocesses of the original process. Note: On Winodows and for some Python versions, this option must be enabled for the profiler to find the python process.",
+                    "scope": "resource"
+                },
+                "flamegraph.py-spy.native": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Profile native extensions. Note: This option can not be used with the nonblocking option and is not supported on MacOS and some Linux distributions.",
+                    "scope": "resource"
+                },
+                "flamegraph.py-spy.nativeAttach": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Profile native extensions when attaching to a running process. Note: This option can not be used with the nonblocking option and is not supported on MacOS and some Linux distributions.",
+                    "scope": "resource"
+                },
+                "flamegraph.py-spy.gil": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Only include traces that are holding on to the GIL (Global Interpreter Lock).",
+                    "scope": "resource"
+                },
+                "flamegraph.py-spy.idle": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Include stack traces for idle threads.",
+                    "scope": "resource"
+                },
+                "flamegraph.py-spy.nonblocking": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Don't pause the python process when collecting samples. This will reduce the performance impact of sampling, but may lead to inaccurate results.",
+                    "scope": "resource"
+                }
+            }
+        },
         "taskDefinitions": [
             {
                 "type": "flamegraph",

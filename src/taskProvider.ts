@@ -34,14 +34,30 @@ export interface FlamegraphTaskDefinition extends vscode.TaskDefinition {
     pid?: string;
 
     /**
-     * Profile subprocesses (optional)
+     * Profile subprocesses of the original process
      */
     subprocesses?: boolean;
 
     /**
-     * Use native profiling (optional)
+     * Record native stack traces. This will include stack traces of compiled code.
      */
     native?: boolean;
+
+    /**
+     * Only include traces that are holding on to the GIL
+     */
+    gil?: boolean;
+
+    /**
+     * Include stack traces for idle threads
+     */
+    idle?: boolean;
+
+    /**
+     * Don't pause the python process when collecting samples.
+     * Setting this option will reduce the performance impact of sampling, but may lead to inaccurate results
+     */
+    nonblocking?: boolean;
 
     /**
      * The arguments to pass to the profiler (optional).
@@ -84,11 +100,19 @@ export function createProfileTask(
     profilerPath: string | undefined = undefined
 ): vscode.Task {
     let command = '';
+
     const sudo = definition.sudo || os.platform() === 'darwin' ? 'sudo ' : '';
     const ampersand = os.platform() === 'win32' ? '& ' : '';
     const mode = definition.mode || 'record';
-    const subprocesses = definition.subprocesses || true;
-    const native = definition.native || false;
+
+    const config = vscode.workspace.getConfiguration('flamegraph.py-spy');
+    const subprocesses = definition.subprocesses || config.get<boolean>('subprocesses', true);
+    const native = definition.pid
+        ? definition.native || config.get<boolean>('nativeAttach', false)
+        : definition.native || config.get<boolean>('native', false);
+    const gil = definition.gil || config.get<boolean>('gil', false);
+    const idle = definition.idle || config.get<boolean>('idle', false);
+    const nonblocking = definition.nonblocking || config.get<boolean>('nonblocking', false);
 
     const pySpyArgs = [
         `${ampersand}${sudo}"${profilerPath || definition.profilerPath}" ${mode}`,
@@ -97,6 +121,9 @@ export function createProfileTask(
         mode === 'record' ? '--full-filenames' : '',
         subprocesses ? '--subprocesses' : '',
         native ? '--native' : '',
+        gil ? '--gil' : '',
+        idle ? '--idle' : '',
+        nonblocking ? '--nonblocking' : '',
         definition.pid ? `--pid ${definition.pid}` : '',
         definition.pythonPath || pythonPath ? `-- "${definition.pythonPath || pythonPath}"` : '',
         definition.file ? `"${definition.file}"` : '',
