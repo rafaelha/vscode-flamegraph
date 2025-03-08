@@ -4,4 +4,16 @@ old
 node_modules
 .vscode-test/
 *.vsix
+*.zip
 .env.local
+
+*.png
+*.gif
+*.heic
+*.jpg
+*.xcf
+*.DS_STORE
+
+flamegraph-react/public/flamegraph.json
+flamegraph-react/src/components/*.js
+flamegraph-react/src/components/*.map
