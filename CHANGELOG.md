@@ -12,15 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - VS Code setting `flamegraph.syncInlineAnnotations` (enabled by default) to sync inline annotations with the flamegraph. When enabled, selected a node in the flamegraph will update the inline annotations to only show timing information for the visible flamegraph nodes.
 
 ### Changed
-- When a flamegraph tab is already open, profiling a file will no longer resize or reveal the existing tab. Instead
-the profile data will silently update the existing flamegraph.
+- When a flamegraph tab is already open, profiling a file will no longer resize or reveal the existing tab.
 
 ### Fixed
 - Fixed an issue where the profile data was not parsed correctly in multi-process applications.
 
 ## [0.3.6] - 2025-03-02
 ### Added
-- Added support for VS Code task API. Now users can add their custom task definitions to their `tasks.json` file. See README for details.
+- Added support for VS Code task API. Now you can add your custom task definitions to your `tasks.json` file. See README for details.
 
 ### Changed
 - Reintroduced source code display in the flamegraph.
