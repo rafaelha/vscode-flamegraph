@@ -65,7 +65,7 @@ export function FlameNode({
     const percentageOfTotal = ((samples / rootValue) * 100).toFixed(1);
     const percentageOfFocus = ((samples / focusNodeValue) * 100).toFixed(1);
     const tooltipContent = [
-        fgFileName ? `${fgFunctionName} (${line ? `${fgFileName}:${line}` : fgFileName})` : fgFunctionName,
+        fgFileName ? `${functionName} (${line ? `${fgFileName}:${line}` : fgFileName})` : functionName,
         sourceCode,
         module,
         `${samples / 100}s / ${percentageOfTotal}% / ${percentageOfFocus}%`,
