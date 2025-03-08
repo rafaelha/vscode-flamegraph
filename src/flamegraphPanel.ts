@@ -63,10 +63,7 @@ export class FlamegraphPanel {
         const flamegraph: Flamegraph | undefined = extensionState.currentFlamegraph;
         if (!flamegraph) return;
 
-        if (FlamegraphPanel.currentPanel) {
-            // Reveal the panel and update the profile data
-            FlamegraphPanel.currentPanel._panel.reveal(ViewColumn.Beside);
-        } else {
+        if (!FlamegraphPanel.currentPanel) {
             const panel = window.createWebviewPanel('showFlamegraph', 'Flamegraph', ViewColumn.Beside, {
                 enableScripts: true,
                 retainContextWhenHidden: true,
