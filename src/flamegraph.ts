@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import { basename } from 'path';
 import { URI } from './utilities/uri';
 import { strToHue } from './utilities/colors';
-import { getModuleName, toUnixPath } from './utilities/pathUtils';
+import { getModuleName, toUnixPath, splitOutsideQuotes } from './utilities/pathUtils';
 import { NotebookCellMap } from './types';
 
 type FrameId = number;
@@ -202,7 +202,8 @@ export class Flamegraph {
             const stackTraceStr = row.substring(0, lastSpaceIndex);
             const samples = parseInt(row.substring(lastSpaceIndex + 1), 10);
             this.root.samples += samples;
-            const stackTrace = stackTraceStr.split(';');
+            const stackTrace = splitOutsideQuotes(stackTraceStr, ';');
+            // const stackTrace = stackTraceStr.split(';');
 
             // count the number of occurrences of each string in the stack trace
             const stackTraceCounts = new Map<number, number>();

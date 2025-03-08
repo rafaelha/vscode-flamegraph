@@ -241,7 +241,7 @@ async function handleNotebookProfiling(notebook: vscode.NotebookDocument, execut
     const { pid } = result;
     extensionState.filenameToJupyterCellMap = result.filenameToJupyterCellMap;
 
-    const success = await attach(pid, true, false, os.platform() == 'darwin' || os.platform() == 'linux', true);
+    const success = await attach(pid, true, false, os.platform() === 'darwin' || os.platform() === 'linux', true);
     if (!success) return;
 
     // small delay to ensure py-spy is running

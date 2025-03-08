@@ -83,3 +83,42 @@ export function getModuleName(filePath: string | undefined): string | undefined 
 
     return moduleName && moduleName.startsWith('<') ? undefined : moduleName;
 }
+
+/**
+ * Splits a string by a delimiter, handling escaped quotes.
+ *
+ * @param input - The input string to split.
+ * @param delimiter - The delimiter to split by.
+ * @returns An array of strings.
+ */
+export function splitOutsideQuotes(input: string, delimiter: string = ';'): string[] {
+    // Pre-allocate result array with estimated capacity
+    const result: string[] = [];
+    const { length } = input;
+
+    // Early return for empty input
+    if (length === 0) return result;
+
+    let startIndex = 0;
+    let insideQuotes = false;
+
+    for (let i = 0; i < length; i += 1) {
+        const char = input.charAt(i);
+
+        // Toggle quote state (handling escaped quotes)
+        if (char === '"' && (i === 0 || input.charAt(i - 1) !== '\\')) {
+            insideQuotes = !insideQuotes;
+        }
+
+        // Split only if delimiter is outside quotes
+        if (char === delimiter && !insideQuotes) {
+            result.push(input.substring(startIndex, i));
+            startIndex = i + 1;
+        }
+    }
+
+    // Add the final segment
+    result.push(input.substring(startIndex));
+
+    return result;
+}

@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - When a flamegraph tab is already open, profiling a file will no longer resize or reveal the existing tab. Instead
 the profile data will silently update the existing flamegraph.
 
+### Fixed
+- Fixed an issue where the profile data was not parsed correctly in multi-process applications.
+
 ## [0.3.6] - 2025-03-02
 ### Added
 - Added support for VS Code task API. Now users can add their custom task definitions to their `tasks.json` file. See README for details.
