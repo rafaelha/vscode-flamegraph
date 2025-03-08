@@ -189,9 +189,14 @@ export class FlamegraphPanel {
                         break;
 
                     case 'set-focus-node': {
-                        const { uids } = message;
-                        extensionState.focusNode = uids;
-                        extensionState.updateUI();
+                        const syncInlineAnnotations = workspace
+                            .getConfiguration('flamegraph')
+                            .get('syncInlineAnnotations');
+                        if (syncInlineAnnotations) {
+                            const { uids } = message;
+                            extensionState.focusNode = uids;
+                            extensionState.updateUI();
+                        }
                         break;
                     }
 

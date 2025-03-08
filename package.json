@@ -95,6 +95,12 @@
         "configuration": {
             "title": "Flamegraph",
             "properties": {
+                "flamegraph.syncInlineAnnotations": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Sync inline annotations with the flamegraph. Whenever a node in the flamegraph is clicked, the inline annotations will be updated to only reflect timing information for the visible flamegraph nodes.",
+                    "scope": "resource"
+                },
                 "flamegraph.py-spy.subprocesses": {
                     "type": "boolean",
                     "default": true,

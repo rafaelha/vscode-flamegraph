@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - VS Code settings `flamegraph.py-spy.subprocesses`, `flamegraph.py-spy.native`, `flamegraph.py-spy.nativeAttach`, `flamegraph.py-spy.gil`, `flamegraph.py-spy.idle`, `flamegraph.py-spy.nonblocking` to set py-spy flags.
+- VS Code setting `flamegraph.syncInlineAnnotations` (enabled by default) to sync inline annotations with the flamegraph. When enabled, selected a node in the flamegraph will update the inline annotations to only show timing information for the visible flamegraph nodes.
 
 ### Changed
 - When a flamegraph tab is already open, profiling a file will no longer resize or reveal the existing tab. Instead
