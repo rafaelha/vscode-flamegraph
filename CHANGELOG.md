@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased]
+
+### Added
+- VS Code settings `flamegraph.py-spy.subprocesses`, `flamegraph.py-spy.native`, `flamegraph.py-spy.nativeAttach`, `flamegraph.py-spy.gil`, `flamegraph.py-spy.idle`, `flamegraph.py-spy.nonblocking` to set py-spy flags.
+
+### Changed
+- When a flamegraph tab is already open, profiling a file will no longer resize or reveal the existing tab. Instead
+the profile data will silently update the existing flamegraph.
+
 ## [0.3.6] - 2025-03-02
 ### Added
 - Added support for VS Code task API. Now users can add their custom task definitions to their `tasks.json` file. See README for details.
