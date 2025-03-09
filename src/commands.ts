@@ -150,8 +150,6 @@ export function runAllPytestsCommand() {
  */
 export async function attach(
     pid?: string,
-    subprocesses: boolean = true,
-    native: boolean = false,
     requireSudoAccess: boolean = false,
     silent: boolean = false
 ): Promise<boolean> {
@@ -173,8 +171,6 @@ export async function attach(
             type: 'flamegraph',
             profilerPath: pySpyPath,
             pid: verifiedPid,
-            native,
-            subprocesses,
             sudo: requireSudoAccess,
         },
         TASK_TERMINAL_NAME,
@@ -192,17 +188,6 @@ export async function attach(
 export function attachProfilerCommand() {
     return vscode.commands.registerCommand('flamegraph.attachProfiler', async () => {
         await attach();
-    });
-}
-
-/**
- * Attaches py-spy to the running process with the --native flag.
- *
- * @returns The command registration.
- */
-export function attachNativeProfilerCommand() {
-    return vscode.commands.registerCommand('flamegraph.attachNativeProfiler', async () => {
-        await attach(undefined, false, true);
     });
 }
 
@@ -241,7 +226,7 @@ async function handleNotebookProfiling(notebook: vscode.NotebookDocument, execut
     const { pid } = result;
     extensionState.filenameToJupyterCellMap = result.filenameToJupyterCellMap;
 
-    const success = await attach(pid, true, false, os.platform() === 'darwin' || os.platform() === 'linux', true);
+    const success = await attach(pid, os.platform() === 'darwin' || os.platform() === 'linux', true);
     if (!success) return;
 
     // small delay to ensure py-spy is running

@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fixed an issue where the profile data was not parsed correctly in multi-process applications.
 
+### Removed
+
+- Removed command `Flamegraph: Attach py-spy to running process (native)`. Instead, the `--native` flag for `py-spy`
+can be enabled with the setting `flamegraph.py-spy.native` or by defining a custom task in your `tasks.json` file (see README for details).
+
 ## [0.3.6] - 2025-03-02
 ### Added
 - Added support for VS Code task API. Now you can add your custom task definitions to your `tasks.json` file. See README for details.

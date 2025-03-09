@@ -52,7 +52,6 @@ export function activate(context: ExtensionContext) {
         toggleProfileCommand(),
         runProfilerCommand(),
         attachProfilerCommand(),
-        attachNativeProfilerCommand(),
         showFlamegraphCommand(context),
         profileCellCommand(),
         profileNotebookCommand(),

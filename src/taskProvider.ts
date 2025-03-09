@@ -106,7 +106,9 @@ export function createProfileTask(
     const mode = definition.mode || 'record';
 
     const config = vscode.workspace.getConfiguration('flamegraph.py-spy');
-    const subprocesses = definition.subprocesses || config.get<boolean>('subprocesses', true);
+    const subprocesses = definition.pid
+        ? definition.subprocesses || config.get<boolean>('subprocessesAttach', true)
+        : definition.subprocesses || config.get<boolean>('subprocesses', true);
     const native = definition.pid
         ? definition.native || config.get<boolean>('nativeAttach', false)
         : definition.native || config.get<boolean>('native', false);

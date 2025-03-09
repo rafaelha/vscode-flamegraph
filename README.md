@@ -47,7 +47,6 @@ Open the Command Palette (Command+Shift+P on Mac and Ctrl+Shift+P on Windows/Lin
 | `Flamegraph: Toggle Inline Profile` | Show or hide the inline annotations. This is also accessible via right-click on the editor. |
 | `Flamegraph: Show` | Open a new tab showing the flamegraph |
 | `Flamegraph: Attach py-spy to running process` | Attach py-spy to a running process and display the results. The extension will ask for a Process ID (PID) to attach to |
-| `Flamegraph: Attach py-spy to running process (native)` | Attach py-spy, and also collect profiling data from native (e.g. C++) extensions. This is not supported on all platforms. See this [blog post by Ben Frederickson](https://www.benfrederickson.com/profiling-native-python-extensions-with-py-spy/) |
 | `Flamegraph: Profile all unit tests with pytest` | Run and profile the `pytest` command |
 | `Flamegraph: Profile unit tests in file with pytest` | Run and profile the `pytest` command on the active file |
 | `Flamegraph: Show py-spy top` | Displays a top like view of functions consuming CPU using py-spy |
@@ -107,13 +106,17 @@ Or, you can profile a specific unit test (via `pytest`) with the following task 
 			],
 			"subprocesses": false,
 			"native": true,
+			"subprocesses": false,
+			"gil": false,
+			"idle": false,
+			"nonblocking": false,
 			"label": "Flamegraph: Profile my_test_function"
 		}
 	]
 }
 ```
 
-Notice that we additionally configured the py-spy subprocess and native options. This will execute the command
+Notice that we additionally enabled the py-spy native option. This will execute the command
 
 ```py-spy <py-spy-args> --native -- python -m pytest path/to/my_test_file.py::test_my_function```
 

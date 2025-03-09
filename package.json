@@ -76,10 +76,6 @@
                 "title": "Flamegraph: Attach py-spy to running process"
             },
             {
-                "command": "flamegraph.attachNativeProfiler",
-                "title": "Flamegraph: Attach py-spy to running process (native)"
-            },
-            {
                 "command": "flamegraph.runAllPytests",
                 "title": "Flamegraph: Profile all unit tests with pytest"
             },
@@ -107,6 +103,13 @@
                     "description": "Profile subprocesses of the original process. Note: On Winodows and for some Python versions, this option must be enabled for the profiler to find the python process.",
                     "scope": "resource"
                 },
+                "flamegraph.py-spy.subprocessesAttach": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Profile subprocesses that are spawned by the process that py-spy is attached to. Note: On Winodows and for some Python versions, this option must be enabled for the profiler to find the python process.",
+                    "scope": "resource"
+                },
+
                 "flamegraph.py-spy.native": {
                     "type": "boolean",
                     "default": false,
