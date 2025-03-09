@@ -8,7 +8,6 @@ import {
     showFlamegraphCommand,
     profileCellCommand,
     attachProfilerCommand,
-    attachNativeProfilerCommand,
     profileNotebookCommand,
     runAllPytestsCommand,
     runPytestFileCommand,
