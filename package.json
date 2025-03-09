@@ -4,7 +4,7 @@
     "description": "Py-spy profiling results and flamegraphs in VS Code",
     "icon": "assets/flame.png",
     "license": "Apache-2.0",
-    "version": "0.3.6",
+    "version": "0.3.7",
     "publisher": "rafaelha",
     "homepage": "https://github.com/rafaelha/vscode-flamegraph",
     "repository": {
@@ -109,7 +109,6 @@
                     "description": "Profile subprocesses that are spawned by the process that py-spy is attached to. Note: On Winodows and for some Python versions, this option must be enabled for the profiler to find the python process.",
                     "scope": "resource"
                 },
-
                 "flamegraph.py-spy.native": {
                     "type": "boolean",
                     "default": false,
