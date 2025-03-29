@@ -171,7 +171,7 @@ export async function attach(
             type: 'flamegraph',
             profilerPath: pySpyPath,
             pid: verifiedPid,
-            sudo: requireSudoAccess,
+            sudo: os.platform() === 'darwin' || os.platform() === 'linux',
         },
         TASK_TERMINAL_NAME,
         silent
