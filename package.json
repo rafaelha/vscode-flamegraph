@@ -4,7 +4,7 @@
     "description": "Py-spy profiling results and flamegraphs in VS Code",
     "icon": "assets/flame.png",
     "license": "Apache-2.0",
-    "version": "0.3.7",
+    "version": "0.3.8",
     "publisher": "rafaelha",
     "homepage": "https://github.com/rafaelha/vscode-flamegraph",
     "repository": {
