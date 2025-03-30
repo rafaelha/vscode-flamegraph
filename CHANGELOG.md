@@ -5,8 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.7] - 2025-03-08
+## [Unreleased]
+### Fixed
+- Fixed broken hyperlinks in the flamegraph on Windows.
+- Fixed an issue on Linux where `sudo` was not used when attaching to a running process.
 
+## [0.3.7] - 2025-03-08
 ### Added
 - VS Code settings `flamegraph.py-spy.subprocesses`, `flamegraph.py-spy.native`, `flamegraph.py-spy.nativeAttach`, `flamegraph.py-spy.gil`, `flamegraph.py-spy.idle`, `flamegraph.py-spy.nonblocking` to set py-spy flags.
 - VS Code setting `flamegraph.syncInlineAnnotations` (enabled by default) to sync inline annotations with the flamegraph. When enabled, selected a node in the flamegraph will update the inline annotations to only show timing information for the visible flamegraph nodes.

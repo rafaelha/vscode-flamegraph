@@ -14,8 +14,8 @@ import { URI } from './uri';
 export function toUnixPath(filePath: string) {
     // First decode any existing URI-encoded spaces to ensure consistent starting point
     const decodedPath = decodeURIComponent(filePath);
-    // Normalize the path, convert backslashes to forward slashes, and decode spaces
-    return normalize(decodedPath).replace(/\\/g, '/');
+    // convert backslashes to forward slashes, and decode spaces
+    return decodedPath.replace(/\\/g, '/');
 }
 
 /**
