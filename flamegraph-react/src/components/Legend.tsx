@@ -6,9 +6,19 @@ interface LegendProps {
     items: LegendItem[];
     onModuleVisibilityChange: (moduleName: string, isVisible: boolean) => void;
     hiddenModules: Set<string>;
+    moduleSamples: Map<string, number>;
+    moduleOwnSamples: Map<string, number>;
+    totalSamples: number;
 }
 
-export function Legend({ items, onModuleVisibilityChange, hiddenModules }: LegendProps) {
+export function Legend({
+    items,
+    onModuleVisibilityChange,
+    hiddenModules,
+    moduleSamples,
+    moduleOwnSamples,
+    totalSamples,
+}: LegendProps) {
     if (items.length === 0) return null;
 
     return (
@@ -17,8 +27,18 @@ export function Legend({ items, onModuleVisibilityChange, hiddenModules }: Legen
                 <div className="flex items-center gap-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     {items.map(({ name, hue }) => {
                         const isHidden = hiddenModules.has(name);
+                        const samples = moduleSamples.get(name) || 0;
+                        const ownSamples = moduleOwnSamples.get(name) || 0;
                         return (
-                            <div key={name} className="flex items-center gap-1.5">
+                            <div
+                                key={name}
+                                className="flex items-center gap-1.5"
+                                {...(samples > 0
+                                    ? {
+                                          title: `Time: ${samples / 100}s (${((samples / totalSamples) * 100).toFixed(1)}%) / Own time: ${ownSamples / 100}s${ownSamples > 0 ? ` (${((ownSamples / totalSamples) * 100).toFixed(1)}%)` : ''}`,
+                                      }
+                                    : {})}
+                            >
                                 <label className="flex items-center cursor-pointer">
                                     <input
                                         type="checkbox"
