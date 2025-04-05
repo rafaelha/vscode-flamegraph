@@ -1,7 +1,7 @@
 {
     "name": "vscode-flamegraph",
     "displayName": "Flamegraph",
-    "description": "Py-spy profiling results and flamegraphs in VS Code",
+    "description": "Py-spy profiling and flamegraphs in VS Code",
     "icon": "assets/flame.png",
     "license": "Apache-2.0",
     "version": "0.3.8",
