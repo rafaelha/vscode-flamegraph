@@ -38,14 +38,12 @@ export function FlameGraph({
     );
 
     const { moduleSamples, moduleOwnSamples, totalSamples } = useMemo(() => {
-        let totalSamples = 0;
-
         function getModuleInfo(
             node: Flamenode,
             currentPath: string[] = [],
             moduleSamples: Map<string, number> = new Map(),
             moduleOwnSamples: Map<string, number> = new Map()
-        ): { moduleSamples: Map<string, number>; moduleOwnSamples: Map<string, number> } {
+        ): { moduleSamples: Map<string, number>; moduleOwnSamples: Map<string, number>; totalSamples: number } {
             // Get the module of current node
             const currentModule = functions[node.functionId]?.module;
 
@@ -60,14 +58,15 @@ export function FlameGraph({
 
             const childrenSamples = node.children.reduce((acc, child) => acc + child.samples, 0);
             const ownSamples = node.samples - childrenSamples;
-            totalSamples += ownSamples;
             if (currentModule) {
                 moduleOwnSamples.set(currentModule, (moduleOwnSamples.get(currentModule) || 0) + ownSamples);
             }
 
-            // Recursively process children
+            // Recursively process children and accumulate their total samples
+            let childTotalSamples = 0;
             for (const child of node.children) {
-                getModuleInfo(child, currentPath, moduleSamples, moduleOwnSamples);
+                const childResult = getModuleInfo(child, currentPath, moduleSamples, moduleOwnSamples);
+                childTotalSamples += childResult.totalSamples;
             }
 
             // Remove from path if it was added (when backtracking)
@@ -75,11 +74,10 @@ export function FlameGraph({
                 currentPath.pop();
             }
 
-            return { moduleSamples, moduleOwnSamples };
+            return { moduleSamples, moduleOwnSamples, totalSamples: ownSamples + childTotalSamples };
         }
 
-        const { moduleSamples, moduleOwnSamples } = getModuleInfo(filteredRoot);
-        return { moduleSamples, moduleOwnSamples, totalSamples };
+        return getModuleInfo(filteredRoot);
     }, [filteredRoot, functions]);
 
     const [focusNode, setFocusNode] = useState<Flamenode>(filteredRoot);
