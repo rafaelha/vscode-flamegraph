@@ -33,7 +33,7 @@ export function Legend({
                             <div
                                 key={name}
                                 className="flex items-center gap-1.5"
-                                {...(samples > 0
+                                {...(samples > 0 && totalSamples > 0
                                     ? {
                                           title: `Time: ${samples / 100}s (${((samples / totalSamples) * 100).toFixed(1)}%) / Own time: ${ownSamples / 100}s${ownSamples > 0 ? ` (${((ownSamples / totalSamples) * 100).toFixed(1)}%)` : ''}`,
                                       }
