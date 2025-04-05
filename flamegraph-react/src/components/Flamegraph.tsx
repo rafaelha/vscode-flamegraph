@@ -37,6 +37,49 @@ export function FlameGraph({
         [hiddenModules, root, functions]
     );
 
+    const { moduleSamples, moduleOwnSamples, totalSamples } = useMemo(() => {
+        function getModuleInfo(
+            node: Flamenode,
+            currentPath: string[] = [],
+            moduleSamples: Map<string, number> = new Map(),
+            moduleOwnSamples: Map<string, number> = new Map()
+        ): { moduleSamples: Map<string, number>; moduleOwnSamples: Map<string, number>; totalSamples: number } {
+            // Get the module of current node
+            const currentModule = functions[node.functionId]?.module;
+
+            // If module exists and hasn't been visited in current path, we can count it towards the module samples
+            if (currentModule) {
+                if (!currentPath.includes(currentModule)) {
+                    moduleSamples.set(currentModule, (moduleSamples.get(currentModule) || 0) + node.samples);
+                }
+                // Add to current path to track that we have already counted
+                currentPath.push(currentModule);
+            }
+
+            const childrenSamples = node.children.reduce((acc, child) => acc + child.samples, 0);
+            const ownSamples = node.samples - childrenSamples;
+            if (currentModule) {
+                moduleOwnSamples.set(currentModule, (moduleOwnSamples.get(currentModule) || 0) + ownSamples);
+            }
+
+            // Recursively process children and accumulate their total samples
+            let childTotalSamples = 0;
+            for (const child of node.children) {
+                const childResult = getModuleInfo(child, currentPath, moduleSamples, moduleOwnSamples);
+                childTotalSamples += childResult.totalSamples;
+            }
+
+            // Remove from path if it was added (when backtracking)
+            if (currentModule) {
+                currentPath.pop();
+            }
+
+            return { moduleSamples, moduleOwnSamples, totalSamples: ownSamples + childTotalSamples };
+        }
+
+        return getModuleInfo(filteredRoot);
+    }, [filteredRoot, functions]);
+
     const [focusNode, setFocusNode] = useState<Flamenode>(filteredRoot);
     const [hoveredLineId, setHoveredLineId] = useState<number | null>(null);
     const [hoveredFunctionId, setHoveredFunctionId] = useState<number | null>(null);
@@ -239,6 +282,9 @@ export function FlameGraph({
                         return next;
                     });
                 }}
+                moduleSamples={moduleSamples}
+                moduleOwnSamples={moduleOwnSamples}
+                totalSamples={totalSamples}
             />
         </div>
     );
