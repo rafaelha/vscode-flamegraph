@@ -251,7 +251,16 @@ async function handleNotebookProfiling(notebook: vscode.NotebookDocument, execut
 export function profileCellCommand() {
     return vscode.commands.registerCommand('flamegraph.profileCell', async (cell?: vscode.NotebookCell) => {
         if (!cell) {
-            return;
+            // If no cell is provided, use the active notebook editor and select the first cell
+            const notebookEditor = vscode.window.activeNotebookEditor;
+            if (!notebookEditor) {
+                return;
+            }
+            const { selection } = notebookEditor;
+            if (!selection || selection.isEmpty) {
+                return;
+            }
+            cell = notebookEditor.notebook.cellAt(selection.start);
         }
 
         await handleNotebookProfiling(cell.notebook, async () =>
