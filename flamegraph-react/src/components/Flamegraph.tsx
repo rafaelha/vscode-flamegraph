@@ -4,7 +4,7 @@ import { vscode } from '../utilities/vscode';
 import { Legend } from './Legend';
 import { Flamenode, Function } from './types';
 import { FlameNode } from './FlameNode';
-import { filterTreeByModule } from '../utilities/filter';
+import { filterTreeByModule, getModuleInfo } from '../utilities/filter';
 
 export function FlameGraph({
     root,
@@ -38,47 +38,12 @@ export function FlameGraph({
     );
 
     const { moduleSamples, moduleOwnSamples, totalSamples } = useMemo(() => {
-        function getModuleInfo(
-            node: Flamenode,
-            currentPath: string[] = [],
-            moduleSamples: Map<string, number> = new Map(),
-            moduleOwnSamples: Map<string, number> = new Map()
-        ): { moduleSamples: Map<string, number>; moduleOwnSamples: Map<string, number>; totalSamples: number } {
-            // Get the module of current node
-            const currentModule = functions[node.functionId]?.module;
-
-            // If module exists and hasn't been visited in current path, we can count it towards the module samples
-            if (currentModule) {
-                if (!currentPath.includes(currentModule)) {
-                    moduleSamples.set(currentModule, (moduleSamples.get(currentModule) || 0) + node.samples);
-                }
-                // Add to current path to track that we have already counted
-                currentPath.push(currentModule);
-            }
-
-            const childrenSamples = node.children.reduce((acc, child) => acc + child.samples, 0);
-            const ownSamples = node.samples - childrenSamples;
-            if (currentModule) {
-                moduleOwnSamples.set(currentModule, (moduleOwnSamples.get(currentModule) || 0) + ownSamples);
-            }
-
-            // Recursively process children and accumulate their total samples
-            let childTotalSamples = 0;
-            for (const child of node.children) {
-                const childResult = getModuleInfo(child, currentPath, moduleSamples, moduleOwnSamples);
-                childTotalSamples += childResult.totalSamples;
-            }
-
-            // Remove from path if it was added (when backtracking)
-            if (currentModule) {
-                currentPath.pop();
-            }
-
-            return { moduleSamples, moduleOwnSamples, totalSamples: ownSamples + childTotalSamples };
-        }
-
-        return getModuleInfo(filteredRoot);
+        return getModuleInfo(filteredRoot, functions);
     }, [filteredRoot, functions]);
+
+    const rootModuleInfo = useMemo(() => {
+        return getModuleInfo(root, functions);
+    }, [root, functions]);
 
     const [focusNode, setFocusNode] = useState<Flamenode>(filteredRoot);
     const [hoveredLineId, setHoveredLineId] = useState<number | null>(null);
@@ -252,15 +217,19 @@ export function FlameGraph({
     // Compute legend items with proper ordering
     const legendItems = Array.from(moduleDict.entries())
         .map(([name]) => {
-            const moduleData = moduleCount.get(name) || { hue: moduleDict.get(name)!.hue, totalValue: 0 };
-            return { name, hue: moduleData.hue, totalValue: moduleData.totalValue };
+            return {
+                name,
+                hue: moduleDict.get(name)?.hue || 0,
+                totalValue: rootModuleInfo.moduleSamples.get(name) || 0,
+                visibleValue: moduleCount.get(name)?.totalValue || 0,
+            };
         })
-        .filter((item) => hiddenModules.has(item.name) || item.totalValue > 0) // Only show items that are either hidden or have value
+        .filter((item) => hiddenModules.has(item.name) || item.visibleValue > 0) // Only show items that are either hidden or have value
         .sort((a, b) => {
             // First sort by hidden status
-            const aHidden = hiddenModules.has(a.name);
-            const bHidden = hiddenModules.has(b.name);
-            if (aHidden !== bHidden) return aHidden ? -1 : 1;
+            // const aHidden = hiddenModules.has(a.name);
+            // const bHidden = hiddenModules.has(b.name);
+            // if (aHidden !== bHidden) return aHidden ? -1 : 1;
             // Then sort by total value
             return b.totalValue - a.totalValue;
         });
