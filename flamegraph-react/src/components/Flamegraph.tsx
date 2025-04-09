@@ -65,8 +65,41 @@ export function FlameGraph({
     );
 
     React.useEffect(() => {
-        handleFocusNodeChange(filteredRoot);
-    }, [filteredRoot, handleFocusNodeChange]);
+        // Get the UIDs of the node we *want* to keep focus on from the current focusNode state
+        const targetUids = focusNode.mergedUids || [focusNode.uid];
+
+        // Helper function to search the tree for a node by its UIDs
+        function findNodeByUids(node: Flamenode, uidsToFind: number[]): Flamenode | null {
+            const nodeUids = node.mergedUids || [node.uid];
+            // Compare sorted UIDs to handle potential order differences
+            if (JSON.stringify([...nodeUids].sort()) === JSON.stringify([...uidsToFind].sort())) {
+                return node;
+            }
+            // Recursively search children
+            for (const child of node.children) {
+                const found = findNodeByUids(child, uidsToFind);
+                if (found) {
+                    return found;
+                }
+            }
+            // Not found in this subtree
+            return null;
+        }
+
+        // Try to find the node corresponding to the previous focus in the *new* filtered tree
+        const preservedNode = findNodeByUids(filteredRoot, targetUids);
+
+        // If we found the node in the new tree, focus it. Otherwise, focus the new root.
+        // Check if the focus needs to change to avoid unnecessary updates if the node is the same.
+        if (preservedNode && preservedNode !== focusNode) {
+            handleFocusNodeChange(preservedNode);
+        } else if (!preservedNode && filteredRoot !== focusNode) {
+            // If the preserved node wasn't found, and the current focus isn't already the filtered root
+            handleFocusNodeChange(filteredRoot);
+        }
+        // If preservedNode is found and is the same as focusNode, or
+        // if preservedNode is not found and focusNode is already filteredRoot, do nothing.
+    }, [filteredRoot, handleFocusNodeChange, focusNode]); // Add focusNode dependency to access its UIDs
 
     useEffect(() => {
         function handleKeyDown(e: KeyboardEvent) {
@@ -226,11 +259,6 @@ export function FlameGraph({
         })
         .filter((item) => hiddenModules.has(item.name) || item.visibleValue > 0) // Only show items that are either hidden or have value
         .sort((a, b) => {
-            // First sort by hidden status
-            // const aHidden = hiddenModules.has(a.name);
-            // const bHidden = hiddenModules.has(b.name);
-            // if (aHidden !== bHidden) return aHidden ? -1 : 1;
-            // Then sort by total value
             return b.totalValue - a.totalValue;
         });
 
