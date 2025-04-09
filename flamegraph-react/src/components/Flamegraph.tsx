@@ -217,10 +217,12 @@ export function FlameGraph({
 
             node.children?.forEach((child) => {
                 const childWidth = child.samples / focusNode.samples;
-                getModuleCount(child);
-                nodes.push(createFlameNode(child, depth + 1, currentX, childWidth));
-                if (childWidth >= 0.008) {
-                    renderChildren(child, depth + 1, currentX);
+                if (childWidth >= 0.002) {
+                    getModuleCount(child);
+                    nodes.push(createFlameNode(child, depth + 1, currentX, childWidth));
+                    if (childWidth >= 0.008) {
+                        renderChildren(child, depth + 1, currentX);
+                    }
                 }
                 currentX += childWidth;
             });
