@@ -17,6 +17,8 @@ class ExtensionState {
 
     private _profileVisible: boolean = false;
 
+    private _profileDocumentUri?: vscode.Uri;
+
     private _focusNode: number[] = [0];
 
     private _sourceCode?: string[];
@@ -137,6 +139,24 @@ class ExtensionState {
     set profileUri(uri: vscode.Uri | undefined) {
         if (!this._context) return;
         this._context.workspaceState.update('profileUri', uri);
+    }
+
+    /**
+     * Gets the profile document URI
+     * @returns The profile document URI or undefined if not set
+     */
+    get profileDocumentUri(): vscode.Uri | undefined {
+        return this._profileDocumentUri;
+    }
+
+    /**
+     * Sets the profile document URI
+     * @param uri The new profile document URI or undefined to clear
+     */
+    set profileDocumentUri(uri: vscode.Uri | undefined) {
+        if (uri) {
+            this._profileDocumentUri = uri;
+        }
     }
 
     /**

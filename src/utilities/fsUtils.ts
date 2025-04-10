@@ -8,6 +8,7 @@ import { exec, spawn } from 'child_process';
 import { Jupyter } from '@vscode/jupyter-extension';
 import { NotebookCellMap } from '../types';
 import { toUnixPath } from './pathUtils';
+import { extensionState } from '../state';
 
 export const execAsync = promisify(exec);
 /**
@@ -581,6 +582,8 @@ export async function verify({
         }
         if (!pid) return false;
     }
+
+    extensionState.profileDocumentUri = fileUri;
 
     // If all checks pass, return the requested information
     return {

@@ -163,7 +163,10 @@ export class FlamegraphPanel {
                     case 'open-file':
                         try {
                             // Find the file in the workspace
-                            let fileUri: Uri = Uri.parse(message.file);
+                            let fileUri: Uri =
+                                message.file === 'root' && extensionState.profileDocumentUri
+                                    ? extensionState.profileDocumentUri
+                                    : Uri.parse(message.file);
                             if (!path.isAbsolute(fileUri.fsPath)) {
                                 const files = await workspace.findFiles(`**/${message.file}`);
                                 if (files.length === 0) return;
@@ -177,11 +180,13 @@ export class FlamegraphPanel {
                                 preserveFocus: false,
                             });
 
-                            // Move cursor to specified line
-                            const line = Math.max(0, message.line - 1); // Convert to 0-based line number
-                            const { range } = document.lineAt(line);
-                            editor.selection = new Selection(range.start, range.start);
-                            editor.revealRange(range, TextEditorRevealType.InCenter);
+                            if (message.file !== 'root') {
+                                // Move cursor to specified line
+                                const line = Math.max(0, message.line - 1); // Convert to 0-based line number
+                                const { range } = document.lineAt(line);
+                                editor.selection = new Selection(range.start, range.start);
+                                editor.revealRange(range, TextEditorRevealType.InCenter);
+                            }
                         } catch (error) {
                             // do nothing, error messages are overly verbose
                         }

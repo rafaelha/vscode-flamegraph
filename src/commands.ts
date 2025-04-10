@@ -225,7 +225,6 @@ async function handleNotebookProfiling(notebook: vscode.NotebookDocument, execut
 
     const { pid } = result;
     extensionState.filenameToJupyterCellMap = result.filenameToJupyterCellMap;
-
     const success = await attach(pid, os.platform() === 'darwin' || os.platform() === 'linux', true);
     if (!success) return;
 
@@ -262,6 +261,7 @@ export function profileCellCommand() {
             }
             cell = notebookEditor.notebook.cellAt(selection.start);
         }
+        extensionState.profileDocumentUri = cell.document.uri;
 
         await handleNotebookProfiling(cell.notebook, async () =>
             commands.executeCommand(
@@ -285,6 +285,8 @@ export function profileNotebookCommand() {
             vscode.window.showErrorMessage('No notebook selected for profiling. Please open a notebook and try again.');
             return;
         }
+
+        extensionState.profileDocumentUri = vscode.window.activeTextEditor?.document.uri;
 
         await handleNotebookProfiling(notebookEditor.notebook, async () =>
             commands.executeCommand('notebook.execute', notebookEditor.notebook.uri)

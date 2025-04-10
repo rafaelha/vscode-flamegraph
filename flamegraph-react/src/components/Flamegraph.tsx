@@ -123,13 +123,21 @@ export function FlameGraph({
 
     function handleNodeClick(node: Flamenode, e: React.MouseEvent) {
         if (e.metaKey || e.ctrlKey) {
-            const functionData = functions[node.functionId];
-            if (!functionData?.filePath) return;
-            vscode.postMessage({
-                command: 'open-file',
-                file: functionData.filePath,
-                line: node.line || 1,
-            });
+            if (node.uid === 0) {
+                vscode.postMessage({
+                    command: 'open-file',
+                    file: 'root',
+                    line: 0,
+                });
+            } else {
+                const functionData = functions[node.functionId];
+                if (!functionData?.filePath) return;
+                vscode.postMessage({
+                    command: 'open-file',
+                    file: functionData.filePath,
+                    line: node.line || 1,
+                });
+            }
         } else {
             handleFocusNodeChange(node);
         }

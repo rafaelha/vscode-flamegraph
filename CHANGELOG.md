@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved legend in the flamegraph. Now, filtering modules does not reset the zoom level, unless the currently selected node is affected by the module filtering.
 - Legend items are now sorted by total time and not by visible area in the flamegraph.
 
+### Added
+- When clicking the `all` node in the flamegraph, the VS Code editor will now open the file that was profiled.
+
 ### Fixed
 - Fixed an issue where the `Profile Cell` command would not work when executed via the command palette.
 
