@@ -8,6 +8,7 @@ import { Flamegraph } from './flamegraph';
 import { createProfileTask } from './taskProvider';
 
 const TASK_TERMINAL_NAME = 'Py-spy profile'; // Name of the terminal launched for the profiling task
+const LINUX_BASED = os.platform() === 'darwin' || os.platform() === 'linux';
 
 /**
  * Loads a profile from a file specified by the user.
@@ -156,7 +157,7 @@ export async function attach(
     const result = await verify({
         requireUri: false,
         requirePython: false,
-        recommendSudo: os.platform() === 'darwin' || os.platform() === 'linux',
+        recommendSudo: LINUX_BASED,
         requireSudo: requireSudoAccess,
         requirePid: true,
         pid,
@@ -171,7 +172,7 @@ export async function attach(
             type: 'flamegraph',
             profilerPath: pySpyPath,
             pid: verifiedPid,
-            sudo: os.platform() === 'darwin' || os.platform() === 'linux',
+            sudo: LINUX_BASED,
         },
         TASK_TERMINAL_NAME,
         silent
@@ -225,7 +226,7 @@ async function handleNotebookProfiling(notebook: vscode.NotebookDocument, execut
 
     const { pid } = result;
     extensionState.filenameToJupyterCellMap = result.filenameToJupyterCellMap;
-    const success = await attach(pid, os.platform() === 'darwin' || os.platform() === 'linux', true);
+    const success = await attach(pid, LINUX_BASED, true);
     if (!success) return;
 
     // small delay to ensure py-spy is running
@@ -304,7 +305,7 @@ export function topCommand() {
         const result = await verify({
             requireUri: false,
             requirePython: false,
-            recommendSudo: os.platform() === 'darwin' || os.platform() === 'linux',
+            recommendSudo: LINUX_BASED,
             requireSudo: false,
             requirePid: true,
         });
@@ -317,6 +318,7 @@ export function topCommand() {
             profilerPath: pySpyPath,
             pid: verifiedPid,
             mode: 'top',
+            sudo: LINUX_BASED,
         });
         await vscode.tasks.executeTask(task);
         return true;
