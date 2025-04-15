@@ -101,7 +101,12 @@ export function createProfileTask(
 ): vscode.Task {
     let command = '';
 
-    const sudo = definition.sudo || os.platform() === 'darwin' ? 'sudo ' : '';
+    const sudo =
+        definition.sudo ||
+        os.platform() === 'darwin' ||
+        vscode.workspace.getConfiguration('flamegraph.alwaysUseSudo').get<boolean>('alwaysUseSudo', false)
+            ? 'sudo '
+            : '';
     const ampersand = os.platform() === 'win32' ? '& ' : '';
     const mode = definition.mode || 'record';
 
