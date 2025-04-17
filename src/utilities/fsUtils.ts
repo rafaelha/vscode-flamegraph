@@ -394,11 +394,11 @@ export async function getPidAndCellFilenameMap(
 function getProcessListCommand(): string {
     switch (process.platform) {
         case 'darwin': // macOS
-            return `ps -eo pid,%cpu,command | grep -E 'python|ray' | grep -v 'ray::IDLE' | grep -v grep | sort -k2 -nr | awk '{print $1, $3, $4, $5, $6, $7, $8, $9, $10}'`;
+            return `ps -eo pid,%cpu,command | grep -E 'python|ray::' | grep -v 'ray::IDLE' | grep -v grep | sort -k2 -nr | awk '{print $1, $3, $4, $5, $6, $7, $8, $9, $10}'`;
         case 'linux':
-            return `ps -eo pid,%cpu,cmd --sort=-%cpu | grep -E 'python|ray' | grep -v 'ray::IDLE' | grep -v grep | awk '{ $2=""; print $0 }'`;
+            return `ps -eo pid,%cpu,cmd --sort=-%cpu | grep -E 'python|ray::' | grep -v 'ray::IDLE' | grep -v grep | awk '{ $2=""; print $0 }'`;
         case 'win32':
-            return `powershell.exe -Command "Get-WmiObject Win32_Process | Where-Object { ($_.CommandLine -match 'python' -or $_.CommandLine -match 'ray') -and ($_.CommandLine -notmatch 'ray::IDLE') } | Sort-Object CreationDate -Descending | Select-Object ProcessId, CommandLine"`;
+            return `powershell.exe -Command "Get-WmiObject Win32_Process | Where-Object { ($_.CommandLine -match 'python' -or $_.CommandLine -match 'ray::') -and ($_.CommandLine -notmatch 'ray::IDLE') } | Sort-Object CreationDate -Descending | Select-Object ProcessId, CommandLine"`;
 
         default:
             return '';
@@ -468,30 +468,82 @@ export async function selectPid(): Promise<string | undefined> {
         return promptForPid();
     }
 
-    // Create QuickPick items from processes
-    const items = [
+    const quickPick = vscode.window.createQuickPick();
+    quickPick.placeholder = 'Select a Python process to attach py-spy or type a PID';
+    quickPick.title = 'Python Processes';
+    quickPick.matchOnDescription = true;
+
+    // Add process items
+    quickPick.items = [
         ...processes.map((proc) => ({
             label: proc.pid,
             description: proc.command,
         })),
         {
-            label: 'Other PID',
-            description: 'Enter a process ID manually',
+            label: 'Use this PID',
+            description: 'Attach py-spy to the entered PID',
             alwaysShow: true,
         },
     ];
 
-    const selected = await vscode.window.showQuickPick(items, {
-        placeHolder: 'Select a Python process to attach py-spy',
-        title: 'Python Processes',
-        matchOnDescription: true,
+    // Create a promise that will be resolved when user accepts
+    return new Promise<string | undefined>((resolve) => {
+        // Track if user is typing a custom PID
+        let lastValue = '';
+        let userManuallySelected = false;
+
+        quickPick.onDidChangeValue((value) => {
+            lastValue = value;
+            // Clear active selection when value changes, unless user manually selected an item
+            if (!userManuallySelected) {
+                quickPick.activeItems = [];
+            }
+        });
+
+        // Track when user actively selects an item with arrow keys or mouse
+        quickPick.onDidChangeActive(() => {
+            if (quickPick.activeItems.length > 0) {
+                userManuallySelected = true;
+            }
+        });
+
+        quickPick.onDidAccept(() => {
+            // If user manually selected an item or there's a valid selection
+            if (userManuallySelected && quickPick.selectedItems.length > 0) {
+                const selectedItem = quickPick.selectedItems[0];
+
+                if (selectedItem.label === 'Use this PID') {
+                    // When "Use this PID" is selected, check if there's already a number in the input
+                    if (/^\d+$/.test(lastValue)) {
+                        resolve(lastValue);
+                    } else {
+                        // Otherwise fall back to the regular prompt
+                        quickPick.hide();
+                        promptForPid().then(resolve);
+                        return;
+                    }
+                } else {
+                    // User selected a process from the list
+                    resolve(selectedItem.label);
+                }
+            } else if (/^\d+$/.test(lastValue)) {
+                // No explicit selection but user entered a complete PID number
+                resolve(lastValue);
+            } else {
+                // No selection and no valid PID entered
+                resolve(undefined);
+            }
+
+            quickPick.hide();
+        });
+
+        quickPick.onDidHide(() => {
+            quickPick.dispose();
+            resolve(undefined);
+        });
+
+        quickPick.show();
     });
-
-    if (!selected) {
-        return undefined;
-    }
-
-    return selected.label === 'Other PID' ? promptForPid() : selected.label;
 }
 
 /**
