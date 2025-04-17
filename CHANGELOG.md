@@ -9,12 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [unreleased]
 ### Added
 - Added toggle in flamegraph legend to switch between source code and function name display.
-- Code display now also works for Jupyter notebook cells.
-- VS Code setting `flamegraph.alwaysUseSudo` to always use `sudo` when running py-spy commands. This is required for some Linux distributions.
+- Code display now works for Jupyter notebook cells in addition to python files.
+- New VS Code setting `flamegraph.alwaysUseSudo` to always use `sudo` when running py-spy commands. This is required for some Linux distributions.
 
 ### Fixed
 - Fixed an issue where the `py-spy top` was run without `sudo` on Linux.
 
+### Changed
+- Improved process selection with streamlined PID picking and added support for ray processes.
 
 ## [0.3.10] - 2025-04-10
 ### Changed
