@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { Flamegraph } from './flamegraph';
-import { NotebookCellMap } from './types';
+import { NotebookCellMap, UriToCodeMap } from './types';
 import { FlamegraphPanel } from './flamegraphPanel';
 import { readTextFile } from './utilities/fsUtils';
 
@@ -28,6 +28,8 @@ class ExtensionState {
     private _onUpdateUI: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
 
     private _filenameToJupyterCellMap: NotebookCellMap = new Map();
+
+    private _uriToCode: UriToCodeMap = new Map();
 
     private _decorationCache: Map<string, vscode.DecorationOptions[]> = new Map();
 
@@ -176,6 +178,22 @@ class ExtensionState {
     }
 
     /**
+     * Gets the uriToCodeMap
+     * @returns The uriToCodeMap
+     */
+    get uriToCode(): UriToCodeMap {
+        return this._uriToCode;
+    }
+
+    /**
+     * Sets the uriToCodeMap
+     * @param uriToCode The new uriToCodeMap
+     */
+    set uriToCode(uriToCode: UriToCodeMap) {
+        this._uriToCode = uriToCode;
+    }
+
+    /**
      * Gets the active profile watcher. This monitors the profile file produced by py-spy
      * @returns The active profile watcher or undefined if none exists
      */
@@ -215,7 +233,7 @@ class ExtensionState {
     public loadSourceCode() {
         if (!this.currentFlamegraph) return;
         this.currentFlamegraph
-            .readSourceCode()
+            .readSourceCode(this.uriToCode)
             .then((sourceCode) => {
                 this.sourceCode = sourceCode;
                 FlamegraphPanel.postSourceCode(sourceCode);

@@ -3,7 +3,7 @@ import { basename } from 'path';
 import { URI } from './utilities/uri';
 import { strToHue } from './utilities/colors';
 import { getModuleName, toUnixPath, splitOutsideQuotes } from './utilities/pathUtils';
-import { NotebookCellMap } from './types';
+import { NotebookCellMap, UriToCodeMap } from './types';
 
 type FrameId = number;
 type FunctionId = number;
@@ -401,7 +401,7 @@ export class Flamegraph {
      * Reads the source code for all nodes in the flamegraph.
      * @returns A promise that resolves to an array of source code strings.
      */
-    public async readSourceCode(): Promise<string[]> {
+    public async readSourceCode(uriToCode?: UriToCodeMap): Promise<string[]> {
         // Process one file at a time
         const sourceCode: string[] = new Array(this.nodes.length).fill('');
         const fileReadPromises: Promise<void>[] = [];
@@ -411,13 +411,15 @@ export class Flamegraph {
             const fileProfiles = this.index[fileName];
 
             for (const fileProfile of fileProfiles) {
-                if (!fileProfile.filePath.endsWith('.py')) continue;
+                if (!fileProfile.filePath.endsWith('.py') && !fileProfile.filePath.includes('.ipynb')) continue;
 
                 // Create a promise for each file read operation
                 const fileReadPromise = (async () => {
                     try {
                         // Read file content asynchronously
-                        const fileContent = await fs.promises.readFile(URI.parse(fileProfile.filePath).fsPath, 'utf-8');
+                        const fileContent =
+                            uriToCode?.get(fileProfile.filePath) ??
+                            (await fs.promises.readFile(URI.parse(fileProfile.filePath).fsPath, 'utf-8'));
                         const lines = fileContent.split('\n');
 
                         // Process all line profiles for this file
