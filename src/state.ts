@@ -27,7 +27,7 @@ class ExtensionState {
 
     private _onUpdateUI: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
 
-    private _filenameToJupyterCellMap: NotebookCellMap = new Map();
+    private _filenameToJupyterCell: NotebookCellMap = new Map();
 
     private _uriToCode: UriToCodeMap = new Map();
 
@@ -162,19 +162,19 @@ class ExtensionState {
     }
 
     /**
-     * Gets the fileNameToJupyterCellMap
-     * @returns The fileNameToJupyterCellMap
+     * Gets the filenameToJupyterCell
+     * @returns The filenameToJupyterCell
      */
-    get filenameToJupyterCellMap(): NotebookCellMap {
-        return this._filenameToJupyterCellMap;
+    get filenameToJupyterCell(): NotebookCellMap {
+        return this._filenameToJupyterCell;
     }
 
     /**
-     * Sets the filenameToJupyterCellMap
-     * @param filenameToJupyterCellMap The new filenameToJupyterCellMap
+     * Sets the filenameToJupyterCell
+     * @param filenameToJupyterCell The new filenameToJupyterCell
      */
-    set filenameToJupyterCellMap(filenameToJupyterCellMap: NotebookCellMap) {
-        this._filenameToJupyterCellMap = filenameToJupyterCellMap;
+    set filenameToJupyterCell(filenameToJupyterCell: NotebookCellMap) {
+        this._filenameToJupyterCell = filenameToJupyterCell;
     }
 
     /**
@@ -251,7 +251,7 @@ class ExtensionState {
      */
     public handleProfileUpdate = async (context: vscode.ExtensionContext, profileUri: vscode.Uri) => {
         try {
-            this.currentFlamegraph = new Flamegraph(await readTextFile(profileUri), this.filenameToJupyterCellMap);
+            this.currentFlamegraph = new Flamegraph(await readTextFile(profileUri), this.filenameToJupyterCell);
             this.profileUri = profileUri;
             this.focusNode = [0];
             this.profileVisible = true;

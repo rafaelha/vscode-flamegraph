@@ -225,8 +225,8 @@ async function handleNotebookProfiling(notebook: vscode.NotebookDocument, execut
     const result = await getPidAndCellFilenameMap(notebook);
     if (!result) return;
 
-    const { pid, filenameToJupyterCellMap, uriToCode } = result;
-    extensionState.filenameToJupyterCellMap = filenameToJupyterCellMap;
+    const { pid, filenameToJupyterCell, uriToCode } = result;
+    extensionState.filenameToJupyterCell = filenameToJupyterCell;
     extensionState.uriToCode = uriToCode;
     const success = await attach(pid, LINUX_BASED, true);
     if (!success) return;

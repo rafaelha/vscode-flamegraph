@@ -347,7 +347,7 @@ export async function executeCodeOnIPythonKernel(code: string): Promise<string |
  */
 export async function getPidAndCellFilenameMap(
     notebook: vscode.NotebookDocument
-): Promise<{ pid: string; filenameToJupyterCellMap: NotebookCellMap; uriToCode: UriToCodeMap } | undefined> {
+): Promise<{ pid: string; filenameToJupyterCell: NotebookCellMap; uriToCode: UriToCodeMap } | undefined> {
     const numCells = notebook.cellCount;
 
     const getFileNameCode = Array.from({ length: numCells })
@@ -365,26 +365,26 @@ export async function getPidAndCellFilenameMap(
     const outputArray = output.split('\n').map((s) => s.trim());
     if (outputArray.length < numCells + 1) {
         if (outputArray.length >= 1) {
-            return { pid: outputArray[0], filenameToJupyterCellMap: new Map(), uriToCode: new Map() };
+            return { pid: outputArray[0], filenameToJupyterCell: new Map(), uriToCode: new Map() };
         }
         return undefined;
     }
 
-    const filenameToJupyterCellMap: NotebookCellMap = new Map();
-    const uriToCode = new Map<string, string>();
+    const filenameToJupyterCell: NotebookCellMap = new Map();
+    const uriToCode: UriToCodeMap = new Map();
 
     const pid = outputArray[0];
     for (let i = 0; i < numCells; i += 1) {
         const source = notebook.cellAt(i).document.getText();
         const cellUri = toUnixPath(notebook.cellAt(i).document.uri.toString());
-        filenameToJupyterCellMap.set(toUnixPath(outputArray[i + 1]), {
+        filenameToJupyterCell.set(toUnixPath(outputArray[i + 1]), {
             cellIndex: i,
             cellUri,
         });
         uriToCode.set(cellUri, source);
     }
 
-    return { pid, filenameToJupyterCellMap, uriToCode };
+    return { pid, filenameToJupyterCell, uriToCode };
 }
 
 /**
