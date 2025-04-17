@@ -394,11 +394,12 @@ export async function getPidAndCellFilenameMap(
 function getProcessListCommand(): string {
     switch (process.platform) {
         case 'darwin': // macOS
-            return `ps -eo pid,%cpu,command | grep python | grep -v grep | sort -k2 -nr | awk '{print $1, $3, $4, $5, $6, $7, $8, $9, $10}'`;
+            return `ps -eo pid,%cpu,command | grep -E 'python|ray' | grep -v 'ray::IDLE' | grep -v grep | sort -k2 -nr | awk '{print $1, $3, $4, $5, $6, $7, $8, $9, $10}'`;
         case 'linux':
-            return `ps -eo pid,%cpu,cmd --sort=-%cpu | grep python | grep -v grep | awk '{ $2=""; print $0 }'`;
-        case 'win32': // Windows
-            return `powershell.exe -Command "Get-WmiObject Win32_Process | Where-Object { $_.Name -match 'python' } | Sort-Object CreationDate -Descending | Select-Object ProcessId, CommandLine"`;
+            return `ps -eo pid,%cpu,cmd --sort=-%cpu | grep -E 'python|ray' | grep -v 'ray::IDLE' | grep -v grep | awk '{ $2=""; print $0 }'`;
+        case 'win32':
+            return `powershell.exe -Command "Get-WmiObject Win32_Process | Where-Object { ($_.CommandLine -match 'python' -or $_.CommandLine -match 'ray') -and ($_.CommandLine -notmatch 'ray::IDLE') } | Sort-Object CreationDate -Descending | Select-Object ProcessId, CommandLine"`;
+
         default:
             return '';
     }
@@ -476,12 +477,14 @@ export async function selectPid(): Promise<string | undefined> {
         {
             label: 'Other PID',
             description: 'Enter a process ID manually',
+            alwaysShow: true,
         },
     ];
 
     const selected = await vscode.window.showQuickPick(items, {
         placeHolder: 'Select a Python process to attach py-spy',
         title: 'Python Processes',
+        matchOnDescription: true,
     });
 
     if (!selected) {
