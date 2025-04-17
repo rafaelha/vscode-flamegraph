@@ -18,6 +18,7 @@ interface FlameNodeProps {
     hoveredFunctionId: number | null;
     onNodeClick: (node: Flamenode, e: React.MouseEvent) => void;
     onNodeHover: (frameId: number | null, functionId: number | null) => void;
+    showSourceCode: boolean;
 }
 
 export function FlameNode({
@@ -35,6 +36,7 @@ export function FlameNode({
     hoveredFunctionId,
     onNodeClick,
     onNodeHover,
+    showSourceCode,
 }: FlameNodeProps) {
     const { frameId, functionId, samples, line, sourceCode } = node;
     const functionData = functions[functionId];
@@ -82,7 +84,12 @@ export function FlameNode({
             onMouseLeave={() => onNodeHover(null, null)}
             title={tooltipContent}
         >
-            <FlameNodeContent sourceCode={sourceCode} functionName={fgFunctionName} fileName={fgFileName} line={line} />
+            <FlameNodeContent
+                sourceCode={showSourceCode ? sourceCode : undefined}
+                functionName={fgFunctionName}
+                fileName={fgFileName}
+                line={line}
+            />
         </div>
     );
 }

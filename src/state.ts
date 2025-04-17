@@ -210,6 +210,22 @@ class ExtensionState {
     }
 
     /**
+     * Loads the source code asynchronously without blocking the main thread
+     */
+    public loadSourceCode() {
+        if (!this.currentFlamegraph) return;
+        this.currentFlamegraph
+            .readSourceCode()
+            .then((sourceCode) => {
+                this.sourceCode = sourceCode;
+                FlamegraphPanel.postSourceCode(sourceCode);
+            })
+            .catch(() => {
+                // Silently ignore any errors during source code loading
+            });
+    }
+
+    /**
      * Handles the profile update event. This is called when a new profile is written to the file system.
      *
      * @param context - The extension context.
@@ -224,17 +240,7 @@ class ExtensionState {
             this.sourceCode = undefined;
             this.updateUI();
             FlamegraphPanel.render(context.extensionUri);
-
-            // Load source code asynchronously without blocking the main thread
-            this.currentFlamegraph
-                .readSourceCode()
-                .then((sourceCode) => {
-                    this.sourceCode = sourceCode;
-                    FlamegraphPanel.postSourceCode(sourceCode);
-                })
-                .catch(() => {
-                    // Silently ignore any errors during source code loading
-                });
+            this.loadSourceCode();
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to open profile: ${error}`);
         }

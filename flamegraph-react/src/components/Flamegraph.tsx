@@ -30,7 +30,24 @@ export function FlameGraph({
         return modules;
     }, [root, functions]);
 
+    const sourceCodeAvailabe = useMemo(() => {
+        // traverse all nodes from the root and check if the source code is available
+        function traverse(node: Flamenode) {
+            if (node.sourceCode) {
+                return true;
+            }
+            for (const child of node.children) {
+                if (traverse(child)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return traverse(root);
+    }, [root]);
+
     const [hiddenModules, setHiddenModules] = useState<Set<string>>(() => new Set(['<importlib>']));
+    const [showSourceCode, setShowSourceCode] = useState<boolean>(true);
 
     const filteredRoot = React.useMemo(
         () => filterTreeByModule(hiddenModules, root, functions),
@@ -187,6 +204,7 @@ export function FlameGraph({
                     setHoveredLineId(frameId);
                     setHoveredFunctionId(functionId);
                 }}
+                showSourceCode={showSourceCode}
             />
         );
     }
@@ -292,6 +310,9 @@ export function FlameGraph({
                 moduleSamples={moduleSamples}
                 moduleOwnSamples={moduleOwnSamples}
                 totalSamples={totalSamples}
+                showSourceCode={showSourceCode}
+                onToggleSourceCode={() => setShowSourceCode(!showSourceCode)}
+                sourceCodeAvailable={sourceCodeAvailabe}
             />
         </div>
     );

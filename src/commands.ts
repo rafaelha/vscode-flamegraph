@@ -211,6 +211,7 @@ export function showFlamegraphCommand(context: vscode.ExtensionContext) {
         extensionState.profileVisible = true;
         extensionState.updateUI();
         FlamegraphPanel.render(context.extensionUri);
+        extensionState.loadSourceCode();
     });
 }
 
