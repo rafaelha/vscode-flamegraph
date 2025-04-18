@@ -1,5 +1,12 @@
 # Flamegraph Visualizer for py-spy Profiles in Python and Jupyter
 
+
+[![Installs](https://img.shields.io/visual-studio-marketplace/i/rafaelha.vscode-flamegraph?color=ff4500&style=flat&logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=rafaelha.vscode-flamegraph)
+[![Downloads](https://img.shields.io/visual-studio-marketplace/d/rafaelha.vscode-flamegraph?color=ff8c00&style=flat&logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=rafaelha.vscode-flamegraph)
+[![Rating](https://img.shields.io/visual-studio-marketplace/r/rafaelha.vscode-flamegraph?color=ffa500&style=flat&logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=rafaelha.vscode-flamegraph)
+[![GitHub Stars](https://img.shields.io/github/stars/rafaelha/vscode-flamegraph?style=social&label=Star)](https://github.com/rafaelha/vscode-flamegraph)
+
+
 Profiling your code with *Flamegraph* is simple.
 
 In Jupyter notebooks, click the 🔥 button above the cell you want to profile:
