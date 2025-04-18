@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added toggle in flamegraph legend to switch between source code and function name display.
 - Code display now works for Jupyter notebook cells in addition to python files.
 - New VS Code setting `flamegraph.alwaysUseSudo` to always use `sudo` when running py-spy commands. This is required for some Linux distributions.
+- Flamegraph icon in flamegraph tab.
 
 ### Fixed
 - Fixed an issue where the `py-spy top` was run without `sudo` on Linux.
@@ -20,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.10] - 2025-04-10
 ### Changed
-- Improved legend in the flamegraph. Now, filtering by module (by deselcting items in the legend)does not reset the zoom level, unless the currently selected node is affected by the module filtering.
+- Improved legend in the flamegraph. Now, filtering by module (by deselcting items in the legend) does not reset the zoom level, unless the currently selected node is affected by the module filtering.
 - Legend items are now sorted by total time (previously they were sorted by visible area in the flamegraph).
 
 ### Added

@@ -70,8 +70,13 @@ export class FlamegraphPanel {
                 localResourceRoots: [
                     Uri.joinPath(extensionUri, 'out'),
                     Uri.joinPath(extensionUri, 'flamegraph-react/build'),
+                    Uri.joinPath(extensionUri, 'assets'),
                 ],
             });
+
+            // Set the webview panel icon to a flame
+            const iconPath = Uri.joinPath(extensionUri, 'assets', 'flame.png');
+            panel.iconPath = iconPath;
 
             FlamegraphPanel.currentPanel = new FlamegraphPanel(panel, extensionUri);
         }
