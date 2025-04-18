@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [unreleased]
+## [0.3.11] - 2025-04-17
 ### Added
 - Added toggle in flamegraph legend to switch between source code and function name display.
 - Code display now works for Jupyter notebook cells in addition to python files.
