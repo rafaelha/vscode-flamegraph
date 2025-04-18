@@ -4,7 +4,7 @@
     "description": "Py-spy profiling and flamegraphs in VS Code",
     "icon": "assets/flame.png",
     "license": "Apache-2.0",
-    "version": "0.3.10",
+    "version": "0.3.11",
     "publisher": "rafaelha",
     "homepage": "https://github.com/rafaelha/vscode-flamegraph",
     "repository": {
@@ -138,7 +138,7 @@
                     "default": false,
                     "description": "Don't pause the python process when collecting samples. This will reduce the performance impact of sampling, but may lead to inaccurate results.",
                     "scope": "resource"
-                }, 
+                },
                 "flamegraph.alwaysUseSudo": {
                     "type": "boolean",
                     "default": false,
