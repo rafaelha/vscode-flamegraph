@@ -1,4 +1,4 @@
-# Flamegraph Visualizer for py-spy Profiles in Python and Jupyter
+###  Flamegraph Visualizer for py-spy Profiles in Python and Jupyter
 
 
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/rafaelha.vscode-flamegraph?color=ff4500&style=flat&logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=rafaelha.vscode-flamegraph)
@@ -174,9 +174,6 @@ npm run build:webview
 - [x] Performance tests
 - [x] Option to filter the flamegraph by module.
 - [ ] Refactor flamegraph react component. Currently, the whole graph is recomputed on every mouse hover event. We could consider using `speedscope` npm package to render the flamegraph.
-- [ ] Search in flamegraph
-- [ ] Profiling files without opening a workspace/folder. Currently, the extension requires a workspace/folder to be opened.
 - [ ] Memray memory profiles
-- [ ] Zoom animations in flamegraph
 - [ ] Select sampling interval
 - [x] Jupyter notebook profiling.
