@@ -99,18 +99,14 @@ export function createProfileTask(
     pythonPath: string | undefined = undefined,
     profilerPath: string | undefined = undefined
 ): vscode.Task {
+    const config = vscode.workspace.getConfiguration('flamegraph.py-spy');
     let command = '';
 
     const sudo =
-        definition.sudo ||
-        os.platform() === 'darwin' ||
-        vscode.workspace.getConfiguration('flamegraph.alwaysUseSudo').get<boolean>('alwaysUseSudo', false)
-            ? 'sudo '
-            : '';
+        definition.sudo || os.platform() === 'darwin' || config.get<boolean>('alwaysUseSudo', false) ? 'sudo ' : '';
     const ampersand = os.platform() === 'win32' ? '& ' : '';
     const mode = definition.mode || 'record';
 
-    const config = vscode.workspace.getConfiguration('flamegraph.py-spy');
     const subprocesses = definition.pid
         ? definition.subprocesses || config.get<boolean>('subprocessesAttach', true)
         : definition.subprocesses || config.get<boolean>('subprocesses', true);
