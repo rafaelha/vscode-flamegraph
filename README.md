@@ -4,7 +4,7 @@
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/rafaelha.vscode-flamegraph?color=ff4500&style=flat&logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=rafaelha.vscode-flamegraph)
 [![Downloads](https://img.shields.io/visual-studio-marketplace/d/rafaelha.vscode-flamegraph?color=ffff00&style=flat&logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=rafaelha.vscode-flamegraph)
 [![Rating](https://img.shields.io/visual-studio-marketplace/r/rafaelha.vscode-flamegraph?color=ff8c00&style=flat&logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=rafaelha.vscode-flamegraph)
-[![Like this? Leave a star](https://img.shields.io/github/stars/rafaelha/vscode-flamegraph?style=flat&label=Like%20this%3F%20Leave%20a%20star&color=yellow&logo=github)](https://github.com/rafaelha/vscode-flamegraph)
+[![Like this? Leave a ⭐](https://img.shields.io/github/stars/rafaelha/vscode-flamegraph?style=flat&label=Like%20this%3F%20Leave%20a%20%E2%AD%90&color=yellow&logo=github)](https://github.com/rafaelha/vscode-flamegraph)
 
 
 Profiling your code with *Flamegraph* is simple.
@@ -58,9 +58,18 @@ Open the Command Palette (Command+Shift+P on Mac and Ctrl+Shift+P on Windows/Lin
 | `Flamegraph: Profile unit tests in file with pytest` | Run and profile the `pytest` command on the active file |
 | `Flamegraph: Show py-spy top` | Displays a top like view of functions consuming CPU using py-spy |
 
+## Using the Command Line
+
+You can run py-spy directly from the command line. The extension will watch for changes to the file `profile.pyspy` in the current workspace and load the profile when it changes.
+
+To profile a script, use the command:
+```bash
+py-spy record --output profile.pyspy --format raw --full-filenames -- python my_script.py
+```
+Here, it is important to specify the output file as `profile.pyspy` and the format as `raw`. For best results, use the `--full-filenames` flag to allow the extension to resolve file names in the flamegraph. For additional configuration options, see the [py-spy documentation](https://github.com/benfred/py-spy) or run `py-spy record --help`.
 
 
-## Using Tasks
+## Using VS Code Tasks
 
 The extension allows you to run the py-spy profiler from VS Code's task system. This makes it easy to integrate profiling into your workflow and configure custom tasks.
 
