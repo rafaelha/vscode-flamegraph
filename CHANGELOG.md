@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased]
+### Added
+- The `Toggle Inline Profile` context menu item is now available in diff editors.
+
+### Changed
+- Changed seeting `flamegraph.alwaysUseSudo` to `flamegraph.py-spy.alwaysUseSudo` for consistency.
+
+
 
 ## [0.3.11] - 2025-04-17
 ### Added
