@@ -139,7 +139,7 @@
                     "description": "Don't pause the python process when collecting samples. This will reduce the performance impact of sampling, but may lead to inaccurate results.",
                     "scope": "resource"
                 },
-                "flamegraph.alwaysUseSudo": {
+                "flamegraph.py-spy.alwaysUseSudo": {
                     "type": "boolean",
                     "default": false,
                     "description": "Always use sudo when running py-spy commands. This is required for some Linux distributions.",
@@ -214,7 +214,7 @@
                 {
                     "command": "flamegraph.toggleProfile",
                     "group": "2_workspace",
-                    "when": "editorLangId == python && !isInDiffEditor && !virtualWorkspace"
+                    "when": "editorLangId == python && !virtualWorkspace"
                 }
             ],
             "editor/title/run": [
