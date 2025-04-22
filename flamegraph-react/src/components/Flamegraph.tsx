@@ -46,7 +46,9 @@ export function FlameGraph({
         return traverse(root);
     }, [root]);
 
-    const [hiddenModules, setHiddenModules] = useState<Set<string>>(() => new Set(['<importlib>']));
+    const [hiddenModules, setHiddenModules] = useState<Set<string>>(() => {
+        return moduleDict.has('<importlib>') ? new Set(['<importlib>']) : new Set();
+    });
     const [showSourceCode, setShowSourceCode] = useState<boolean>(true);
 
     const filteredRoot = React.useMemo(
