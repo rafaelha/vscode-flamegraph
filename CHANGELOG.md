@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Changed seeting `flamegraph.alwaysUseSudo` to `flamegraph.py-spy.alwaysUseSudo` for consistency.
+- Small improvements to the flamegraph legend.
 
 
 
