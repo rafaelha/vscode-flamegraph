@@ -59,11 +59,20 @@ export class FlamegraphPanel {
      *
      * @param extensionUri The URI of the directory containing the extension.
      */
-    public static render(extensionUri: Uri) {
+    public static render(extensionUri: Uri, alwaysShowFlamegraph: boolean = false) {
+        const showFlamegraphBehavior = workspace.getConfiguration('flamegraph').get('showFlamegraph');
+
         const flamegraph: Flamegraph | undefined = extensionState.currentFlamegraph;
         if (!flamegraph) return;
 
-        if (!FlamegraphPanel.currentPanel) {
+        if ((showFlamegraphBehavior === 'showAndFocus' || alwaysShowFlamegraph) && FlamegraphPanel.currentPanel) {
+            // Reveal the panel if it already exists and the appropriate setting is enabled
+            FlamegraphPanel.currentPanel._panel.reveal(ViewColumn.Beside);
+        } else if (
+            !FlamegraphPanel.currentPanel &&
+            (showFlamegraphBehavior !== 'onlyShowCodeAnnotations' || alwaysShowFlamegraph)
+        ) {
+            // Create a new panel if it doesn't exist and the appropriate setting is enabled
             const panel = window.createWebviewPanel('showFlamegraph', 'Flamegraph', ViewColumn.Beside, {
                 enableScripts: true,
                 retainContextWhenHidden: true,
@@ -80,11 +89,14 @@ export class FlamegraphPanel {
 
             FlamegraphPanel.currentPanel = new FlamegraphPanel(panel, extensionUri);
         }
-        FlamegraphPanel.currentPanel._panel.webview.postMessage({
-            type: 'profile-data',
-            data: { root: flamegraph.root, functions: flamegraph.functions, sourceCode: extensionState.sourceCode },
-            focusUid: extensionState.focusNode,
-        });
+
+        if (FlamegraphPanel.currentPanel) {
+            FlamegraphPanel.currentPanel._panel.webview.postMessage({
+                type: 'profile-data',
+                data: { root: flamegraph.root, functions: flamegraph.functions, sourceCode: extensionState.sourceCode },
+                focusUid: extensionState.focusNode,
+            });
+        }
     }
 
     public static postSourceCode(sourceCode: string[]) {

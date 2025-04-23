@@ -97,6 +97,18 @@
                     "description": "Sync inline annotations with the flamegraph. Whenever a node in the flamegraph is clicked, the inline annotations will be updated to only reflect timing information for the visible flamegraph nodes.",
                     "scope": "resource"
                 },
+                "flamegraph.showFlamegraph": {
+                    "type": "string",
+                    "enum": ["show", "showAndFocus", "onlyShowCodeAnnotations"],
+                    "default": "show", 
+                    "enumDescriptions": [
+                        "Display the flamegraph in a new tab after profiling.",
+                        "Display and bring the flamegraph tab to focus after profiling.",
+                        "Only show the code annotations after profiling and do not open the flamegraph tab. The flamegraph panel can be manually opened by the 'Flamegraph: Show' command."
+                    ],
+                    "description": "Controls how the flamegraph is displayed after profiling completes.",
+                    "scope": "resource"
+                },
                 "flamegraph.py-spy.subprocesses": {
                     "type": "boolean",
                     "default": true,

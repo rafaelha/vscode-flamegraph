@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [unreleased]
 ### Added
 - The `Toggle Inline Profile` context menu item is now available in diff editors.
+- New VS Code setting `flamegraph.showFlamegraph` to control how the flamegraph is displayed after profiling completes. Options are `show`, `showAndFocus`, and `onlyShowCodeAnnotations`. The `onlyShowCodeAnnotations` option will only show the code annotations after profiling completes and will not open the flamegraph tab. The flamegraph panel can still be manually opened by the `Flamegraph: Show` command.
 
 ### Changed
 - Changed seeting `flamegraph.alwaysUseSudo` to `flamegraph.py-spy.alwaysUseSudo` for consistency.
