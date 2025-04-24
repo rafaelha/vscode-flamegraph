@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { basename } from 'path';
+import { basename, isAbsolute } from 'path';
 import { URI } from './utilities/uri';
 import { strToHue } from './utilities/colors';
 import { getModuleName, toUnixPath, splitOutsideQuotes } from './utilities/pathUtils';
@@ -63,6 +63,8 @@ export class Flamegraph {
 
     public index: FileIndex; // index of the flamegraph, used for efficient lookup of profile data for a single file
 
+    public profileType: 'py-spy' | 'memray' = 'py-spy';
+
     /**
      * Constructor for the Flamegraph class.
      * @param data - The profile data to be parsed. This should be the raw output of py-spy as a string.
@@ -102,15 +104,24 @@ export class Flamegraph {
         if (this.frameCache.has(frameString)) {
             return this.frameCache.get(frameString)!;
         }
-        // match regex of the form
-        // <functionName> (<filePath>:<lineNumber>)
-        // <functionName> (<filePath>)
-        // <functionName>
-        const frameRegex = /^(.+?)(?:\s+\(([^)]+?)(?::(\d+))?\))?$/;
-        const matches = frameString.match(frameRegex);
 
-        if (!matches) return [undefined, undefined, undefined, undefined];
-        const [, functionName, filePathRaw, lineNumberStr] = matches;
+        let functionName: string | undefined;
+        let filePathRaw: string | undefined;
+        let lineNumberStr: string | undefined;
+
+        if (this.profileType === 'memray') {
+            [functionName, filePathRaw, lineNumberStr] = frameString.split(';');
+        } else {
+            // match regex of the form
+            // <functionName> (<filePath>:<lineNumber>)
+            // <functionName> (<filePath>)
+            // <functionName>
+            const frameRegex = /^(.+?)(?:\s+\(([^)]+?)(?::(\d+))?\))?$/;
+            const matches = frameString.match(frameRegex);
+
+            if (!matches) return [undefined, undefined, undefined, undefined];
+            [, functionName, filePathRaw, lineNumberStr] = matches;
+        }
         if (!functionName) return [undefined, undefined, undefined, undefined];
 
         let cell: number | undefined;
@@ -126,7 +137,9 @@ export class Flamegraph {
             } else {
                 // If the file is not a jupyter notebook, then filePathRaw is the actual file path.
                 // Save it in URI format for consistency.
-                filePath = toUnixPath(URI.file(filePathRaw).toString());
+                filePath = isAbsolute(filePathRaw)
+                    ? toUnixPath(URI.file(filePathRaw).toString())
+                    : toUnixPath(filePathRaw);
             }
         }
 
@@ -194,16 +207,31 @@ export class Flamegraph {
      */
     public parseFlamegraph(flamegraphString: string, filenameToJupyterCell?: NotebookCellMap): void {
         const rows = flamegraphString.trim().split('\n');
+        if (rows.length === 0) return;
+        if (rows[0].includes('allocator,num_allocations,size,tid,thread_name,stack_trace')) {
+            this.profileType = 'memray';
+            rows.shift();
+        } else {
+            this.profileType = 'py-spy';
+        }
 
         for (const row of rows) {
             const lastSpaceIndex = row.lastIndexOf(' ');
             if (lastSpaceIndex === -1) continue;
 
-            const stackTraceStr = row.substring(0, lastSpaceIndex);
-            const samples = parseInt(row.substring(lastSpaceIndex + 1), 10);
+            let stackTrace: string[];
+            let samples: number;
+            if (this.profileType === 'memray') {
+                const elements = row.split(',');
+                samples = parseInt(elements[2], 10);
+                const stackTraceStr = elements[5];
+                stackTrace = splitOutsideQuotes(stackTraceStr, '|').reverse();
+            } else {
+                const stackTraceStr = row.substring(0, lastSpaceIndex);
+                samples = parseInt(row.substring(lastSpaceIndex + 1), 10);
+                stackTrace = splitOutsideQuotes(stackTraceStr, ';');
+            }
             this.root.samples += samples;
-            const stackTrace = splitOutsideQuotes(stackTraceStr, ';');
-            // const stackTrace = stackTraceStr.split(';');
 
             // count the number of occurrences of each string in the stack trace
             const stackTraceCounts = new Map<number, number>();
