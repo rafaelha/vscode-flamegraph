@@ -59,7 +59,7 @@ const updateNodesWithSourceCode = (node: Flamenode, sourceCodeArray?: string[]) 
 };
 
 export default function Home() {
-    const [parsedData, setParsedData] = useState<{ root: Flamenode; functions: Function[] } | null>(null);
+    const [parsedData, setParsedData] = useState<{ root: Flamenode; functions: Function[]; profileType: 'py-spy' | 'memray' } | null>(null);
     const [originalRoot, setOriginalRoot] = useState<Flamenode | null>(null);
     const [sourceCodeVersion, setSourceCodeVersion] = useState(0);
 
@@ -68,17 +68,18 @@ export default function Home() {
             const message = event.data;
 
             if (message.type === 'profile-data') {
-                const { root, functions, sourceCode } = message.data as {
+                const { root, functions, sourceCode, profileType } = message.data as {
                     root: Flamenode;
                     functions: Function[];
                     sourceCode: string[];
+                    profileType: 'py-spy' | 'memray';
                 };
                 const focusUid = message.focusUid as number;
 
                 addParents(root);
                 setOriginalRoot(root);
                 updateNodesWithSourceCode(root, sourceCode);
-                setParsedData({ root: getNodeWithUid(root, focusUid) || root, functions });
+                setParsedData({ root: getNodeWithUid(root, focusUid) || root, functions, profileType });
             } else if (message.type === 'source-code' && originalRoot) {
                 const sourceCodeArray = message.data as string[];
 
@@ -108,6 +109,7 @@ export default function Home() {
                 <FlameGraph
                     root={parsedData.root}
                     functions={parsedData.functions}
+                    profileType={parsedData.profileType}
                     key={`flamegraph-${sourceCodeVersion}`}
                 />
             </div>

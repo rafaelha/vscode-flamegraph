@@ -1,6 +1,7 @@
 import React from 'react';
 import { type LegendItem } from './types';
 import './Flamegraph.css';
+import { toUnitString } from '../utilities/units';
 
 interface LegendProps {
     items: LegendItem[];
@@ -12,6 +13,7 @@ interface LegendProps {
     showSourceCode: boolean;
     onToggleSourceCode: () => void;
     sourceCodeAvailable: boolean;
+    profileType: 'py-spy' | 'memray';
 }
 
 export function Legend({
@@ -24,6 +26,7 @@ export function Legend({
     showSourceCode,
     onToggleSourceCode,
     sourceCodeAvailable,
+    profileType,
 }: LegendProps) {
     if (items.length === 0) return null;
 
@@ -36,13 +39,22 @@ export function Legend({
                             const isHidden = hiddenModules.has(name);
                             const samples = moduleSamples.get(name) || 0;
                             const ownSamples = moduleOwnSamples.get(name) || 0;
+                            let title = '';
+                            const percentageString = ((samples / totalSamples) * 100).toFixed(1) + '%';
+                            const ownPercentageString = ((ownSamples / totalSamples) * 100).toFixed(1) + '%';
+                            if (profileType === 'memray') {
+                                title = `Memory: ${toUnitString(samples, profileType)} (${percentageString}) / Own memory: ${toUnitString(ownSamples, profileType)}${ownSamples > 0 ? ` (${ownPercentageString})` : ''}`;
+                            } else {
+                                title = `Time: ${toUnitString(samples, profileType)} (${percentageString}) / Own time: ${toUnitString(ownSamples, profileType)}${ownSamples > 0 ? ` (${ownPercentageString})` : ''}`;
+                            }
+
                             return (
                                 <div
                                     key={name}
                                     className="flex items-center gap-1.5"
                                     {...(samples > 0 && totalSamples > 0
                                         ? {
-                                              title: `Time: ${samples / 100}s (${((samples / totalSamples) * 100).toFixed(1)}%) / Own time: ${ownSamples / 100}s${ownSamples > 0 ? ` (${((ownSamples / totalSamples) * 100).toFixed(1)}%)` : ''}`,
+                                              title,
                                           }
                                         : {})}
                                 >

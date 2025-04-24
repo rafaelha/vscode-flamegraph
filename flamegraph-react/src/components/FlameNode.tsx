@@ -2,6 +2,7 @@ import React from 'react';
 import { FlameNodeContent } from './FlameNodeContent';
 import { Flamenode, Function } from './types';
 import './FlameNode.css';
+import { toUnitString } from '../utilities/units';
 
 interface FlameNodeProps {
     node: Flamenode;
@@ -19,6 +20,7 @@ interface FlameNodeProps {
     onNodeClick: (node: Flamenode, e: React.MouseEvent) => void;
     onNodeHover: (frameId: number | null, functionId: number | null) => void;
     showSourceCode: boolean;
+    profileType: 'py-spy' | 'memray';
 }
 
 export function FlameNode({
@@ -37,6 +39,7 @@ export function FlameNode({
     onNodeClick,
     onNodeHover,
     showSourceCode,
+    profileType,
 }: FlameNodeProps) {
     const { frameId, functionId, samples, line, sourceCode } = node;
     const functionData = functions[functionId];
@@ -70,7 +73,7 @@ export function FlameNode({
         fgFileName ? `${functionName} (${line ? `${fgFileName}:${line}` : fgFileName})` : functionName,
         sourceCode,
         module,
-        `${samples / 100}s / ${percentageOfTotal}% / ${percentageOfFocus}%`,
+        `${toUnitString(samples, profileType)} / ${percentageOfTotal}% / ${percentageOfFocus}%`,
     ]
         .filter(Boolean)
         .join('\n');

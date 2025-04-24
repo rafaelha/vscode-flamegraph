@@ -10,10 +10,12 @@ export function FlameGraph({
     root,
     functions,
     height = 23,
+    profileType,
 }: {
     root: Flamenode;
     functions: Function[];
     height?: number;
+    profileType: 'py-spy' | 'memray';
 }) {
     // Initialize a map of all modules in the flamegraph to their hues
     const moduleDict = useMemo(() => {
@@ -47,7 +49,7 @@ export function FlameGraph({
     }, [root]);
 
     const [hiddenModules, setHiddenModules] = useState<Set<string>>(() => {
-        return moduleDict.has('<importlib>') ? new Set(['<importlib>']) : new Set();
+        return new Set(['<importlib>', '<runpy>'].filter((m) => moduleDict.has(m)));
     });
     const [showSourceCode, setShowSourceCode] = useState<boolean>(true);
 
@@ -207,6 +209,7 @@ export function FlameGraph({
                     setHoveredFunctionId(functionId);
                 }}
                 showSourceCode={showSourceCode}
+                profileType={profileType}
             />
         );
     }
@@ -315,6 +318,7 @@ export function FlameGraph({
                 showSourceCode={showSourceCode}
                 onToggleSourceCode={() => setShowSourceCode(!showSourceCode)}
                 sourceCodeAvailable={sourceCodeAvailabe}
+                profileType={profileType}
             />
         </div>
     );
