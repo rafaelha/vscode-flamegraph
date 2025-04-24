@@ -37,6 +37,27 @@ function getCurrentTheme(): 'dark' | 'light' {
 }
 
 /**
+ * Converts a number of samples to a unit string.
+ * @param samples - The number of samples.
+ * @param profileType - The type of profile.
+ * @returns The unit string.
+ */
+function toUnitString(samples: number, profileType: 'py-spy' | 'memray'): string {
+    if (profileType === 'memray') {
+        // convert bits to B, MB, GB, TB
+        const units = ['B', 'kB', 'MB', 'GB', 'TB'];
+        let index = 0;
+        let value = samples;
+        while (value >= 1024 && index < units.length - 1) {
+            value /= 1024;
+            index += 1;
+        }
+        return `${value % 1 === 0 ? Math.floor(value) : value.toFixed(1)}${units[index]}`;
+    }
+    return `${samples / SAMPLES_PER_SECOND}s`;
+}
+
+/**
  * Creates an empty line decoration.
  * @remarks Unfortunately, the `before` decorations are only rendered before the range specified in the decoration.
  * This means that we need to create individual decoration for every line, even the empty ones.
@@ -93,7 +114,7 @@ function makeToolTip(nodes: Flamenode[], samples: number, flamegraph: Flamegraph
         const barLength = Math.round((node.ownSamples / samples) * TOOLTIP_BAR_ELEMENTS);
         const bar = '█'.repeat(barLength) + ' '.repeat(TOOLTIP_BAR_ELEMENTS - barLength);
         const callStack = stackToString(callStacks[i]);
-        toolTip += `| ${node.ownSamples / 100}s | ${bar} | ${percentage}% | ${callStack} |\n`;
+        toolTip += `| ${toUnitString(node.ownSamples, flamegraph.profileType)} | ${bar} | ${percentage}% | ${callStack} |\n`;
     }
 
     if (n > MAX_TOOLTIP_ENTRIES) {
@@ -182,7 +203,7 @@ export function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
                     backgroundColor: `hsl(${functionHue}, ${
                         theme === 'dark' ? DARK_THEME_SETTINGS.saturation : LIGHT_THEME_SETTINGS.saturation
                     }, ${theme === 'dark' ? DARK_THEME_SETTINGS.lightness : LIGHT_THEME_SETTINGS.lightness})`,
-                    contentText: samples > 0 ? `${(samples / SAMPLES_PER_SECOND).toFixed(2)}s` : '',
+                    contentText: samples > 0 ? toUnitString(samples, flamegraph.profileType) : '',
                     color: theme === 'dark' ? 'white' : 'black',
                     width: `${width}px`,
                     margin: `0px ${DECORATION_WIDTH - width}px 0px 0px`,
