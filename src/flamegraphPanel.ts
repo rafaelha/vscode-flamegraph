@@ -9,6 +9,7 @@ import {
     workspace,
     Selection,
     TextEditorRevealType,
+    TextDocument,
 } from 'vscode';
 import { getUri } from './utilities/fsUtils';
 import { getNonce } from './utilities/nonceUtils';
@@ -93,7 +94,12 @@ export class FlamegraphPanel {
         if (FlamegraphPanel.currentPanel) {
             FlamegraphPanel.currentPanel._panel.webview.postMessage({
                 type: 'profile-data',
-                data: { root: flamegraph.root, functions: flamegraph.functions, sourceCode: extensionState.sourceCode },
+                data: {
+                    root: flamegraph.root,
+                    functions: flamegraph.functions,
+                    sourceCode: extensionState.sourceCode,
+                    profileType: flamegraph.profileType,
+                },
                 focusUid: extensionState.focusNode,
             });
         }
@@ -184,14 +190,17 @@ export class FlamegraphPanel {
                                 message.file === 'root' && extensionState.profileDocumentUri
                                     ? extensionState.profileDocumentUri
                                     : Uri.parse(message.file);
-                            if (!path.isAbsolute(fileUri.fsPath)) {
+
+                            // Open the first matching file
+                            let document: TextDocument;
+                            try {
+                                document = await workspace.openTextDocument(fileUri);
+                            } catch (error) {
                                 const files = await workspace.findFiles(`**/${message.file}`);
                                 if (files.length === 0) return;
                                 [fileUri] = files;
+                                document = await workspace.openTextDocument(fileUri);
                             }
-
-                            // Open the first matching file
-                            const document = await workspace.openTextDocument(fileUri);
                             const editor = await window.showTextDocument(document, {
                                 viewColumn: ViewColumn.One,
                                 preserveFocus: false,

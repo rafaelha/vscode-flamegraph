@@ -15,7 +15,7 @@ import {
 } from './commands';
 import { updateDecorations } from './render';
 import { extensionState } from './state';
-import { FlamegraphTaskProvider, PROFILE_FILENAME } from './taskProvider';
+import { FlamegraphTaskProvider, MEMRAY_PROFILE_FILENAME, PROFILE_FILENAME } from './taskProvider';
 
 /**
  * Activates the extension.
@@ -33,16 +33,27 @@ export function activate(context: ExtensionContext) {
 
     const profilePath = path.join(workspaceFolder.uri.fsPath, PROFILE_FILENAME);
     const profileUri = vscode.Uri.file(profilePath);
+    const memrayProfilePath = path.join(workspaceFolder.uri.fsPath, MEMRAY_PROFILE_FILENAME);
+    const memrayProfileUri = vscode.Uri.file(memrayProfilePath);
 
     // Setup file watcher
     extensionState.activeProfileWatcher = vscode.workspace.createFileSystemWatcher(
         new vscode.RelativePattern(workspaceFolder, PROFILE_FILENAME)
+    );
+    extensionState.activeMemrayProfileWatcher = vscode.workspace.createFileSystemWatcher(
+        new vscode.RelativePattern(workspaceFolder, MEMRAY_PROFILE_FILENAME)
     );
     extensionState.activeProfileWatcher.onDidCreate(async () =>
         extensionState.handleProfileUpdate(context, profileUri)
     );
     extensionState.activeProfileWatcher.onDidChange(async () =>
         extensionState.handleProfileUpdate(context, profileUri)
+    );
+    extensionState.activeMemrayProfileWatcher.onDidCreate(async () =>
+        extensionState.handleProfileUpdate(context, memrayProfileUri)
+    );
+    extensionState.activeMemrayProfileWatcher.onDidChange(async () =>
+        extensionState.handleProfileUpdate(context, memrayProfileUri)
     );
 
     // Register all commands

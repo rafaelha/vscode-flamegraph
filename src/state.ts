@@ -25,6 +25,8 @@ class ExtensionState {
 
     private _activeProfileWatcher?: vscode.FileSystemWatcher;
 
+    private _activeMemrayProfileWatcher?: vscode.FileSystemWatcher;
+
     private _onUpdateUI: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
 
     private _filenameToJupyterCell: NotebookCellMap = new Map();
@@ -210,6 +212,25 @@ class ExtensionState {
             this._activeProfileWatcher.dispose();
         }
         this._activeProfileWatcher = watcher;
+    }
+
+    /**
+     * Gets the active memray profile watcher. This monitors the profile file produced by memray
+     * @returns The active memray profile watcher or undefined if none exists
+     */
+    get activeMemrayProfileWatcher(): vscode.FileSystemWatcher | undefined {
+        return this._activeMemrayProfileWatcher;
+    }
+
+    /**
+     * Sets the active memray profile watcher. This monitors the profile file produced by memray
+     * @param watcher The new profile watcher or undefined to clear
+     */
+    set activeMemrayProfileWatcher(watcher: vscode.FileSystemWatcher | undefined) {
+        if (this._activeMemrayProfileWatcher) {
+            this._activeMemrayProfileWatcher.dispose();
+        }
+        this._activeMemrayProfileWatcher = watcher;
     }
 
     /**

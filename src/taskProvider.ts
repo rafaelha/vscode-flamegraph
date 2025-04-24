@@ -5,6 +5,7 @@ import { getPythonPath, getPySpyPath } from './utilities/fsUtils';
 import { escapeSpaces } from './utilities/pathUtils';
 
 export const PROFILE_FILENAME = 'profile.pyspy';
+export const MEMRAY_PROFILE_FILENAME = 'profile.memray';
 
 /**
  * Task definition for the flamegraph profiler tasks. This will be used to execute the py-spy command
