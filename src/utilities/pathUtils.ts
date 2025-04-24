@@ -73,6 +73,7 @@ export function getModuleName(filePath: string | undefined): string | undefined 
     // check if the file path is absolute
     if (!filePath) return undefined;
     if (filePath.includes('frozen importlib')) return '<importlib>';
+    if (filePath.includes('frozen runpy')) return '<runpy>';
 
     let fileName = URI.parse(filePath).fsPath;
     if (isAbsolute(fileName)) {
