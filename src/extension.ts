@@ -12,6 +12,7 @@ import {
     runAllPytestsCommand,
     runPytestFileCommand,
     topCommand,
+    runMemrayProfilerCommand,
 } from './commands';
 import { updateDecorations } from './render';
 import { extensionState } from './state';
@@ -61,6 +62,7 @@ export function activate(context: ExtensionContext) {
         loadProfileCommand(context),
         toggleProfileCommand(),
         runProfilerCommand(),
+        runMemrayProfilerCommand(),
         attachProfilerCommand(),
         showFlamegraphCommand(context),
         profileCellCommand(),

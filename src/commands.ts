@@ -5,7 +5,7 @@ import { selectProfileFile, readTextFile, getPidAndCellFilenameMap, verify } fro
 import { FlamegraphPanel } from './flamegraphPanel';
 import { extensionState } from './state';
 import { Flamegraph } from './flamegraph';
-import { createProfileTask } from './taskProvider';
+import { createMemrayProfileTask, createProfileTask } from './taskProvider';
 
 const TASK_TERMINAL_NAME = 'Py-spy profile'; // Name of the terminal launched for the profiling task
 const LINUX_BASED = os.platform() === 'darwin' || os.platform() === 'linux';
@@ -78,6 +78,34 @@ export function runProfilerCommand() {
             file: uri!.fsPath,
             pythonPath,
             profilerPath: pySpyPath,
+        });
+        await vscode.tasks.executeTask(task);
+    });
+}
+
+/**
+ * Runs the profiler on the active file.
+ *
+ * @returns The command registration.
+ */
+export function runMemrayProfilerCommand() {
+    return vscode.commands.registerCommand('flamegraph.runMemrayProfiler', async (fileUri?: vscode.Uri) => {
+        const result = await verify({
+            requireUri: true,
+            requirePython: true,
+            recommendSudo: true,
+            requireSudo: false,
+            requirePid: false,
+            fileUri: fileUri || vscode.window.activeTextEditor?.document.uri,
+        });
+        if (!result) return;
+
+        const { uri, pythonPath, workspaceFolder } = result;
+
+        const task = createMemrayProfileTask(workspaceFolder, {
+            type: 'flamegraph',
+            file: uri!.fsPath,
+            pythonPath,
         });
         await vscode.tasks.executeTask(task);
     });

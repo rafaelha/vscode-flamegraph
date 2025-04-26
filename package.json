@@ -72,6 +72,11 @@
                 "icon": "$(flame)"
             },
             {
+                "command": "flamegraph.runMemrayProfiler",
+                "title": "Flamegraph: Profile file with memray",
+                "icon": "$(flame)"
+            },
+            {
                 "command": "flamegraph.attachProfiler",
                 "title": "Flamegraph: Attach py-spy to running process"
             },
