@@ -53,9 +53,22 @@ export function activate(context: ExtensionContext) {
     extensionState.activeMemrayProfileWatcher.onDidCreate(async () =>
         extensionState.handleProfileUpdate(context, memrayProfileUri)
     );
-    extensionState.activeMemrayProfileWatcher.onDidChange(async () =>
-        extensionState.handleProfileUpdate(context, memrayProfileUri)
-    );
+
+    // Timer-based debouncing to only process the last event
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    extensionState.activeMemrayProfileWatcher.onDidChange(async () => {
+        // Clear any existing timer
+        if (debounceTimer) {
+            clearTimeout(debounceTimer);
+        }
+
+        // Set a new timer that will execute after 500ms of no new events
+        debounceTimer = setTimeout(async () => {
+            await extensionState.handleProfileUpdate(context, memrayProfileUri);
+            debounceTimer = null;
+        }, 500);
+    });
 
     // Register all commands
     context.subscriptions.push(

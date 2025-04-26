@@ -89,7 +89,6 @@ export class Flamegraph {
         this.parseFlamegraph(data, filenameToJupyterCell);
         this.assignEulerTimes(this.root);
         this.buildIndex();
-        // this.addSourceCode();  // TODO: refactor this to use lazy loading and put back in
     }
 
     /**
@@ -216,7 +215,6 @@ export class Flamegraph {
         }
 
         for (const row of rows) {
-
             let stackTrace: string[];
             let samples: number;
             if (this.profileType === 'memray') {
