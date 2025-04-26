@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.12] - 2025-04-26
+## [0.4.0] - 2025-04-26
 ### Added
 - Experimental support for memray profiling. This is currently limited to executing python scripts via the command `Flamegraph: Profile file with memray`.
 - The `Toggle Inline Profile` context menu item is now available in diff editors.
