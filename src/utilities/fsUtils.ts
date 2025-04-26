@@ -648,6 +648,20 @@ export async function verify({
           pid?: string;
       }
 > {
+    if (profilerType === 'memray' && process.platform === 'win32') {
+        vscode.window.showErrorMessage('Memray is not supported on Windows.', 'More info').then((selection) => {
+            if (selection === 'More info') {
+                vscode.commands.executeCommand(
+                    'vscode.open',
+                    vscode.Uri.parse(
+                        'https://bloomberg.github.io/memray/supported_environments.html#supported-operating-systems'
+                    )
+                );
+            }
+        });
+        return false;
+    }
+
     // Step 1: Verify that we have a file URI and that it is pointing to a Python file
     if (requireUri) {
         if (!fileUri) {
