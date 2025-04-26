@@ -81,7 +81,7 @@ export async function getPythonPath(): Promise<string | undefined> {
  * On MacOS or Linux, checks if py-spy is given passwordless sudo access in the sudoers file.
  * Returns true on all other platforms. The user will be prompted to add py-spy to the sudoers file
  * if they don't have passwordless sudo access. The user will be given a link to the setup instructions
- * https://github.com/rafaelha/vscode-flamegraph/blob/main/docs/macos-setup.md
+ * for their platform.
  *
  * @param pySpyPath - The path to py-spy.
  * @param modal - Whether the VS Code error/info message should be modal.
@@ -164,6 +164,109 @@ export async function getPySpyPath(): Promise<string | undefined> {
 }
 
 /**
+ * Generic function to install a Python package using pip.
+ *
+ * @param packageName - The name of the package to install.
+ * @param pythonPath - The path to the Python interpreter.
+ * @returns The path to the installed package or undefined if installation fails.
+ */
+async function installPythonPackage(
+    packageName: string,
+    pythonPath: string,
+    getPackagePath: () => Promise<string | undefined>
+): Promise<string | undefined> {
+    return vscode.window.withProgress(
+        {
+            location: vscode.ProgressLocation.Notification,
+            title: `Installing ${packageName}...`,
+            cancellable: true,
+        },
+        async (progress) => {
+            return new Promise<string | undefined>((resolve) => {
+                const install = spawn(pythonPath, ['-m', 'pip', 'install', packageName]);
+                let errorOutput = '';
+
+                install.stdout.on('data', (data: Buffer) => {
+                    const message = data.toString().trim();
+                    progress.report({ message });
+                });
+
+                install.stderr.on('data', (data: Buffer) => {
+                    const error = data.toString().trim();
+                    errorOutput += error;
+                    progress.report({ message: error });
+                });
+
+                install.on('error', (error) => {
+                    errorOutput += error;
+                    resolve(undefined);
+                });
+
+                install.on('close', async () => {
+                    // check if package was installed successfully
+                    const packagePath = await getPackagePath();
+                    if (packagePath) {
+                        vscode.window.showInformationMessage(`${packageName} installed successfully.`);
+                        resolve(packagePath);
+                    } else {
+                        vscode.window.showErrorMessage(
+                            `Failed to install ${packageName}. Please install it manually with "pip install ${packageName}". ${errorOutput || 'Unknown error'}`
+                        );
+                        resolve(undefined);
+                    }
+                });
+            });
+        }
+    );
+}
+
+/**
+ * Checks if memray is installed in the Python environment.
+ *
+ * @returns The command to run memray or undefined if it is not installed.
+ */
+export async function getMemrayPath(): Promise<string | undefined> {
+    try {
+        const pythonPath = await getPythonPath();
+        if (!pythonPath) return undefined;
+
+        // Check if memray is available as a module
+        await execAsync(`"${pythonPath}" -m memray --version`);
+        return `"${pythonPath}" -m memray`;
+    } catch {
+        return undefined;
+    }
+}
+
+/**
+ * Get the command to run memray. If memray is not found, the user will be guided to install it.
+ *
+ * @returns The command to run memray or undefined if installation is aborted or fails.
+ */
+export async function getOrInstallMemray(): Promise<string | undefined> {
+    const memrayPath = await getMemrayPath();
+    if (memrayPath) return memrayPath;
+
+    const installMemray = await vscode.window.showInformationMessage(
+        'memray is not installed. Would you like to install it?',
+        'Yes',
+        'No'
+    );
+
+    if (installMemray !== 'Yes') return undefined;
+
+    // Get python path from the current environment
+    const pythonPath = await getPythonPath();
+    if (!pythonPath) {
+        vscode.window.showErrorMessage('No Python interpreter found. Please configure a Python interpreter first.');
+        return undefined;
+    }
+
+    // Install memray using the generic installation function
+    return installPythonPackage('memray', pythonPath, getMemrayPath);
+}
+
+/**
  * Get the path to py-spy. If py-spy is not found, the user will be guided to install it.
  * The global python environment will be checked first, then the currently selected virtual environment.
  * For installation py-spy, the global python environment is preferred
@@ -171,7 +274,7 @@ export async function getPySpyPath(): Promise<string | undefined> {
  * @returns The path to py-spy or undefined if installation is aborted or fails.
  */
 export async function getOrInstallPySpy(): Promise<string | undefined> {
-    let pySpyPath = await getPySpyPath();
+    const pySpyPath = await getPySpyPath();
     if (pySpyPath) return pySpyPath;
 
     const installPySpy = await vscode.window.showInformationMessage(
@@ -201,51 +304,8 @@ export async function getOrInstallPySpy(): Promise<string | undefined> {
     }
     if (!pythonPath) return undefined;
 
-    // Install py-spy using the command
-    // `path/to/python -m pip install py-spy`
-    return vscode.window.withProgress(
-        {
-            location: vscode.ProgressLocation.Notification,
-            title: 'Installing py-spy...',
-            cancellable: true,
-        },
-        async (progress) => {
-            return new Promise<string | undefined>((resolve) => {
-                const install = spawn(pythonPath, ['-m', 'pip', 'install', 'py-spy']);
-                let errorOutput = '';
-
-                install.stdout.on('data', (data: Buffer) => {
-                    const message = data.toString().trim();
-                    progress.report({ message });
-                });
-
-                install.stderr.on('data', (data: Buffer) => {
-                    const error = data.toString().trim();
-                    errorOutput += error;
-                    progress.report({ message: error });
-                });
-
-                install.on('error', (error) => {
-                    errorOutput += error;
-                    resolve(undefined);
-                });
-
-                install.on('close', async () => {
-                    // check if py-spy was installed successfully
-                    pySpyPath = await getPySpyPath();
-                    if (pySpyPath) {
-                        vscode.window.showInformationMessage('py-spy installed successfully.');
-                        resolve(pySpyPath);
-                    } else {
-                        vscode.window.showErrorMessage(
-                            `Failed to install py-spy. Please install it manually into your global python environment with "pip install py-spy". ${errorOutput || 'Unknown error'}`
-                        );
-                        resolve(undefined);
-                    }
-                });
-            });
-        }
-    );
+    // Install py-spy using the generic installation function
+    return installPythonPackage('py-spy', pythonPath, getPySpyPath);
 }
 
 /**
@@ -557,6 +617,7 @@ export async function selectPid(): Promise<string | undefined> {
  * @param options.requirePid - Whether to require a process ID (PID).
  * @param options.fileUri - The file URI to verify.
  * @param options.pid - The process ID (PID) to verify.
+ * @param options.profilerType - The type of profiler to use ('py-spy' or 'memray').
  * @returns The requested information or false if verification fails.
  */
 export async function verify({
@@ -626,8 +687,11 @@ export async function verify({
 
     let profilerPath = '';
     if (profilerType === 'memray') {
-        // TODO: Implement memray verification
-        profilerPath = 'memray';
+        const memrayPath = await getOrInstallMemray();
+        if (!memrayPath) {
+            return false;
+        }
+        profilerPath = memrayPath;
     } else {
         // Step 4: Verify that we have py-spy
         const pySpyPath = await getOrInstallPySpy();
