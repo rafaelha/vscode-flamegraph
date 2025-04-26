@@ -216,8 +216,6 @@ export class Flamegraph {
         }
 
         for (const row of rows) {
-            const lastSpaceIndex = row.lastIndexOf(' ');
-            if (lastSpaceIndex === -1) continue;
 
             let stackTrace: string[];
             let samples: number;
@@ -227,6 +225,8 @@ export class Flamegraph {
                 const stackTraceStr = elements[5];
                 stackTrace = splitOutsideQuotes(stackTraceStr, '|').reverse();
             } else {
+                const lastSpaceIndex = row.lastIndexOf(' ');
+                if (lastSpaceIndex === -1) continue;
                 const stackTraceStr = row.substring(0, lastSpaceIndex);
                 samples = parseInt(row.substring(lastSpaceIndex + 1), 10);
                 stackTrace = splitOutsideQuotes(stackTraceStr, ';');
