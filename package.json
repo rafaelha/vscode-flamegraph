@@ -4,7 +4,7 @@
     "description": "Py-spy profiling and flamegraphs in VS Code",
     "icon": "assets/flame.png",
     "license": "Apache-2.0",
-    "version": "0.3.11",
+    "version": "0.4.0",
     "publisher": "rafaelha",
     "homepage": "https://github.com/rafaelha/vscode-flamegraph",
     "repository": {
@@ -104,8 +104,12 @@
                 },
                 "flamegraph.showFlamegraph": {
                     "type": "string",
-                    "enum": ["show", "showAndFocus", "onlyShowCodeAnnotations"],
-                    "default": "show", 
+                    "enum": [
+                        "show",
+                        "showAndFocus",
+                        "onlyShowCodeAnnotations"
+                    ],
+                    "default": "show",
                     "enumDescriptions": [
                         "Display the flamegraph in a new tab after profiling.",
                         "Display and bring the flamegraph tab to focus after profiling.",
