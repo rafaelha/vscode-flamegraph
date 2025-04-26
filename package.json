@@ -222,7 +222,7 @@
                     "group": "Python"
                 },
                 {
-                    "when": "resourceExtname == .pyspy",
+                    "when": "resourceExtname == .pyspy || resourceExtname == .memray",
                     "command": "flamegraph.loadProfile",
                     "group": "Python"
                 }
