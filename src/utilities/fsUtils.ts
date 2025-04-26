@@ -567,6 +567,7 @@ export async function verify({
     requirePid,
     fileUri,
     pid,
+    profilerType = 'py-spy',
 }: {
     requireUri: boolean;
     requirePython: boolean;
@@ -575,6 +576,7 @@ export async function verify({
     requirePid: boolean;
     fileUri?: vscode.Uri;
     pid?: string;
+    profilerType: 'py-spy' | 'memray';
 }): Promise<
     | false
     | {
@@ -622,16 +624,22 @@ export async function verify({
         pythonPath = (await getPythonPath()) || '';
     }
 
-    // Step 4: Verify that we have py-spy
-    const pySpyPath = await getOrInstallPySpy();
-    if (!pySpyPath) {
-        return false;
-    }
-
-    // Step 5: Verify that we have sudo access
-    if (recommendSudo) {
-        const hasSudoAccess = await checkSudoAccess(pySpyPath, requireSudo);
-        if (!hasSudoAccess && requireSudo) return false;
+    let profilerPath = '';
+    if (profilerType === 'memray') {
+        // TODO: Implement memray verification
+        profilerPath = 'memray';
+    } else {
+        // Step 4: Verify that we have py-spy
+        const pySpyPath = await getOrInstallPySpy();
+        if (!pySpyPath) {
+            return false;
+        }
+        // Step 5: Verify that we have sudo access
+        if (recommendSudo) {
+            const hasSudoAccess = await checkSudoAccess(pySpyPath, requireSudo);
+            if (!hasSudoAccess && requireSudo) return false;
+        }
+        profilerPath = pySpyPath;
     }
 
     // Step 6: Verify that we have a PID
@@ -648,7 +656,7 @@ export async function verify({
     return {
         uri: fileUri,
         pythonPath,
-        pySpyPath,
+        pySpyPath: profilerPath,
         workspaceFolder,
         pid,
     };

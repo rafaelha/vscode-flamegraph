@@ -68,6 +68,7 @@ export function runProfilerCommand() {
             requireSudo: false,
             requirePid: false,
             fileUri: fileUri || vscode.window.activeTextEditor?.document.uri,
+            profilerType: 'py-spy',
         });
         if (!result) return;
 
@@ -97,6 +98,7 @@ export function runMemrayProfilerCommand() {
             requireSudo: false,
             requirePid: false,
             fileUri: fileUri || vscode.window.activeTextEditor?.document.uri,
+            profilerType: 'memray',
         });
         if (!result) return;
 
@@ -125,6 +127,7 @@ export function runPytestFileCommand() {
             requireSudo: false,
             requirePid: false,
             fileUri: fileUri || vscode.window.activeTextEditor?.document.uri,
+            profilerType: 'py-spy',
         });
         if (!result) return;
 
@@ -153,6 +156,7 @@ export function runAllPytestsCommand() {
             recommendSudo: true,
             requireSudo: false,
             requirePid: false,
+            profilerType: 'py-spy',
         });
         if (!result) return;
 
@@ -189,6 +193,7 @@ export async function attach(
         requireSudo: requireSudoAccess,
         requirePid: true,
         pid,
+        profilerType: 'py-spy',
     });
     if (!result) return false;
 
@@ -338,6 +343,7 @@ export function topCommand() {
             recommendSudo: LINUX_BASED,
             requireSudo: false,
             requirePid: true,
+            profilerType: 'py-spy',
         });
         if (!result) return false;
 
