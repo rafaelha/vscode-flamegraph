@@ -81,6 +81,28 @@ export interface FlamegraphTaskDefinition extends vscode.TaskDefinition {
     sudo?: boolean;
 }
 
+export interface FlamegraphMemrayTaskDefinition extends vscode.TaskDefinition {
+    /**
+     * The type of the task (should be 'flamegraph')
+     */
+    type: 'flamegraph';
+
+    /**
+     * The mode of the task (should be 'record' or 'top')
+     */
+    mode?: 'run';
+
+    /**
+     * The python file to profile (optional)
+     */
+    file?: string;
+
+    /**
+     * The path to the Python interpreter (optional)
+     */
+    pythonPath?: string;
+}
+
 /**
  * Creates a profiling task based on the task definition
  *
@@ -136,6 +158,57 @@ export function createProfileTask(
         .join(' ');
 
     const argsStr = definition.args ? definition.args.map((arg) => `"${arg}"`).join(' ') : '';
+    command = escapeSpaces(`${pySpyArgs} ${argsStr}`);
+
+    const task = new vscode.Task(
+        definition,
+        workspaceFolder,
+        name,
+        'Flamegraph',
+        new vscode.ShellExecution(command, {
+            executable: os.platform() === 'win32' ? 'powershell.exe' : undefined,
+        }),
+        []
+    );
+
+    if (silent) {
+        task.presentationOptions = {
+            reveal: vscode.TaskRevealKind.Never,
+            panel: vscode.TaskPanelKind.Shared,
+            clear: false,
+        };
+    }
+
+    return task;
+}
+
+export function createMemrayProfileTask(
+    workspaceFolder: vscode.WorkspaceFolder,
+    definition: FlamegraphMemrayTaskDefinition,
+    name: string = 'Flamegraph',
+    silent: boolean = false,
+    pythonPath: string | undefined = undefined
+): vscode.Task {
+    let command = '';
+
+    const ampersand = os.platform() === 'win32' ? '& ' : '';
+    const mode = definition.mode || 'run';
+
+    // python -m memray run --aggregate -f -o temp.bin  my_test/main.py;
+    // python -m memray transform csv temp.bin -o profile.pyspy -f
+
+    const python = definition.pythonPath || pythonPath || `python`;
+    const pySpyArgs = [
+        `${ampersand}"${python}" -m memray ${mode}`,
+        `--aggregate -f -o temp.bin`,
+        definition.file ? `"${definition.file}"` : '',
+        `; ${python} -m memray transform csv temp.bin -o profile.memray -f`,
+        `; rm temp.bin`,
+    ]
+        .filter(Boolean)
+        .join(' ');
+
+    const argsStr = definition.args ? definition.args.map((arg: string) => `"${arg}"`).join(' ') : '';
     command = escapeSpaces(`${pySpyArgs} ${argsStr}`);
 
     const task = new vscode.Task(
