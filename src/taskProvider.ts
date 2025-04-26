@@ -191,7 +191,6 @@ export function createMemrayProfileTask(
 ): vscode.Task {
     let command = '';
 
-    const ampersand = os.platform() === 'win32' ? '& ' : '';
     const mode = definition.mode || 'run';
 
     // python -m memray run --aggregate -f -o temp.bin  my_test/main.py;
@@ -201,13 +200,11 @@ export function createMemrayProfileTask(
     const python = definition.pythonPath || pythonPath || `python`;
     const tempBin = `temp-memray-profile.bin`;
     const pySpyArgs = [
-        `${ampersand}"${python}" -m memray ${mode}`,
+        `${python} -m memray ${mode}`,
         `--aggregate -f -o ${tempBin}`,
         definition.file ? `"${definition.file}"` : '',
-        os.platform() === 'win32'
-            ? `; & "${python}" -m memray transform csv ${tempBin} -o profile.memray -f`
-            : `; ${python} -m memray transform csv ${tempBin} -o profile.memray -f`,
-        os.platform() === 'win32' ? `; Remove-Item ${tempBin} -Force` : `; rm ${tempBin}`,
+        `; ${python} -m memray transform csv ${tempBin} -o profile.memray -f`,
+        `; rm ${tempBin}`,
     ]
         .filter(Boolean)
         .join(' ');
@@ -220,9 +217,7 @@ export function createMemrayProfileTask(
         workspaceFolder,
         name,
         'Flamegraph',
-        new vscode.ShellExecution(command, {
-            executable: os.platform() === 'win32' ? 'powershell.exe' : undefined,
-        }),
+        new vscode.ShellExecution(command),
         []
     );
 
