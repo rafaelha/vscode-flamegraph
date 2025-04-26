@@ -183,6 +183,7 @@ npm run build:webview
 - [x] Performance tests
 - [x] Option to filter the flamegraph by module.
 - [ ] Refactor flamegraph react component. Currently, the whole graph is recomputed on every mouse hover event. We could consider using `speedscope` npm package to render the flamegraph.
-- [ ] Memray memory profiles
+- [x] Memray memory profiles
 - [ ] Select sampling interval
 - [x] Jupyter notebook profiling.
+- [ ] Inverted flamegraphs
