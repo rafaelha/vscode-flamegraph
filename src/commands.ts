@@ -85,35 +85,6 @@ export function runProfilerCommand() {
 }
 
 /**
- * Runs the profiler on the active file.
- *
- * @returns The command registration.
- */
-export function runMemrayProfilerCommand() {
-    return vscode.commands.registerCommand('flamegraph.runMemrayProfiler', async (fileUri?: vscode.Uri) => {
-        const result = await verify({
-            requireUri: true,
-            requirePython: true,
-            recommendSudo: true,
-            requireSudo: false,
-            requirePid: false,
-            fileUri: fileUri || vscode.window.activeTextEditor?.document.uri,
-            profilerType: 'memray',
-        });
-        if (!result) return;
-
-        const { uri, pythonPath, workspaceFolder } = result;
-
-        const task = createMemrayProfileTask(workspaceFolder, {
-            type: 'flamegraph',
-            file: uri!.fsPath,
-            pythonPath,
-        });
-        await vscode.tasks.executeTask(task);
-    });
-}
-
-/**
  * Profiles all pytests in the active file.
  *
  * @returns The command registration.
@@ -358,5 +329,177 @@ export function topCommand() {
         });
         await vscode.tasks.executeTask(task);
         return true;
+    });
+}
+/**
+ * Runs the profiler on the active file.
+ *
+ * @returns The command registration.
+ */
+export function runMemrayProfilerCommand() {
+    return vscode.commands.registerCommand('flamegraph.runMemrayProfiler', async (fileUri?: vscode.Uri) => {
+        const result = await verify({
+            requireUri: true,
+            requirePython: true,
+            recommendSudo: true,
+            requireSudo: false,
+            requirePid: false,
+            fileUri: fileUri || vscode.window.activeTextEditor?.document.uri,
+            profilerType: 'memray',
+        });
+        if (!result) return;
+
+        const { uri, pythonPath, workspaceFolder } = result;
+
+        const task = createMemrayProfileTask(workspaceFolder, {
+            type: 'flamegraph',
+            mode: 'run',
+            file: uri!.fsPath,
+            pythonPath,
+        });
+
+        await vscode.tasks.executeTask(task);
+
+        // Wait for the first task to complete before running the transform task
+        const taskExecution = await vscode.tasks.executeTask(task);
+
+        // Create a promise that resolves when the task completes
+        await new Promise<void>((resolve) => {
+            const disposable = vscode.tasks.onDidEndTaskProcess((e) => {
+                if (e.execution === taskExecution) {
+                    disposable.dispose();
+                    resolve();
+                }
+            });
+        });
+
+        // Now run the transform task after the first task has completed
+        const transformTask = createMemrayProfileTask(workspaceFolder, {
+            type: 'flamegraph',
+            mode: 'transform',
+            file: uri!.fsPath,
+            pythonPath,
+        });
+        await vscode.tasks.executeTask(transformTask);
+    });
+}
+
+async function attachMemoryProfiler(
+    pid?: string,
+    mode: 'attach' | 'detach' = 'attach',
+    silent: boolean = false,
+    waitForKeyPress: boolean = false
+): Promise<boolean> {
+    const result = await verify({
+        requireUri: false,
+        requirePython: false,
+        recommendSudo: false,
+        requireSudo: false,
+        requirePid: true,
+        pid,
+        profilerType: 'memray',
+    });
+    if (!result) return false;
+
+    const { pid: verifiedPid, workspaceFolder } = result;
+
+    const task = createMemrayProfileTask(
+        workspaceFolder,
+        {
+            type: 'flamegraph',
+            mode,
+            pid: verifiedPid,
+            waitForKeyPress,
+        },
+        TASK_TERMINAL_NAME,
+        silent
+    );
+
+    const taskExecution = await vscode.tasks.executeTask(task);
+    if (mode === 'detach') {
+        const dispStatusBarMessage = vscode.window.setStatusBarMessage('Processing profiling results...', 10000);
+
+        await new Promise<void>((resolve) => {
+            const disposable = vscode.tasks.onDidEndTaskProcess((e) => {
+                if (e.execution === taskExecution) {
+                    disposable.dispose();
+                    dispStatusBarMessage.dispose();
+                    resolve();
+                }
+            });
+        });
+    }
+    return true;
+}
+
+async function handleNotebookMemoryProfiling(notebook: vscode.NotebookDocument, executeCommand: () => Promise<void>) {
+    const result = await getPidAndCellFilenameMap(notebook);
+    if (!result) return;
+
+    const { pid, filenameToJupyterCell, uriToCode } = result;
+    extensionState.filenameToJupyterCell = filenameToJupyterCell;
+    extensionState.uriToCode = uriToCode;
+    const success = await attachMemoryProfiler(pid, 'attach', true);
+    if (!success) return;
+
+    // small delay to ensure memrayis running
+    await new Promise((resolve) => {
+        setTimeout(resolve, 500);
+    });
+
+    await executeCommand();
+
+    await attachMemoryProfiler(pid, 'detach', true);
+}
+
+/**
+ * Profiles the currently selected cell in the active notebook.
+ *
+ * @returns The command registration.
+ */
+export function memoryProfileCellCommand() {
+    return vscode.commands.registerCommand('flamegraph.memoryProfileCell', async (cell?: vscode.NotebookCell) => {
+        if (!cell) {
+            // If no cell is provided, use the active notebook editor and select the first cell
+            const notebookEditor = vscode.window.activeNotebookEditor;
+            if (!notebookEditor) {
+                return;
+            }
+            const { selection } = notebookEditor;
+            if (!selection || selection.isEmpty) {
+                return;
+            }
+            cell = notebookEditor.notebook.cellAt(selection.start);
+        }
+        extensionState.profileDocumentUri = cell.document.uri;
+
+        await handleNotebookMemoryProfiling(cell.notebook, async () =>
+            commands.executeCommand(
+                'notebook.cell.execute',
+                { start: cell.index, end: cell.index + 1 },
+                cell.notebook.uri
+            )
+        );
+    });
+}
+export function attachMemoryProfilerCommand() {
+    return vscode.commands.registerCommand('flamegraph.attachMemoryProfiler', async () => {
+        await attachMemoryProfiler(undefined, 'attach', false, true);
+    });
+}
+
+export function memoryProfileNotebookCommand() {
+    return vscode.commands.registerCommand('flamegraph.memoryProfileNotebook', async () => {
+        const notebookEditor = vscode.window.activeNotebookEditor;
+        if (!notebookEditor) {
+            vscode.window.showErrorMessage('No notebook selected for profiling. Please open a notebook and try again.');
+            return;
+        }
+
+        extensionState.profileDocumentUri = vscode.window.activeTextEditor?.document.uri;
+
+        await handleNotebookMemoryProfiling(notebookEditor.notebook, async () =>
+            commands.executeCommand('notebook.execute', notebookEditor.notebook.uri)
+        );
     });
 }

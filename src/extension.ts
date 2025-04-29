@@ -13,6 +13,9 @@ import {
     runPytestFileCommand,
     topCommand,
     runMemrayProfilerCommand,
+    memoryProfileCellCommand,
+    attachMemoryProfilerCommand,
+    memoryProfileNotebookCommand,
 } from './commands';
 import { updateDecorations } from './render';
 import { extensionState } from './state';
@@ -82,7 +85,10 @@ export function activate(context: ExtensionContext) {
         profileNotebookCommand(),
         runAllPytestsCommand(),
         runPytestFileCommand(),
-        topCommand()
+        topCommand(),
+        memoryProfileCellCommand(),
+        attachMemoryProfilerCommand(),
+        memoryProfileNotebookCommand()
     );
 
     // Register task provider

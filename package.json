@@ -77,8 +77,22 @@
                 "icon": "$(flame)"
             },
             {
+                "command": "flamegraph.memoryProfileCell",
+                "title": "Flamegraph: Profile cell with memray",
+                "icon": "$(flame)"
+            },
+            {
+                "command": "flamegraph.memoryProfileNotebook",
+                "title": "Flamegraph: Profile notebook with memray",
+                "icon": "$(flame)"
+            },
+            {
                 "command": "flamegraph.attachProfiler",
                 "title": "Flamegraph: Attach py-spy to running process"
+            },
+            {
+                "command": "flamegraph.attachMemoryProfiler",
+                "title": "Flamegraph: Attach memray to running process"
             },
             {
                 "command": "flamegraph.runAllPytests",
