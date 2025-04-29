@@ -208,16 +208,17 @@ export function createMemrayProfileTask(
     name: string = 'Flamegraph',
     silent: boolean = false
 ): vscode.Task {
+    const config = vscode.workspace.getConfiguration('flamegraph.memray');
     let command = '';
 
+    const sudo = config.get<boolean>('alwaysUseSudo', false) ? 'sudo ' : '';
     const mode = definition.mode || 'run';
-
     const transformBin = definition.mode === 'transform' || definition.mode === 'detach' || definition.waitForKeyPress;
 
     const python = definition.pythonPath;
     const tempBin = `temp-memray-profile.bin`;
     const pySpyArgs = [
-        definition.mode !== 'transform' ? `"${python}" -m memray ${mode}` : '',
+        definition.mode !== 'transform' ? `${sudo}"${python}" -m memray ${mode}` : '',
         definition.mode !== 'detach' && definition.mode !== 'transform' ? `--aggregate -f -o ${tempBin}` : '',
         definition.file ? `"${definition.file}"` : '',
         definition.mode === 'attach' || definition.mode === 'detach' ? `${definition.pid}` : '',

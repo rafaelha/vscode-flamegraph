@@ -179,6 +179,12 @@
                     "default": false,
                     "description": "Always use sudo when running py-spy commands. This is required for some Linux distributions.",
                     "scope": "resource"
+                },
+                "flamegraph.memray.alwaysUseSudo": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Always use sudo when running memray commands. This is required for some Linux distributions.",
+                    "scope": "resource"
                 }
             }
         },
