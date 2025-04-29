@@ -105,7 +105,7 @@ export interface FlamegraphMemrayTaskDefinition extends vscode.TaskDefinition {
     /**
      * The path to the Python interpreter (optional)
      */
-    pythonPath?: string;
+    pythonPath: string;
 
     /**
      * Whether to wait for a key press before detaching the profiler
@@ -206,26 +206,25 @@ export function createMemrayProfileTask(
     workspaceFolder: vscode.WorkspaceFolder,
     definition: FlamegraphMemrayTaskDefinition,
     name: string = 'Flamegraph',
-    silent: boolean = false,
-    pythonPath: string | undefined = undefined
+    silent: boolean = false
 ): vscode.Task {
     let command = '';
 
     const mode = definition.mode || 'run';
 
-    const transformBin = definition.mode === 'transform' || definition.mode === 'detach';
+    const transformBin = definition.mode === 'transform' || definition.mode === 'detach' || definition.waitForKeyPress;
 
-    const python = definition.pythonPath || pythonPath || `python`;
+    const python = definition.pythonPath;
     const tempBin = `temp-memray-profile.bin`;
     const pySpyArgs = [
-        definition.mode !== 'transform' ? `${python} -m memray ${mode}` : '',
+        definition.mode !== 'transform' ? `"${python}" -m memray ${mode}` : '',
         definition.mode !== 'detach' && definition.mode !== 'transform' ? `--aggregate -f -o ${tempBin}` : '',
         definition.file ? `"${definition.file}"` : '',
         definition.mode === 'attach' || definition.mode === 'detach' ? `${definition.pid}` : '',
         definition.waitForKeyPress
-            ? `; echo "Press any key to detach..." && read -n 1; ${python} -m memray detach ${definition.pid}`
+            ? `; echo "Memray attached to process ${definition.pid}. Press <Enter> to detach and show results..." && read -n 1; "${python}" -m memray detach ${definition.pid}`
             : '',
-        transformBin ? `; ${python} -m memray transform csv ${tempBin} -o profile.memray -f; rm ${tempBin}` : '',
+        transformBin ? `; "${python}" -m memray transform csv ${tempBin} -o profile.memray -f; rm ${tempBin}` : '',
     ]
         .filter(Boolean)
         .join(' ');

@@ -350,7 +350,7 @@ export function runMemrayProfilerCommand() {
         if (!result) return;
 
         const { uri, pythonPath, workspaceFolder } = result;
-
+        if (!pythonPath) return;
         const task = createMemrayProfileTask(workspaceFolder, {
             type: 'flamegraph',
             mode: 'run',
@@ -377,7 +377,6 @@ export function runMemrayProfilerCommand() {
         const transformTask = createMemrayProfileTask(workspaceFolder, {
             type: 'flamegraph',
             mode: 'transform',
-            file: uri!.fsPath,
             pythonPath,
         });
         await vscode.tasks.executeTask(transformTask);
@@ -401,7 +400,8 @@ async function attachMemoryProfiler(
     });
     if (!result) return false;
 
-    const { pid: verifiedPid, workspaceFolder } = result;
+    const { pid: verifiedPid, workspaceFolder, pythonPath } = result;
+    if (!pythonPath) return false;
 
     const task = createMemrayProfileTask(
         workspaceFolder,
@@ -410,6 +410,7 @@ async function attachMemoryProfiler(
             mode,
             pid: verifiedPid,
             waitForKeyPress,
+            pythonPath,
         },
         TASK_TERMINAL_NAME,
         silent

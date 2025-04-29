@@ -148,7 +148,7 @@ export async function checkSudoAccess(pySpyPath: string, modal: boolean = true):
 export async function getPySpyPath(): Promise<string | undefined> {
     try {
         await execAsync('py-spy --version');
-        return 'py-spy';
+        return (await execAsync('which py-spy')).stdout.trim();
     } catch {
         try {
             // get python path
