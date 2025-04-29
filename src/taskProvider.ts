@@ -90,7 +90,12 @@ export interface FlamegraphMemrayTaskDefinition extends vscode.TaskDefinition {
     /**
      * The mode of the task (should be 'record' or 'top')
      */
-    mode?: 'run';
+    mode?: 'run' | 'attach' | 'detach' | 'transform';
+
+    /**
+     * The process ID to attach to, should only be provided if file is not provided (optional)
+     */
+    pid?: string;
 
     /**
      * The python file to profile (optional)
@@ -101,6 +106,11 @@ export interface FlamegraphMemrayTaskDefinition extends vscode.TaskDefinition {
      * The path to the Python interpreter (optional)
      */
     pythonPath?: string;
+
+    /**
+     * Whether to wait for a key press before detaching the profiler
+     */
+    waitForKeyPress?: boolean;
 }
 
 /**
@@ -182,6 +192,16 @@ export function createProfileTask(
     return task;
 }
 
+/**
+ * Creates a profiling task for memray
+ *
+ * @param workspaceFolder - The workspace folder to run the task in
+ * @param definition - The task definition
+ * @param name - The name of the task. Defaults to 'Flamegraph'
+ * @param silent - Whether to run the task silently
+ * @param pythonPath - The path to the Python interpreter
+ * @returns The memray profiling task
+ */
 export function createMemrayProfileTask(
     workspaceFolder: vscode.WorkspaceFolder,
     definition: FlamegraphMemrayTaskDefinition,
@@ -193,18 +213,19 @@ export function createMemrayProfileTask(
 
     const mode = definition.mode || 'run';
 
-    // python -m memray run --aggregate -f -o temp.bin  my_test/main.py;
-    // python -m memray transform csv temp.bin -o profile.pyspy -f
-    // rm temp.bin
+    const transformBin = definition.mode === 'transform' || definition.mode === 'detach';
 
     const python = definition.pythonPath || pythonPath || `python`;
     const tempBin = `temp-memray-profile.bin`;
     const pySpyArgs = [
-        `${python} -m memray ${mode}`,
-        `--aggregate -f -o ${tempBin}`,
+        definition.mode !== 'transform' ? `${python} -m memray ${mode}` : '',
+        definition.mode !== 'detach' && definition.mode !== 'transform' ? `--aggregate -f -o ${tempBin}` : '',
         definition.file ? `"${definition.file}"` : '',
-        `; ${python} -m memray transform csv ${tempBin} -o profile.memray -f`,
-        `; rm ${tempBin}`,
+        definition.mode === 'attach' || definition.mode === 'detach' ? `${definition.pid}` : '',
+        definition.waitForKeyPress
+            ? `; echo "Press any key to detach..." && read -n 1; ${python} -m memray detach ${definition.pid}`
+            : '',
+        transformBin ? `; ${python} -m memray transform csv ${tempBin} -o profile.memray -f; rm ${tempBin}` : '',
     ]
         .filter(Boolean)
         .join(' ');
