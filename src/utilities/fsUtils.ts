@@ -653,7 +653,7 @@ export async function verify({
     | {
           uri?: vscode.Uri;
           pythonPath?: string;
-          pySpyPath: string;
+          profilerPath: string;
           workspaceFolder: vscode.WorkspaceFolder;
           pid?: string;
       }
@@ -744,7 +744,7 @@ export async function verify({
     return {
         uri: fileUri,
         pythonPath,
-        pySpyPath: profilerPath,
+        profilerPath: profilerPath,
         workspaceFolder,
         pid,
     };

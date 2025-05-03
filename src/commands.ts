@@ -72,13 +72,13 @@ export function runProfilerCommand() {
         });
         if (!result) return;
 
-        const { uri, pythonPath, pySpyPath, workspaceFolder } = result;
+        const { uri, pythonPath, profilerPath, workspaceFolder } = result;
 
         const task = createProfileTask(workspaceFolder, {
             type: 'flamegraph',
             file: uri!.fsPath,
             pythonPath,
-            profilerPath: pySpyPath,
+            profilerPath,
         });
         await vscode.tasks.executeTask(task);
     });
@@ -102,12 +102,12 @@ export function runPytestFileCommand() {
         });
         if (!result) return;
 
-        const { uri, pythonPath, pySpyPath, workspaceFolder } = result;
+        const { uri, pythonPath, profilerPath, workspaceFolder } = result;
 
         const task = createProfileTask(workspaceFolder, {
             type: 'flamegraph',
             pythonPath,
-            profilerPath: pySpyPath,
+            profilerPath,
             args: ['-m', 'pytest', uri!.fsPath],
         });
         await vscode.tasks.executeTask(task);
@@ -131,12 +131,12 @@ export function runAllPytestsCommand() {
         });
         if (!result) return;
 
-        const { pythonPath, pySpyPath, workspaceFolder } = result;
+        const { pythonPath, profilerPath, workspaceFolder } = result;
 
         const task = createProfileTask(workspaceFolder, {
             type: 'flamegraph',
             pythonPath,
-            profilerPath: pySpyPath,
+            profilerPath,
             args: ['-m', 'pytest'],
         });
         await vscode.tasks.executeTask(task);
@@ -168,13 +168,13 @@ export async function attach(
     });
     if (!result) return false;
 
-    const { pid: verifiedPid, pySpyPath, workspaceFolder } = result;
+    const { pid: verifiedPid, profilerPath, workspaceFolder } = result;
 
     const task = createProfileTask(
         workspaceFolder,
         {
             type: 'flamegraph',
-            profilerPath: pySpyPath,
+            profilerPath,
             pid: verifiedPid,
             sudo: LINUX_BASED,
         },
@@ -318,11 +318,11 @@ export function topCommand() {
         });
         if (!result) return false;
 
-        const { pid: verifiedPid, pySpyPath, workspaceFolder } = result;
+        const { pid: verifiedPid, profilerPath, workspaceFolder } = result;
 
         const task = createProfileTask(workspaceFolder, {
             type: 'flamegraph',
-            profilerPath: pySpyPath,
+            profilerPath,
             pid: verifiedPid,
             mode: 'top',
             sudo: LINUX_BASED,
@@ -349,14 +349,14 @@ export function runMemrayProfilerCommand() {
         });
         if (!result) return;
 
-        const { uri, pythonPath, workspaceFolder, pySpyPath } = result;
+        const { uri, pythonPath, workspaceFolder, profilerPath } = result;
         if (!pythonPath) return;
         const task = createMemrayProfileTask(workspaceFolder, {
             type: 'flamegraph',
             mode: 'run',
             file: uri!.fsPath,
             pythonPath,
-            profilerPath: pySpyPath,
+            profilerPath,
         });
 
         await vscode.tasks.executeTask(task);
@@ -379,7 +379,7 @@ export function runMemrayProfilerCommand() {
             type: 'flamegraph',
             mode: 'transform',
             pythonPath,
-            profilerPath: pySpyPath,
+            profilerPath,
         });
         await vscode.tasks.executeTask(transformTask);
     });
@@ -402,7 +402,7 @@ async function attachMemoryProfiler(
     });
     if (!result) return false;
 
-    const { pid: verifiedPid, workspaceFolder, pythonPath, pySpyPath } = result;
+    const { pid: verifiedPid, workspaceFolder, pythonPath, profilerPath } = result;
     if (!pythonPath) return false;
 
     const task = createMemrayProfileTask(
@@ -413,7 +413,7 @@ async function attachMemoryProfiler(
             pid: verifiedPid,
             waitForKeyPress,
             pythonPath,
-            profilerPath: pySpyPath,
+            profilerPath,
         },
         TASK_TERMINAL_NAME,
         silent
@@ -525,7 +525,7 @@ export function memoryLiveViewCommand() {
         });
         if (!result) return false;
 
-        const { pid: verifiedPid, workspaceFolder, pythonPath, pySpyPath } = result;
+        const { pid: verifiedPid, workspaceFolder, pythonPath, profilerPath } = result;
         if (!pythonPath) return false;
 
         const task = createMemrayProfileTask(workspaceFolder, {
@@ -533,7 +533,7 @@ export function memoryLiveViewCommand() {
             mode: 'attach',
             pid: verifiedPid,
             pythonPath,
-            profilerPath: pySpyPath,
+            profilerPath,
             live: true,
         });
         await vscode.tasks.executeTask(task);
