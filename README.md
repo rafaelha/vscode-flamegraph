@@ -1,9 +1,4 @@
-###  Flamegraph Visualizer for py-spy Profiles in Python and Jupyter
-
-
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/rafaelha.vscode-flamegraph?color=ff4500&style=flat&logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=rafaelha.vscode-flamegraph)
-[![Downloads](https://img.shields.io/visual-studio-marketplace/d/rafaelha.vscode-flamegraph?color=ffff00&style=flat&logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=rafaelha.vscode-flamegraph)
-[![Rating](https://img.shields.io/visual-studio-marketplace/r/rafaelha.vscode-flamegraph?color=ff8c00&style=flat&logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=rafaelha.vscode-flamegraph)
+###  Flamegraph Visualizer for py-spy and memray Profiles in Python and Jupyter
 [![Like this? Leave a ⭐](https://img.shields.io/github/stars/rafaelha/vscode-flamegraph?style=flat&label=Like%20this%3F%20Leave%20a%20%E2%AD%90&color=yellow&logo=github)](https://github.com/rafaelha/vscode-flamegraph)
 
 
@@ -25,6 +20,9 @@ or wait for it to finish.
 The profiling results are then visualized next to your code and as a flamegraph in a new tab.
 
 To hide the inline annotions, right-click anywhere in the editor and select `Flamegraph: Toggle Inline Profile`.
+
+Additionally, on linux, macOS, and WSL,memory profiling is supported with [memray](https://github.com/bloomberg/memray). Here, use the command palette in VS Code (Cmd+Shift+P/Ctrl+Shift+P) to select various commands, e.g. `Flamegraph: Profile file with memray` or `Flamegraph: Profile cell with memray`.
+
 
 
 ## Usage
@@ -58,9 +56,20 @@ Open the Command Palette (Command+Shift+P on Mac and Ctrl+Shift+P on Windows/Lin
 | `Flamegraph: Profile unit tests in file with pytest` | Run and profile the `pytest` command on the active file |
 | `Flamegraph: Show py-spy top` | Displays a top like view of functions consuming CPU using py-spy |
 
+
+For memory profiling with `memray`, use the following commands. Note that memray is [not supported](https://bloomberg.github.io/memray/supported_environments.html#supported-operating-systems) on Windows. Profiling memory is supported in Windows Subsystem for Linux (WSL).
+
+| Command | Description |
+|---------|-------------|
+| `Flamegraph: Profile file with memray` | Profile the active file with memray and display the results |
+| `Flamegraph: Profile cell with memray` | Profile the active cell with memray and display the results |
+| `Flamegraph: Profile notebook with memray` | Profile the entire notebook with memray and display the results |
+| `Flamegraph: Attach memray to running process` | Attach memray to a running process and display the results. The extension will ask for a Process ID (PID) to attach to |
+| `Flamegraph: Attach memray live view to running process` | Attach memray live view to a running process for real-time memory profiling |
+
 ## Using the Command Line
 
-You can run py-spy directly from the command line. The extension will watch for changes to the file `profile.pyspy` in the current workspace and load the profile when it changes.
+You can run py-spy directly from the command line. The extension will watch for changes to the files `profile.pyspy` and `profile.memray` in the current workspace and load the profile when it changes.
 
 To profile a script, use the command:
 ```bash

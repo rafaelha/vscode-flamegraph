@@ -20,10 +20,12 @@
     "keywords": [
         "py-spy",
         "pyspy",
+        "memray",
         "profile",
         "flame graph",
         "profiler",
         "profiling",
+        "memory profiler",
         "python",
         "performance",
         "performance analysis",
