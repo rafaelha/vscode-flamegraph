@@ -229,7 +229,7 @@ export function createMemrayProfileTask(
 
     const record = definition.mode === 'run' || definition.mode === 'attach';
 
-    const sudo = config.get<boolean>('alwaysUseSudo', false) ? 'sudo ' : '';
+    const sudo = definition.sudo || config.get<boolean>('alwaysUseSudo', false) ? 'sudo ' : '';
     const mode = definition.mode || 'run';
     const transformBin = definition.mode === 'transform' || definition.mode === 'detach' || definition.waitForKeyPress;
     const runProfiler = definition.mode !== 'transform';
@@ -245,7 +245,7 @@ export function createMemrayProfileTask(
         definition.file ? `"${definition.file}"` : '',
         definition.mode === 'attach' || definition.mode === 'detach' ? `${definition.pid}` : '',
         definition.waitForKeyPress
-            ? `; echo "Memray attached to process ${definition.pid}. Press <Enter> to detach and show results..." && read -n 1; "${definition.profilerPath} detach ${definition.pid}`
+            ? `; echo "Memray attached to process ${definition.pid}. Press <Enter> to detach and show results..." && read -n 1; "${definition.profilerPath}" detach ${definition.pid}`
             : '',
         transformBin
             ? `; ${sudo}"${definition.profilerPath}" transform csv ${tempBin} -o profile.memray -f ${leaks ? '--leaks' : ''}; rm ${tempBin}`
