@@ -221,6 +221,14 @@ export function createMemrayProfileTask(
     const config = vscode.workspace.getConfiguration('flamegraph.memray');
     let command = '';
 
+    const native = definition.pid ? config.get<boolean>('nativeAttach', false) : config.get<boolean>('native', false);
+    const leaks = config.get<boolean>('showMemoryLeaks', false);
+    // const fork = config.get<boolean>('followFork', false);
+    const fork = false; // TODO: enable follow-fork flag. Currently, memray seems to create one .bin file per process
+    const allocators = config.get<boolean>('tracePythonAllocators', false);
+
+    const record = definition.mode === 'run' || definition.mode === 'attach';
+
     const sudo = config.get<boolean>('alwaysUseSudo', false) ? 'sudo ' : '';
     const mode = definition.mode || 'run';
     const transformBin = definition.mode === 'transform' || definition.mode === 'detach' || definition.waitForKeyPress;
@@ -230,16 +238,17 @@ export function createMemrayProfileTask(
 
     const commandStr = [
         runProfiler ? `${sudo}"${definition.profilerPath}" ${mode}` : '',
-        definition.mode !== 'detach' && definition.mode !== 'transform' && !definition.live
-            ? `--aggregate -f -o ${tempBin}`
-            : '',
+        record && native ? '--native' : '',
+        record && fork ? '--follow-fork' : '',
+        record && allocators ? '--trace-python-allocators' : '',
+        record && !definition.live ? `--aggregate -f -o ${tempBin}` : '',
         definition.file ? `"${definition.file}"` : '',
         definition.mode === 'attach' || definition.mode === 'detach' ? `${definition.pid}` : '',
         definition.waitForKeyPress
             ? `; echo "Memray attached to process ${definition.pid}. Press <Enter> to detach and show results..." && read -n 1; "${definition.profilerPath} detach ${definition.pid}`
             : '',
         transformBin
-            ? `; ${sudo}"${definition.profilerPath}" transform csv ${tempBin} -o profile.memray -f; rm ${tempBin}`
+            ? `; ${sudo}"${definition.profilerPath}" transform csv ${tempBin} -o profile.memray -f ${leaks ? '--leaks' : ''}; rm ${tempBin}`
             : '',
     ]
         .filter(Boolean)

@@ -389,7 +389,8 @@ export function runMemrayProfilerCommand() {
                 pythonPath,
                 profilerPath,
             },
-            MEMORY_TASK_TERMINAL_NAME
+            MEMORY_TASK_TERMINAL_NAME,
+            true
         );
         await vscode.tasks.executeTask(transformTask);
     });

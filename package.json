@@ -189,6 +189,30 @@
                     "default": false,
                     "description": "Always use sudo when running memray commands. This is required for some Linux distributions.",
                     "scope": "resource"
+                },
+                "flamegraph.memray.tracePythonAllocators": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Record allocations made by the pymalloc allocator.",
+                    "scope": "resource"
+                },
+                "flamegraph.memray.native": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Track native (C/C++) stack frames as well as Python frames when profiling as script.",
+                    "scope": "resource"
+                },
+                "flamegraph.memray.nativeAttach": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Track native (C/C++) stack frames as well as Python frames when attaching to a running process.",
+                    "scope": "resource"
+                },
+                "flamegraph.memray.showMemoryLeaks": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Show memory leaks, instead of peak memory usage. Memory leaks are allocations that are not freed until the process exits or the profiler is stopped.",
+                    "scope": "resource"
                 }
             }
         },
