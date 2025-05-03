@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
-import { getPythonPath, getProfilerPath } from './utilities/fsUtils';
+import { getPythonPath, getPyspyPath } from './utilities/fsUtils';
 import { escapeSpaces } from './utilities/pathUtils';
 
 export const PROFILE_FILENAME = 'profile.pyspy';
@@ -103,9 +103,14 @@ export interface FlamegraphMemrayTaskDefinition extends vscode.TaskDefinition {
     file?: string;
 
     /**
-     * The path to the Python interpreter (optional)
+     * The path to the Python interpreter
      */
     pythonPath: string;
+
+    /**
+     * The path to the memray profiler
+     */
+    profilerPath: string;
 
     /**
      * Whether to show a live view of the memray profile
@@ -225,16 +230,18 @@ export function createMemrayProfileTask(
     const tempBin = `temp-memray-profile.bin`;
 
     const commandStr = [
-        runProfiler ? `${sudo}"${python}" -m memray ${mode}` : '',
+        runProfiler ? `${sudo}"${definition.profilerPath}" ${mode}` : '',
         definition.mode !== 'detach' && definition.mode !== 'transform' && !definition.live
             ? `--aggregate -f -o ${tempBin}`
             : '',
         definition.file ? `"${definition.file}"` : '',
         definition.mode === 'attach' || definition.mode === 'detach' ? `${definition.pid}` : '',
         definition.waitForKeyPress
-            ? `; echo "Memray attached to process ${definition.pid}. Press <Enter> to detach and show results..." && read -n 1; "${python}" -m memray detach ${definition.pid}`
+            ? `; echo "Memray attached to process ${definition.pid}. Press <Enter> to detach and show results..." && read -n 1; "${definition.profilerPath} detach ${definition.pid}`
             : '',
-        transformBin ? `; "${python}" -m memray transform csv ${tempBin} -o profile.memray -f; rm ${tempBin}` : '',
+        transformBin
+            ? `; "${definition.profilerPath}" transform csv ${tempBin} -o profile.memray -f; rm ${tempBin}`
+            : '',
     ]
         .filter(Boolean)
         .join(' ')
@@ -284,7 +291,7 @@ export class FlamegraphTaskProvider implements vscode.TaskProvider {
         if (!pythonPath) {
             return [];
         }
-        const profilerPath = await getProfilerPath();
+        const profilerPath = await getPyspyPath();
         if (!profilerPath) {
             return [];
         }
@@ -360,7 +367,7 @@ export class FlamegraphTaskProvider implements vscode.TaskProvider {
             task.name,
             false,
             definition.pythonPath || (await getPythonPath()),
-            definition.profilerPath || (await getProfilerPath())
+            definition.profilerPath || (await getPyspyPath())
         );
     }
 }

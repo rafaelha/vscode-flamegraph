@@ -349,13 +349,14 @@ export function runMemrayProfilerCommand() {
         });
         if (!result) return;
 
-        const { uri, pythonPath, workspaceFolder } = result;
+        const { uri, pythonPath, workspaceFolder, pySpyPath } = result;
         if (!pythonPath) return;
         const task = createMemrayProfileTask(workspaceFolder, {
             type: 'flamegraph',
             mode: 'run',
             file: uri!.fsPath,
             pythonPath,
+            profilerPath: pySpyPath,
         });
 
         await vscode.tasks.executeTask(task);
@@ -378,6 +379,7 @@ export function runMemrayProfilerCommand() {
             type: 'flamegraph',
             mode: 'transform',
             pythonPath,
+            profilerPath: pySpyPath,
         });
         await vscode.tasks.executeTask(transformTask);
     });
@@ -400,7 +402,7 @@ async function attachMemoryProfiler(
     });
     if (!result) return false;
 
-    const { pid: verifiedPid, workspaceFolder, pythonPath } = result;
+    const { pid: verifiedPid, workspaceFolder, pythonPath, pySpyPath } = result;
     if (!pythonPath) return false;
 
     const task = createMemrayProfileTask(
@@ -411,6 +413,7 @@ async function attachMemoryProfiler(
             pid: verifiedPid,
             waitForKeyPress,
             pythonPath,
+            profilerPath: pySpyPath,
         },
         TASK_TERMINAL_NAME,
         silent
@@ -522,7 +525,7 @@ export function memoryLiveViewCommand() {
         });
         if (!result) return false;
 
-        const { pid: verifiedPid, workspaceFolder, pythonPath } = result;
+        const { pid: verifiedPid, workspaceFolder, pythonPath, pySpyPath } = result;
         if (!pythonPath) return false;
 
         const task = createMemrayProfileTask(workspaceFolder, {
@@ -530,6 +533,7 @@ export function memoryLiveViewCommand() {
             mode: 'attach',
             pid: verifiedPid,
             pythonPath,
+            profilerPath: pySpyPath,
             live: true,
         });
         await vscode.tasks.executeTask(task);

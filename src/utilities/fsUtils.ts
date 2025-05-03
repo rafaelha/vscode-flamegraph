@@ -145,21 +145,39 @@ export async function checkSudoAccess(pySpyPath: string, modal: boolean = true):
  *
  * @returns The path to py-spy or undefined if it is not installed.
  */
-export async function getProfilerPath(profilerName: string = 'py-spy'): Promise<string | undefined> {
+export async function getPyspyPath(): Promise<string | undefined> {
     try {
-        await execAsync(`${profilerName} --version`);
-        return (await execAsync(`which ${profilerName}`)).stdout.trim();
+        await execAsync(`py-spy --version`);
+        return (await execAsync(`which py-spy`)).stdout.trim();
     } catch {
         try {
             // get python path
             const pythonPath = await getPythonPath();
             if (!pythonPath) return undefined;
-            const profilerPath = path.join(path.dirname(pythonPath), profilerName);
+            const profilerPath = path.join(path.dirname(pythonPath), 'py-spy');
             await execAsync(`"${profilerPath}" --version`);
             return profilerPath;
         } catch {
             return undefined;
         }
+    }
+}
+
+/**
+ * Checks if memray is installed in the Python environment.
+ *
+ * @returns The command to run memray or undefined if it is not installed.
+ */
+export async function getMemrayPath(): Promise<string | undefined> {
+    try {
+        const pythonPath = await getPythonPath();
+        if (!pythonPath) return undefined;
+
+        const profilerPath = path.join(path.dirname(pythonPath), 'memray');
+        await execAsync(`"${profilerPath}" --version`);
+        return profilerPath;
+    } catch {
+        return undefined;
     }
 }
 
@@ -221,24 +239,6 @@ async function installPythonPackage(
 }
 
 /**
- * Checks if memray is installed in the Python environment.
- *
- * @returns The command to run memray or undefined if it is not installed.
- */
-export async function getMemrayPath(): Promise<string | undefined> {
-    try {
-        const pythonPath = await getPythonPath();
-        if (!pythonPath) return undefined;
-
-        // Check if memray is available as a module
-        await execAsync(`"${pythonPath}" -m memray --version`);
-        return `"${pythonPath}" -m memray`;
-    } catch {
-        return undefined;
-    }
-}
-
-/**
  * Get the command to run memray. If memray is not found, the user will be guided to install it.
  *
  * @returns The command to run memray or undefined if installation is aborted or fails.
@@ -274,7 +274,7 @@ export async function getOrInstallMemray(): Promise<string | undefined> {
  * @returns The path to py-spy or undefined if installation is aborted or fails.
  */
 export async function getOrInstallPySpy(): Promise<string | undefined> {
-    const pySpyPath = await getProfilerPath();
+    const pySpyPath = await getPyspyPath();
     if (pySpyPath) return pySpyPath;
 
     const installPySpy = await vscode.window.showInformationMessage(
@@ -303,7 +303,7 @@ export async function getOrInstallPySpy(): Promise<string | undefined> {
         }
 
         if (pythonPath) {
-            const result = await installPythonPackage('py-spy', pythonPath, getProfilerPath);
+            const result = await installPythonPackage('py-spy', pythonPath, getPyspyPath);
             if (result) {
                 return result;
             }
@@ -315,7 +315,7 @@ export async function getOrInstallPySpy(): Promise<string | undefined> {
     // If we get here, we will try to install py-spy using the python path from the python extension
     pythonPath = await getPythonPath();
     if (!pythonPath) return undefined;
-    return installPythonPackage('py-spy', pythonPath, getProfilerPath);
+    return installPythonPackage('py-spy', pythonPath, getPyspyPath);
 }
 
 /**
