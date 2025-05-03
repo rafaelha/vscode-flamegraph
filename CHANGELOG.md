@@ -13,7 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `Flamegraph: Profile notebook with memray`
   - `Flamegraph: Attach memray to running process`
   - `Flamegraph: Attach memray live view to running process`
-- Added setting `flamegraph.memray.alwaysUseSudo` to always use `sudo` when running memray commands. This is required for some Linux distributions.
+- Memray supports the following settings:
+  - `flamegraph.memray.native`: Track native (C/C++) stack frames as well as Python frames when profiling as script.
+  - `flamegraph.memray.nativeAttach`: Track native (C/C++) stack frames as well as Python frames when attaching to a running process.
+  - `flamegraph.memray.showMemoryLeaks`: Show memory leaks, instead of peak memory usage. Memory leaks are allocations that are not freed until the process exits or the profiler is stopped. By default, memray will show a flamegraph for the point in time where peak memory usage occurs. So, enabling this option will show a flamegraph for the point in time where script execution ends.
+  - `flamegraph.memray.tracePythonAllocators`: Record allocations made by the pymalloc allocator.
+  - `flamegraph.memray.alwaysUseSudo`: Always use `sudo` when running memray commands. This is required for some Linux distributions.
   
 ### Fixed
 - Fixed issue with Python path resolution by enforcing absolute paths. This addresses a problem on Linux systems where sudo's secure path doesn't include the py-spy binary location.
