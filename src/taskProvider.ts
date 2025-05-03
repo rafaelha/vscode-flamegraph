@@ -226,7 +226,6 @@ export function createMemrayProfileTask(
     const transformBin = definition.mode === 'transform' || definition.mode === 'detach' || definition.waitForKeyPress;
     const runProfiler = definition.mode !== 'transform';
 
-    const python = definition.pythonPath;
     const tempBin = `temp-memray-profile.bin`;
 
     const commandStr = [
@@ -240,7 +239,7 @@ export function createMemrayProfileTask(
             ? `; echo "Memray attached to process ${definition.pid}. Press <Enter> to detach and show results..." && read -n 1; "${definition.profilerPath} detach ${definition.pid}`
             : '',
         transformBin
-            ? `; "${definition.profilerPath}" transform csv ${tempBin} -o profile.memray -f; rm ${tempBin}`
+            ? `; ${sudo}"${definition.profilerPath}" transform csv ${tempBin} -o profile.memray -f; rm ${tempBin}`
             : '',
     ]
         .filter(Boolean)

@@ -87,7 +87,11 @@ export async function getPythonPath(): Promise<string | undefined> {
  * @param modal - Whether the VS Code error/info message should be modal.
  * @returns Whether py-spy is installed and has passwordless sudo access.
  */
-export async function checkSudoAccess(pySpyPath: string, modal: boolean = true): Promise<boolean> {
+export async function checkSudoAccess(
+    pySpyPath: string,
+    modal: boolean = true,
+    profilerName: string = 'py-spy'
+): Promise<boolean> {
     // Check for passwordless sudo access to py-spy on macOS
     if (os.platform() === 'darwin' || os.platform() === 'linux') {
         // get user name by running `whoami`
@@ -95,7 +99,7 @@ export async function checkSudoAccess(pySpyPath: string, modal: boolean = true):
         if (pySpyPath === 'py-spy') {
             pySpyPath = (await execAsync('which py-spy')).stdout.trim();
         }
-        const permaLink = `https://www.rafaelha.dev/sudoers?path=${pySpyPath.replace(/ /g, '\\ ')}&os=${os.platform()}&username=${userName.stdout.trim()}`;
+        const permaLink = `https://www.rafaelha.dev/sudoers?path=${pySpyPath.replace(/ /g, '\\ ')}&os=${os.platform()}&username=${userName.stdout.trim()}&profiler=${profilerName}`;
         try {
             // Use -n flag to prevent sudo from asking for a password
             await new Promise((resolve, reject) => {
@@ -111,7 +115,7 @@ export async function checkSudoAccess(pySpyPath: string, modal: boolean = true):
             if (modal) {
                 vscode.window
                     .showErrorMessage(
-                        `Passwordless sudo access is required for py-spy to profile notebooks. Please add py-spy to your sudoers file.`,
+                        `Passwordless sudo access is required for ${profilerName} to profile notebooks. Please add ${profilerName} to your sudoers file.`,
                         { modal },
                         'See instructions'
                     )
@@ -124,7 +128,7 @@ export async function checkSudoAccess(pySpyPath: string, modal: boolean = true):
             }
             vscode.window
                 .showInformationMessage(
-                    `Root access is required to run py-spy. Please enter your password in the terminal. For a better experience, consider adding py-spy to your sudoers file.`,
+                    `Root access is required to run ${profilerName}. Please enter your password in the terminal. For a better experience, consider adding ${profilerName} to your sudoers file.`,
                     { modal },
                     'See instructions'
                 )
@@ -711,20 +715,28 @@ export async function verify({
 
     let profilerPath = '';
     if (profilerType === 'memray') {
+        const config = vscode.workspace.getConfiguration('flamegraph.memray');
+        const sudoSetting = config.get<boolean>('alwaysUseSudo', false);
         const memrayPath = await getOrInstallMemray();
         if (!memrayPath) {
             return false;
         }
+        if (recommendSudo || sudoSetting) {
+            const hasSudoAccess = await checkSudoAccess(memrayPath, requireSudo, 'memray');
+            if (!hasSudoAccess && requireSudo) return false;
+        }
         profilerPath = memrayPath;
     } else {
+        const config = vscode.workspace.getConfiguration('flamegraph.py-spy');
+        const sudoSetting = config.get<boolean>('alwaysUseSudo', false);
         // Step 4: Verify that we have py-spy
         const pySpyPath = await getOrInstallPySpy();
         if (!pySpyPath) {
             return false;
         }
         // Step 5: Verify that we have sudo access
-        if (recommendSudo) {
-            const hasSudoAccess = await checkSudoAccess(pySpyPath, requireSudo);
+        if (recommendSudo || sudoSetting) {
+            const hasSudoAccess = await checkSudoAccess(pySpyPath, requireSudo, 'py-spy');
             if (!hasSudoAccess && requireSudo) return false;
         }
         profilerPath = pySpyPath;
@@ -744,7 +756,7 @@ export async function verify({
     return {
         uri: fileUri,
         pythonPath,
-        profilerPath: profilerPath,
+        profilerPath,
         workspaceFolder,
         pid,
     };

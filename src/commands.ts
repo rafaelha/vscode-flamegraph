@@ -7,8 +7,10 @@ import { extensionState } from './state';
 import { Flamegraph } from './flamegraph';
 import { createMemrayProfileTask, createProfileTask } from './taskProvider';
 
-const TASK_TERMINAL_NAME = 'Py-spy profile'; // Name of the terminal launched for the profiling task
+const TASK_TERMINAL_NAME = 'py-spy profile'; // Name of the terminal launched for the profiling task
+const MEMORY_TASK_TERMINAL_NAME = 'memray profile';
 const LINUX_BASED = os.platform() === 'darwin' || os.platform() === 'linux';
+const IS_LINUX = os.platform() === 'linux';
 
 /**
  * Loads a profile from a file specified by the user.
@@ -341,7 +343,7 @@ export function runMemrayProfilerCommand() {
         const result = await verify({
             requireUri: true,
             requirePython: true,
-            recommendSudo: true,
+            recommendSudo: false,
             requireSudo: false,
             requirePid: false,
             fileUri: fileUri || vscode.window.activeTextEditor?.document.uri,
@@ -351,13 +353,17 @@ export function runMemrayProfilerCommand() {
 
         const { uri, pythonPath, workspaceFolder, profilerPath } = result;
         if (!pythonPath) return;
-        const task = createMemrayProfileTask(workspaceFolder, {
-            type: 'flamegraph',
-            mode: 'run',
-            file: uri!.fsPath,
-            pythonPath,
-            profilerPath,
-        });
+        const task = createMemrayProfileTask(
+            workspaceFolder,
+            {
+                type: 'flamegraph',
+                mode: 'run',
+                file: uri!.fsPath,
+                pythonPath,
+                profilerPath,
+            },
+            MEMORY_TASK_TERMINAL_NAME
+        );
 
         await vscode.tasks.executeTask(task);
 
@@ -375,12 +381,16 @@ export function runMemrayProfilerCommand() {
         });
 
         // Now run the transform task after the first task has completed
-        const transformTask = createMemrayProfileTask(workspaceFolder, {
-            type: 'flamegraph',
-            mode: 'transform',
-            pythonPath,
-            profilerPath,
-        });
+        const transformTask = createMemrayProfileTask(
+            workspaceFolder,
+            {
+                type: 'flamegraph',
+                mode: 'transform',
+                pythonPath,
+                profilerPath,
+            },
+            MEMORY_TASK_TERMINAL_NAME
+        );
         await vscode.tasks.executeTask(transformTask);
     });
 }
@@ -394,8 +404,8 @@ async function attachMemoryProfiler(
     const result = await verify({
         requireUri: false,
         requirePython: false,
-        recommendSudo: false,
-        requireSudo: false,
+        recommendSudo: IS_LINUX,
+        requireSudo: IS_LINUX && silent,
         requirePid: true,
         pid,
         profilerType: 'memray',
@@ -414,8 +424,9 @@ async function attachMemoryProfiler(
             waitForKeyPress,
             pythonPath,
             profilerPath,
+            sudo: IS_LINUX,
         },
-        TASK_TERMINAL_NAME,
+        MEMORY_TASK_TERMINAL_NAME,
         silent
     );
 
@@ -518,7 +529,7 @@ export function memoryLiveViewCommand() {
         const result = await verify({
             requireUri: false,
             requirePython: false,
-            recommendSudo: false,
+            recommendSudo: IS_LINUX,
             requireSudo: false,
             requirePid: true,
             profilerType: 'memray',
@@ -528,14 +539,20 @@ export function memoryLiveViewCommand() {
         const { pid: verifiedPid, workspaceFolder, pythonPath, profilerPath } = result;
         if (!pythonPath) return false;
 
-        const task = createMemrayProfileTask(workspaceFolder, {
-            type: 'flamegraph',
-            mode: 'attach',
-            pid: verifiedPid,
-            pythonPath,
-            profilerPath,
-            live: true,
-        });
+        const task = createMemrayProfileTask(
+            workspaceFolder,
+            {
+                type: 'flamegraph',
+                mode: 'attach',
+                pid: verifiedPid,
+                pythonPath,
+                profilerPath,
+                live: true,
+                sudo: IS_LINUX,
+            },
+            MEMORY_TASK_TERMINAL_NAME,
+            false
+        );
         await vscode.tasks.executeTask(task);
         return true;
     });
