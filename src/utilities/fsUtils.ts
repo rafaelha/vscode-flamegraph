@@ -145,18 +145,18 @@ export async function checkSudoAccess(pySpyPath: string, modal: boolean = true):
  *
  * @returns The path to py-spy or undefined if it is not installed.
  */
-export async function getPySpyPath(): Promise<string | undefined> {
+export async function getProfilerPath(profilerName: string = 'py-spy'): Promise<string | undefined> {
     try {
-        await execAsync('py-spy --version');
-        return (await execAsync('which py-spy')).stdout.trim();
+        await execAsync(`${profilerName} --version`);
+        return (await execAsync(`which ${profilerName}`)).stdout.trim();
     } catch {
         try {
             // get python path
             const pythonPath = await getPythonPath();
             if (!pythonPath) return undefined;
-            const pySpyPath = path.join(path.dirname(pythonPath), 'py-spy');
-            await execAsync(`"${pySpyPath}" --version`);
-            return pySpyPath;
+            const profilerPath = path.join(path.dirname(pythonPath), profilerName);
+            await execAsync(`"${profilerPath}" --version`);
+            return profilerPath;
         } catch {
             return undefined;
         }
@@ -274,7 +274,7 @@ export async function getOrInstallMemray(): Promise<string | undefined> {
  * @returns The path to py-spy or undefined if installation is aborted or fails.
  */
 export async function getOrInstallPySpy(): Promise<string | undefined> {
-    const pySpyPath = await getPySpyPath();
+    const pySpyPath = await getProfilerPath();
     if (pySpyPath) return pySpyPath;
 
     const installPySpy = await vscode.window.showInformationMessage(
@@ -285,27 +285,37 @@ export async function getOrInstallPySpy(): Promise<string | undefined> {
 
     if (installPySpy !== 'Yes') return undefined;
 
-    // Try to get the global python path
     let pythonPath: string | undefined;
-    try {
-        // Check specifically for pip availability
-        await execAsync('python3 -m pip --version'); // this should work for linux and macos
-        pythonPath = 'python3';
-    } catch {
+    if (os.platform() !== 'linux') {
+        // Try to get the global python path
         try {
-            // Fix typo in pip check and ensure pip is available
-            await execAsync('python -m pip --version'); // this should work for windows
-            pythonPath = 'python';
+            // Check specifically for pip availability
+            await execAsync('python3 -m pip --version'); // this should work for macos
+            pythonPath = 'python3';
         } catch {
-            // If the above approaches fail, try to get the python path from the python extension
-            // This may be a virtual environment
-            pythonPath = await getPythonPath();
+            try {
+                // Fix typo in pip check and ensure pip is available
+                await execAsync('python -m pip --version'); // this should work for windows
+                pythonPath = 'python';
+            } catch {
+                // if both approaches fail, we will use the python path from the python extension below
+            }
+        }
+
+        if (pythonPath) {
+            const result = await installPythonPackage('py-spy', pythonPath, getProfilerPath);
+            if (result) {
+                return result;
+            }
+            // if the installation fails, we will try to install it using the selected python interpreter path
+            // Global installation is preferred since py-spy will be available across all environments.
+            // It is also convenient for MacOS users who only have to add the global py-spy to their sudoers file.
         }
     }
+    // If we get here, we will try to install py-spy using the python path from the python extension
+    pythonPath = await getPythonPath();
     if (!pythonPath) return undefined;
-
-    // Install py-spy using the generic installation function
-    return installPythonPackage('py-spy', pythonPath, getPySpyPath);
+    return installPythonPackage('py-spy', pythonPath, getProfilerPath);
 }
 
 /**

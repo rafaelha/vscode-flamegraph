@@ -105,6 +105,10 @@
             {
                 "command": "flamegraph.top",
                 "title": "Flamegraph: Show py-spy top"
+            },
+            {
+                "command": "flamegraph.memoryLive",
+                "title": "Flamegraph: Attach memray live view to running process"
             }
         ],
         "configuration": {

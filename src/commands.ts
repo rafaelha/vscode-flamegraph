@@ -504,3 +504,35 @@ export function memoryProfileNotebookCommand() {
         );
     });
 }
+
+/**
+ * Attaches memray to a pid and show a live view in the task terminal.
+ *
+ * @returns The command registration.
+ */
+export function memoryLiveViewCommand() {
+    return vscode.commands.registerCommand('flamegraph.memoryLive', async () => {
+        const result = await verify({
+            requireUri: false,
+            requirePython: false,
+            recommendSudo: false,
+            requireSudo: false,
+            requirePid: true,
+            profilerType: 'memray',
+        });
+        if (!result) return false;
+
+        const { pid: verifiedPid, workspaceFolder, pythonPath } = result;
+        if (!pythonPath) return false;
+
+        const task = createMemrayProfileTask(workspaceFolder, {
+            type: 'flamegraph',
+            mode: 'attach',
+            pid: verifiedPid,
+            pythonPath,
+            live: true,
+        });
+        await vscode.tasks.executeTask(task);
+        return true;
+    });
+}

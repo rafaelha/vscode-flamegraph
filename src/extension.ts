@@ -16,6 +16,7 @@ import {
     memoryProfileCellCommand,
     attachMemoryProfilerCommand,
     memoryProfileNotebookCommand,
+    memoryLiveViewCommand,
 } from './commands';
 import { updateDecorations } from './render';
 import { extensionState } from './state';
@@ -88,7 +89,8 @@ export function activate(context: ExtensionContext) {
         topCommand(),
         memoryProfileCellCommand(),
         attachMemoryProfilerCommand(),
-        memoryProfileNotebookCommand()
+        memoryProfileNotebookCommand(),
+        memoryLiveViewCommand()
     );
 
     // Register task provider

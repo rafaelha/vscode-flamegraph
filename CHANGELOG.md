@@ -12,10 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `Flamegraph: Profile cell with memray`
   - `Flamegraph: Profile notebook with memray`
   - `Flamegraph: Attach memray to running process`
+  - `Flamegraph: Attach memray live view to running process`
 - Added setting `flamegraph.memray.alwaysUseSudo` to always use `sudo` when running memray commands. This is required for some Linux distributions.
   
 ### Fixed
 - Fixed issue with Python path resolution by enforcing absolute paths. This addresses a problem on Linux systems where sudo's secure path doesn't include the py-spy binary location.
+- Fixed an issue where py-spy was installed into the global python environment on Linux, where this is not permitted.
 
 ## [0.4.0] - 2025-04-26
 ### Added

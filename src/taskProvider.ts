@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
-import { getPythonPath, getPySpyPath } from './utilities/fsUtils';
+import { getPythonPath, getProfilerPath } from './utilities/fsUtils';
 import { escapeSpaces } from './utilities/pathUtils';
 
 export const PROFILE_FILENAME = 'profile.pyspy';
@@ -106,6 +106,11 @@ export interface FlamegraphMemrayTaskDefinition extends vscode.TaskDefinition {
      * The path to the Python interpreter (optional)
      */
     pythonPath: string;
+
+    /**
+     * Whether to show a live view of the memray profile
+     */
+    live?: boolean;
 
     /**
      * Whether to wait for a key press before detaching the profiler
@@ -214,12 +219,16 @@ export function createMemrayProfileTask(
     const sudo = config.get<boolean>('alwaysUseSudo', false) ? 'sudo ' : '';
     const mode = definition.mode || 'run';
     const transformBin = definition.mode === 'transform' || definition.mode === 'detach' || definition.waitForKeyPress;
+    const runProfiler = definition.mode !== 'transform';
 
     const python = definition.pythonPath;
     const tempBin = `temp-memray-profile.bin`;
-    const pySpyArgs = [
-        definition.mode !== 'transform' ? `${sudo}"${python}" -m memray ${mode}` : '',
-        definition.mode !== 'detach' && definition.mode !== 'transform' ? `--aggregate -f -o ${tempBin}` : '',
+
+    const commandStr = [
+        runProfiler ? `${sudo}"${python}" -m memray ${mode}` : '',
+        definition.mode !== 'detach' && definition.mode !== 'transform' && !definition.live
+            ? `--aggregate -f -o ${tempBin}`
+            : '',
         definition.file ? `"${definition.file}"` : '',
         definition.mode === 'attach' || definition.mode === 'detach' ? `${definition.pid}` : '',
         definition.waitForKeyPress
@@ -228,10 +237,11 @@ export function createMemrayProfileTask(
         transformBin ? `; "${python}" -m memray transform csv ${tempBin} -o profile.memray -f; rm ${tempBin}` : '',
     ]
         .filter(Boolean)
-        .join(' ');
+        .join(' ')
+        .replace(/^[\s;]+/, '') // remove leading spaces/semicolons
+        .replace(/\s+/g, ' '); // normalize multiple spaces to single spaces
 
-    const argsStr = definition.args ? definition.args.map((arg: string) => `"${arg}"`).join(' ') : '';
-    command = escapeSpaces(`${pySpyArgs} ${argsStr}`);
+    command = escapeSpaces(commandStr);
 
     const task = new vscode.Task(
         definition,
@@ -274,7 +284,7 @@ export class FlamegraphTaskProvider implements vscode.TaskProvider {
         if (!pythonPath) {
             return [];
         }
-        const profilerPath = await getPySpyPath();
+        const profilerPath = await getProfilerPath();
         if (!profilerPath) {
             return [];
         }
@@ -350,7 +360,7 @@ export class FlamegraphTaskProvider implements vscode.TaskProvider {
             task.name,
             false,
             definition.pythonPath || (await getPythonPath()),
-            definition.profilerPath || (await getPySpyPath())
+            definition.profilerPath || (await getProfilerPath())
         );
     }
 }
