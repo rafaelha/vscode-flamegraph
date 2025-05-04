@@ -1,4 +1,4 @@
-###  Flamegraph Visualizer for py-spy and memray Profiles in Python and Jupyter
+###  Flamegraphs for py-spy and memray profiles in Python and Jupyter
 [![Like this? Leave a ⭐](https://img.shields.io/github/stars/rafaelha/vscode-flamegraph?style=flat&label=Like%20this%3F%20Leave%20a%20%E2%AD%90&color=yellow&logo=github)](https://github.com/rafaelha/vscode-flamegraph)
 
 
@@ -21,7 +21,7 @@ The profiling results are then visualized next to your code and as a flamegraph 
 
 To hide the inline annotions, right-click anywhere in the editor and select `Flamegraph: Toggle Inline Profile`.
 
-Additionally, on linux, macOS, and WSL,memory profiling is supported with [memray](https://github.com/bloomberg/memray). Here, use the command palette in VS Code (Cmd+Shift+P/Ctrl+Shift+P) to select various commands, e.g. `Flamegraph: Profile file with memray` or `Flamegraph: Profile cell with memray`.
+Additionally, on linux, macOS, and WSL, memory profiling is supported with [memray](https://github.com/bloomberg/memray). Use the command palette in VS Code (Cmd+Shift+P/Ctrl+Shift+P) to select , e.g., `Flamegraph: Profile file with memray` or `Flamegraph: Profile cell with memray` in Jupyter notebooks.
 
 
 
