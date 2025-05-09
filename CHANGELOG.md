@@ -2,8 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## [unreleased]
+### Fixed
+- Resolved an issue with profiling command generation on Linux platforms without `sudo` installed. This issue previously blocked notebook profiling functionality in certain Docker container environments.
+
+### Changed
+- The `Flamegraph: Profile file with py-spy` and `Flamegraph: Profile notebook with memray` commands now also work with Jupyter notebooks.
 
 ## [0.5.0] - 2025-05-03
 ### Added
