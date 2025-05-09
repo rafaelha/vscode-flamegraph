@@ -78,6 +78,23 @@ export async function getPythonPath(): Promise<string | undefined> {
 }
 
 /**
+ * Checks if sudo is installed.
+ * @returns Whether sudo is installed.
+ */
+async function checkSudoInstalled(): Promise<boolean> {
+    // Use -n flag to prevent sudo from asking for a password
+    return new Promise((resolve) => {
+        exec(`sudo -n --version`, (error: any) => {
+            if (error) {
+                resolve(false);
+            } else {
+                resolve(true);
+            }
+        });
+    });
+}
+
+/**
  * On MacOS or Linux, checks if py-spy is given passwordless sudo access in the sudoers file.
  * Returns true on all other platforms. The user will be prompted to add py-spy to the sudoers file
  * if they don't have passwordless sudo access. The user will be given a link to the setup instructions
@@ -626,19 +643,19 @@ export async function selectPid(): Promise<string | undefined> {
  * @param options - The options to verify.
  * @param options.requireUri - Whether to require a file URI.
  * @param options.requirePython - Whether to require a Python interpreter.
- * @param options.recommendSudo - Whether to recommend sudo access.
- * @param options.requireSudo - Whether to require sudo access.
+ * @param options.useSudo - Whether to use sudo access.
+ * @param options.ensurePasswordlessSudo - Whether to ensure passwordless sudo access.
  * @param options.requirePid - Whether to require a process ID (PID).
  * @param options.fileUri - The file URI to verify.
  * @param options.pid - The process ID (PID) to verify.
  * @param options.profilerType - The type of profiler to use ('py-spy' or 'memray').
- * @returns The requested information or false if verification fails.
+ * @returns A promise that resolves to the requested information or false if verification fails.
  */
 export async function verify({
     requireUri,
     requirePython,
-    recommendSudo,
-    requireSudo,
+    useSudo,
+    ensurePasswordlessSudo,
     requirePid,
     fileUri,
     pid,
@@ -646,8 +663,8 @@ export async function verify({
 }: {
     requireUri: boolean;
     requirePython: boolean;
-    recommendSudo: boolean;
-    requireSudo: boolean;
+    useSudo: boolean;
+    ensurePasswordlessSudo: boolean;
     requirePid: boolean;
     fileUri?: vscode.Uri;
     pid?: string;
@@ -660,6 +677,7 @@ export async function verify({
           profilerPath: string;
           workspaceFolder: vscode.WorkspaceFolder;
           pid?: string;
+          useSudo: boolean;
       }
 > {
     if (profilerType === 'memray' && process.platform === 'win32') {
@@ -713,33 +731,33 @@ export async function verify({
         pythonPath = (await getPythonPath()) || '';
     }
 
-    let profilerPath = '';
-    if (profilerType === 'memray') {
-        const config = vscode.workspace.getConfiguration('flamegraph.memray');
-        const sudoSetting = config.get<boolean>('alwaysUseSudo', false);
-        const memrayPath = await getOrInstallMemray();
-        if (!memrayPath) {
-            return false;
+    // Step 4: Verify that we have a profiler
+    const profilerPath = profilerType === 'memray' ? await getOrInstallMemray() : await getOrInstallPySpy();
+    if (!profilerPath) {
+        return false;
+    }
+
+    // Step 5: Verify that we have sudo access
+    const sudoInstalled = await checkSudoInstalled();
+    let verifiedUseSudo = false;
+    if (sudoInstalled) {
+        if (profilerType === 'memray') {
+            const config = vscode.workspace.getConfiguration('flamegraph.memray');
+            const sudoSetting = config.get<boolean>('alwaysUseSudo', false);
+            verifiedUseSudo = sudoSetting || useSudo;
+            if (verifiedUseSudo) {
+                const hasSudoAccess = await checkSudoAccess(profilerPath, ensurePasswordlessSudo, 'memray');
+                if (!hasSudoAccess && ensurePasswordlessSudo) return false;
+            }
+        } else {
+            const config = vscode.workspace.getConfiguration('flamegraph.py-spy');
+            const sudoSetting = config.get<boolean>('alwaysUseSudo', false);
+            verifiedUseSudo = sudoSetting || useSudo;
+            if (verifiedUseSudo) {
+                const hasSudoAccess = await checkSudoAccess(profilerPath, ensurePasswordlessSudo, 'py-spy');
+                if (!hasSudoAccess && ensurePasswordlessSudo) return false;
+            }
         }
-        if (recommendSudo || sudoSetting) {
-            const hasSudoAccess = await checkSudoAccess(memrayPath, requireSudo, 'memray');
-            if (!hasSudoAccess && requireSudo) return false;
-        }
-        profilerPath = memrayPath;
-    } else {
-        const config = vscode.workspace.getConfiguration('flamegraph.py-spy');
-        const sudoSetting = config.get<boolean>('alwaysUseSudo', false);
-        // Step 4: Verify that we have py-spy
-        const pySpyPath = await getOrInstallPySpy();
-        if (!pySpyPath) {
-            return false;
-        }
-        // Step 5: Verify that we have sudo access
-        if (recommendSudo || sudoSetting) {
-            const hasSudoAccess = await checkSudoAccess(pySpyPath, requireSudo, 'py-spy');
-            if (!hasSudoAccess && requireSudo) return false;
-        }
-        profilerPath = pySpyPath;
     }
 
     // Step 6: Verify that we have a PID
@@ -750,6 +768,7 @@ export async function verify({
         if (!pid) return false;
     }
 
+    // Track the profile document URI. This is used when the user clicks the "all" entry
     extensionState.profileDocumentUri = fileUri;
 
     // If all checks pass, return the requested information
@@ -759,5 +778,6 @@ export async function verify({
         profilerPath,
         workspaceFolder,
         pid,
+        useSudo: verifiedUseSudo,
     };
 }

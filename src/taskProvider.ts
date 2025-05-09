@@ -145,8 +145,7 @@ export function createProfileTask(
     const config = vscode.workspace.getConfiguration('flamegraph.py-spy');
     let command = '';
 
-    const sudo =
-        definition.sudo || os.platform() === 'darwin' || config.get<boolean>('alwaysUseSudo', false) ? 'sudo ' : '';
+    const sudo = definition.sudo ? 'sudo ' : '';
     const ampersand = os.platform() === 'win32' ? '& ' : '';
     const mode = definition.mode || 'record';
 
@@ -229,7 +228,7 @@ export function createMemrayProfileTask(
 
     const record = definition.mode === 'run' || definition.mode === 'attach';
 
-    const sudo = definition.sudo || config.get<boolean>('alwaysUseSudo', false) ? 'sudo ' : '';
+    const sudo = definition.sudo ? 'sudo ' : '';
     const mode = definition.mode || 'run';
     const transformBin = definition.mode === 'transform' || definition.mode === 'detach' || definition.waitForKeyPress;
     const runProfiler = definition.mode !== 'transform';

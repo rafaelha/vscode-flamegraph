@@ -11,6 +11,7 @@ const TASK_TERMINAL_NAME = 'py-spy profile'; // Name of the terminal launched fo
 const MEMORY_TASK_TERMINAL_NAME = 'memray profile';
 const LINUX_BASED = os.platform() === 'darwin' || os.platform() === 'linux';
 const IS_LINUX = os.platform() === 'linux';
+const IS_MACOS = os.platform() === 'darwin';
 
 /**
  * Loads a profile from a file specified by the user.
@@ -66,21 +67,22 @@ export function runProfilerCommand() {
         const result = await verify({
             requireUri: true,
             requirePython: true,
-            recommendSudo: true,
-            requireSudo: false,
+            useSudo: IS_MACOS,
+            ensurePasswordlessSudo: false,
             requirePid: false,
             fileUri: fileUri || vscode.window.activeTextEditor?.document.uri,
             profilerType: 'py-spy',
         });
         if (!result) return;
 
-        const { uri, pythonPath, profilerPath, workspaceFolder } = result;
+        const { uri, pythonPath, profilerPath, workspaceFolder, useSudo } = result;
 
         const task = createProfileTask(workspaceFolder, {
             type: 'flamegraph',
             file: uri!.fsPath,
             pythonPath,
             profilerPath,
+            sudo: useSudo,
         });
         await vscode.tasks.executeTask(task);
     });
@@ -96,20 +98,21 @@ export function runPytestFileCommand() {
         const result = await verify({
             requireUri: true,
             requirePython: true,
-            recommendSudo: true,
-            requireSudo: false,
+            useSudo: IS_MACOS,
+            ensurePasswordlessSudo: false,
             requirePid: false,
             fileUri: fileUri || vscode.window.activeTextEditor?.document.uri,
             profilerType: 'py-spy',
         });
         if (!result) return;
 
-        const { uri, pythonPath, profilerPath, workspaceFolder } = result;
+        const { uri, pythonPath, profilerPath, workspaceFolder, useSudo } = result;
 
         const task = createProfileTask(workspaceFolder, {
             type: 'flamegraph',
             pythonPath,
             profilerPath,
+            sudo: useSudo,
             args: ['-m', 'pytest', uri!.fsPath],
         });
         await vscode.tasks.executeTask(task);
@@ -126,19 +129,20 @@ export function runAllPytestsCommand() {
         const result = await verify({
             requireUri: false,
             requirePython: true,
-            recommendSudo: true,
-            requireSudo: false,
+            useSudo: IS_MACOS,
+            ensurePasswordlessSudo: false,
             requirePid: false,
             profilerType: 'py-spy',
         });
         if (!result) return;
 
-        const { pythonPath, profilerPath, workspaceFolder } = result;
+        const { pythonPath, profilerPath, workspaceFolder, useSudo } = result;
 
         const task = createProfileTask(workspaceFolder, {
             type: 'flamegraph',
             pythonPath,
             profilerPath,
+            sudo: useSudo,
             args: ['-m', 'pytest'],
         });
         await vscode.tasks.executeTask(task);
@@ -162,15 +166,15 @@ export async function attach(
     const result = await verify({
         requireUri: false,
         requirePython: false,
-        recommendSudo: LINUX_BASED,
-        requireSudo: requireSudoAccess,
+        useSudo: LINUX_BASED,
+        ensurePasswordlessSudo: requireSudoAccess,
         requirePid: true,
         pid,
         profilerType: 'py-spy',
     });
     if (!result) return false;
 
-    const { pid: verifiedPid, profilerPath, workspaceFolder } = result;
+    const { pid: verifiedPid, profilerPath, workspaceFolder, useSudo } = result;
 
     const task = createProfileTask(
         workspaceFolder,
@@ -178,7 +182,7 @@ export async function attach(
             type: 'flamegraph',
             profilerPath,
             pid: verifiedPid,
-            sudo: LINUX_BASED,
+            sudo: useSudo,
         },
         TASK_TERMINAL_NAME,
         silent
@@ -313,21 +317,21 @@ export function topCommand() {
         const result = await verify({
             requireUri: false,
             requirePython: false,
-            recommendSudo: LINUX_BASED,
-            requireSudo: false,
+            useSudo: LINUX_BASED,
+            ensurePasswordlessSudo: false,
             requirePid: true,
             profilerType: 'py-spy',
         });
         if (!result) return false;
 
-        const { pid: verifiedPid, profilerPath, workspaceFolder } = result;
+        const { pid: verifiedPid, profilerPath, workspaceFolder, useSudo } = result;
 
         const task = createProfileTask(workspaceFolder, {
             type: 'flamegraph',
             profilerPath,
             pid: verifiedPid,
             mode: 'top',
-            sudo: LINUX_BASED,
+            sudo: useSudo,
         });
         await vscode.tasks.executeTask(task);
         return true;
@@ -343,15 +347,15 @@ export function runMemrayProfilerCommand() {
         const result = await verify({
             requireUri: true,
             requirePython: true,
-            recommendSudo: false,
-            requireSudo: false,
+            useSudo: false,
+            ensurePasswordlessSudo: false,
             requirePid: false,
             fileUri: fileUri || vscode.window.activeTextEditor?.document.uri,
             profilerType: 'memray',
         });
         if (!result) return;
 
-        const { uri, pythonPath, workspaceFolder, profilerPath } = result;
+        const { uri, pythonPath, workspaceFolder, profilerPath, useSudo } = result;
         if (!pythonPath) return;
         const task = createMemrayProfileTask(
             workspaceFolder,
@@ -361,6 +365,7 @@ export function runMemrayProfilerCommand() {
                 file: uri!.fsPath,
                 pythonPath,
                 profilerPath,
+                sudo: useSudo,
             },
             MEMORY_TASK_TERMINAL_NAME
         );
@@ -405,15 +410,15 @@ async function attachMemoryProfiler(
     const result = await verify({
         requireUri: false,
         requirePython: false,
-        recommendSudo: IS_LINUX,
-        requireSudo: IS_LINUX && silent,
+        useSudo: IS_LINUX,
+        ensurePasswordlessSudo: IS_LINUX && silent,
         requirePid: true,
         pid,
         profilerType: 'memray',
     });
     if (!result) return false;
 
-    const { pid: verifiedPid, workspaceFolder, pythonPath, profilerPath } = result;
+    const { pid: verifiedPid, workspaceFolder, pythonPath, profilerPath, useSudo } = result;
     if (!pythonPath) return false;
 
     const task = createMemrayProfileTask(
@@ -425,7 +430,7 @@ async function attachMemoryProfiler(
             waitForKeyPress,
             pythonPath,
             profilerPath,
-            sudo: IS_LINUX,
+            sudo: useSudo,
         },
         MEMORY_TASK_TERMINAL_NAME,
         silent
@@ -530,14 +535,14 @@ export function memoryLiveViewCommand() {
         const result = await verify({
             requireUri: false,
             requirePython: false,
-            recommendSudo: IS_LINUX,
-            requireSudo: false,
+            useSudo: IS_LINUX,
+            ensurePasswordlessSudo: false,
             requirePid: true,
             profilerType: 'memray',
         });
         if (!result) return false;
 
-        const { pid: verifiedPid, workspaceFolder, pythonPath, profilerPath } = result;
+        const { pid: verifiedPid, workspaceFolder, pythonPath, profilerPath, useSudo } = result;
         if (!pythonPath) return false;
 
         const task = createMemrayProfileTask(
@@ -549,7 +554,7 @@ export function memoryLiveViewCommand() {
                 pythonPath,
                 profilerPath,
                 live: true,
-                sudo: IS_LINUX,
+                sudo: useSudo,
             },
             MEMORY_TASK_TERMINAL_NAME,
             false
