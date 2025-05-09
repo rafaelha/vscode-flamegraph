@@ -82,9 +82,8 @@ export async function getPythonPath(): Promise<string | undefined> {
  * @returns Whether sudo is installed.
  */
 async function checkSudoInstalled(): Promise<boolean> {
-    // Use -n flag to prevent sudo from asking for a password
     return new Promise((resolve) => {
-        exec(`sudo -n --version`, (error: any) => {
+        exec(`sudo --version`, (error: any) => {
             if (error) {
                 resolve(false);
             } else {
