@@ -64,6 +64,14 @@ export function toggleProfileCommand() {
  */
 export function runProfilerCommand() {
     return vscode.commands.registerCommand('flamegraph.runProfiler', async (fileUri?: vscode.Uri) => {
+        // Check if we're in a notebook
+        const notebookEditor = vscode.window.activeNotebookEditor;
+        if (notebookEditor) {
+            // If we're in a notebook, use the notebook profiling command
+            await vscode.commands.executeCommand('flamegraph.profileNotebook');
+            return;
+        }
+
         const result = await verify({
             requireUri: true,
             requirePython: true,
@@ -344,6 +352,14 @@ export function topCommand() {
  */
 export function runMemrayProfilerCommand() {
     return vscode.commands.registerCommand('flamegraph.runMemrayProfiler', async (fileUri?: vscode.Uri) => {
+        // Check if we're in a notebook
+        const notebookEditor = vscode.window.activeNotebookEditor;
+        if (notebookEditor) {
+            // If we're in a notebook, use the notebook profiling command
+            await vscode.commands.executeCommand('flamegraph.memoryProfileNotebook');
+            return;
+        }
+
         const result = await verify({
             requireUri: true,
             requirePython: true,
