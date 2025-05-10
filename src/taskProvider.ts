@@ -303,6 +303,8 @@ export class FlamegraphTaskProvider implements vscode.TaskProvider {
             return [];
         }
 
+        const sudo = os.platform() === 'darwin';
+
         const tasks = [];
 
         // Get active editor to suggest profiling the current file
@@ -321,6 +323,7 @@ export class FlamegraphTaskProvider implements vscode.TaskProvider {
                         subprocesses: true,
                         pythonPath,
                         profilerPath,
+                        sudo,
                     },
                     `Profile ${fileName}`
                 )
@@ -334,6 +337,7 @@ export class FlamegraphTaskProvider implements vscode.TaskProvider {
                         args: ['-m', 'pytest', `${filePath}`],
                         pythonPath,
                         profilerPath,
+                        sudo,
                     },
                     `Profile pytests in ${fileName}`
                 )
@@ -342,7 +346,7 @@ export class FlamegraphTaskProvider implements vscode.TaskProvider {
         tasks.push(
             createProfileTask(
                 workspaceFolder,
-                { type: 'flamegraph', args: ['-m', 'pytest'], pythonPath, profilerPath },
+                { type: 'flamegraph', args: ['-m', 'pytest'], pythonPath, profilerPath, sudo },
                 `Profile all pytests`
             )
         );
