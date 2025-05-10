@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 - Resolved an issue with profiling command generation on Linux platforms without `sudo` installed. This issue previously blocked notebook profiling functionality in certain Docker container environments.
 
+### Added
+- Added a `"sudo"` argument to the VS Code flamegraph task definition.
+
 ### Changed
 - The `Flamegraph: Profile file with py-spy` and `Flamegraph: Profile notebook with memray` commands now also work with Jupyter notebooks.
 
