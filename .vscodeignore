@@ -32,6 +32,7 @@ assets/screenshot*
 format.md
 jest.config.js
 *.zip
+.env.local
 
 src/performance/*
 out/performance/*
