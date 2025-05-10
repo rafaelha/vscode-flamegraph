@@ -1,7 +1,7 @@
 {
     "name": "vscode-flamegraph",
     "displayName": "Flamegraph",
-    "description": "Py-spy profiling and flamegraphs in VS Code",
+    "description": "Py-spy and Memray Profiling in VS Code",
     "icon": "assets/flame.png",
     "license": "Apache-2.0",
     "version": "0.5.0",
@@ -18,12 +18,12 @@
         "vscode": "^1.95.0"
     },
     "keywords": [
+        "profiler",
         "py-spy",
         "pyspy",
         "memray",
-        "profile",
         "flame graph",
-        "profiler",
+        "profile",
         "profiling",
         "memory profiler",
         "python",
@@ -263,6 +263,11 @@
                     "profilerPath": {
                         "type": "string",
                         "description": "The path to py-spy. If not provided, either the global py-spy installation will be used or the py-spy found in the currently active environment."
+                    },
+                    "sudo": {
+                        "type": "boolean",
+                        "description": "Whether to use sudo when running the profiler. This is required for macOS and some Linux distributions.",
+                        "default": false
                     }
                 },
                 "when": "shellExecutionSupported"
