@@ -1,4 +1,4 @@
-###  `py-spy` and `memray` integration for VS Code
+###  py-spy and memray integration for VS Code
 [![Like this? Leave a ⭐](https://img.shields.io/github/stars/rafaelha/vscode-flamegraph?style=flat&label=Like%20this%3F%20Leave%20a%20%E2%AD%90&color=yellow&logo=github)](https://github.com/rafaelha/vscode-flamegraph)
 
 
@@ -15,11 +15,11 @@ For Python scripts, select `Flamegraph: Profile file with py-spy` from the dropd
 
 ![Profile python script](https://github.com/rafaelha/vscode-flamegraph/blob/a0f7c296fa3d9fa55fba485436ed31573d02c86f/assets/screenshot-python.png?raw=true)
 
-Your code will be profiled with [py-spy](https://github.com/benfred/py-spy). You can interrupt the profiling anytime via `Ctrl+C`.  The profiling results are visualized next to your code and as a flamegraph in a new tab.
+Your code will be profiled with [py-spy](https://github.com/benfred/py-spy). You can interrupt the profiling anytime with `Ctrl+C`. The profiling results are visualized next to your code and as a flamegraph in a new tab.
 
-To hide the inline annotions, right-click anywhere in the editor and select `Flamegraph: Toggle Inline Profile`.
+To hide the inline annotations, right-click anywhere in the editor and select `Flamegraph: Toggle Inline Profile`.
 
-Additionally, on linux, macOS, and WSL, basic memory profiling is supported with [memray](https://github.com/bloomberg/memray). Use the command palette in VS Code (Cmd+Shift+P/Ctrl+Shift+P) to select `Flamegraph: Profile file with memray` or `Flamegraph: Profile cell with memray` in Jupyter notebooks. This will show memory allocations for the time snapshot where heap memory usage reached its maximum.
+Additionally, on Linux, macOS, and within WSL or Docker containers, basic memory profiling is supported with [memray](https://github.com/bloomberg/memray). Use the command palette in VS Code (Cmd+Shift+P/Ctrl+Shift+P) to select `Flamegraph: Profile file with memray` or `Flamegraph: Profile cell with memray`. This will show memory allocations for the time snapshot where heap memory usage reached its maximum.
 
 ![Profile python script with memray](https://github.com/rafaelha/vscode-flamegraph/blob/d65a08926137a2e7b8a01cd120f61482cc5c423d/assets/screenshot-memray.png?raw=true)
 
@@ -34,7 +34,7 @@ The extension visualizes profiling data in two ways:
    - Click parent elements to zoom out
    - `Cmd+Click` (Mac) or `Ctrl+Click` (Windows/Linux) to jump into the code.
    - Click legend elements to filter the flamegraph by module.
-   - Click the `</>` button in the legend to toggle between code or function view.
+   - Click the `</>` button in the legend to toggle between code or function display.
 
 The flamegraph and inline annotations are linked -
 when you select an element in the flamegraph, the corresponding inline annotations are filtered.
