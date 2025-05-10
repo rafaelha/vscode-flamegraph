@@ -1,4 +1,4 @@
-###  Flamegraphs for py-spy and memray profiles in Python and Jupyter
+###  `py-spy` and `memray` integration for VS Code
 [![Like this? Leave a ⭐](https://img.shields.io/github/stars/rafaelha/vscode-flamegraph?style=flat&label=Like%20this%3F%20Leave%20a%20%E2%AD%90&color=yellow&logo=github)](https://github.com/rafaelha/vscode-flamegraph)
 
 
@@ -15,26 +15,26 @@ For Python scripts, select `Flamegraph: Profile file with py-spy` from the dropd
 
 ![Profile python script](https://github.com/rafaelha/vscode-flamegraph/blob/a0f7c296fa3d9fa55fba485436ed31573d02c86f/assets/screenshot-python.png?raw=true)
 
-Your code will be profiled with [py-spy](https://github.com/benfred/py-spy). You can interrupt the profiling anytime via `Ctrl+C`
-or wait for it to finish.
-The profiling results are then visualized next to your code and as a flamegraph in a new tab.
+Your code will be profiled with [py-spy](https://github.com/benfred/py-spy). You can interrupt the profiling anytime via `Ctrl+C`.  The profiling results are visualized next to your code and as a flamegraph in a new tab.
 
 To hide the inline annotions, right-click anywhere in the editor and select `Flamegraph: Toggle Inline Profile`.
 
-Additionally, on linux, macOS, and WSL, memory profiling is supported with [memray](https://github.com/bloomberg/memray). Use the command palette in VS Code (Cmd+Shift+P/Ctrl+Shift+P) to select , e.g., `Flamegraph: Profile file with memray` or `Flamegraph: Profile cell with memray` in Jupyter notebooks.
+Additionally, on linux, macOS, and WSL, basic memory profiling is supported with [memray](https://github.com/bloomberg/memray). Use the command palette in VS Code (Cmd+Shift+P/Ctrl+Shift+P) to select `Flamegraph: Profile file with memray` or `Flamegraph: Profile cell with memray` in Jupyter notebooks. This will show memory allocations for the time snapshot where heap memory usage reached its maximum.
 
-
+![Profile python script with memray](https://github.com/rafaelha/vscode-flamegraph/blob/d65a08926137a2e7b8a01cd120f61482cc5c423d/assets/screenshot-memray.png?raw=true)
 
 ## Usage
 
 The extension visualizes profiling data in two ways:
 
-1. **Inline Code Annotations**: Shows timing information for each function scope, with colors indicating the scope level.
+1. **Inline Code Annotations**: Shows timing or memory information for each function scope, with colors indicating the scope level.
 
 2. **Interactive Flamegraph**: Displays the complete call stack of your profiled code (see [this article](https://www.brendangregg.com/flamegraphs.html) about flamegraphs). You can:
    - Click any element to zoom in
    - Click parent elements to zoom out
-   - `Cmd+Click` (Mac) or `Ctrl+Click` (Windows/Linux) any element to jump directly to that code.
+   - `Cmd+Click` (Mac) or `Ctrl+Click` (Windows/Linux) to jump into the code.
+   - Click legend elements to filter the flamegraph by module.
+   - Click the `</>` button in the legend to toggle between code or function view.
 
 The flamegraph and inline annotations are linked -
 when you select an element in the flamegraph, the corresponding inline annotations are filtered.
@@ -48,16 +48,16 @@ Open the Command Palette (Command+Shift+P on Mac and Ctrl+Shift+P on Windows/Lin
 | Command | Description |
 |---------|-------------|
 | `Flamegraph: Profile file with py-spy` | Profile the active file with py-spy and display the results |
-| `Flamegraph: Load Profile` | Load a profile from a py-spy file. You may also right-click on `.pyspy` files in the file explorer and select `Flamegraph: Load Profile`. |
 | `Flamegraph: Toggle Inline Profile` | Show or hide the inline annotations. This is also accessible via right-click on the editor. |
 | `Flamegraph: Show` | Open a new tab showing the flamegraph |
 | `Flamegraph: Attach py-spy to running process` | Attach py-spy to a running process and display the results. The extension will ask for a Process ID (PID) to attach to |
 | `Flamegraph: Profile all unit tests with pytest` | Run and profile the `pytest` command |
 | `Flamegraph: Profile unit tests in file with pytest` | Run and profile the `pytest` command on the active file |
 | `Flamegraph: Show py-spy top` | Displays a top like view of functions consuming CPU using py-spy |
+| `Flamegraph: Load Profile` | Load a profile from a file. You may also right-click on `.pyspy` or `.memray` files in the file explorer and select `Flamegraph: Load Profile`. |
 
 
-For memory profiling with `memray`, use the following commands. Note that memray is [not supported](https://bloomberg.github.io/memray/supported_environments.html#supported-operating-systems) on Windows. Profiling memory is supported in Windows Subsystem for Linux (WSL).
+For memory profiling with `memray`, use the following commands. Note that memray is [not supported](https://bloomberg.github.io/memray/supported_environments.html#supported-operating-systems) on Windows. On Windows, you can still use the extension within Windows Subsystem for Linux (WSL) or [Docker containers](https://bloomberg.github.io/memray/attach.html#debugger-privileges).
 
 | Command | Description |
 |---------|-------------|
@@ -90,7 +90,7 @@ The extension allows you to run the py-spy profiler from VS Code's task system. 
 
 ### Creating a tasks.json File
 
-You can also create a `tasks.json` file in your `.vscode` folder to customize the tasks. For example, the task
+You can also create a `tasks.json` file in your `.vscode` folder to customize the tasks. This is currently only supported for py-spy profiling. For example, the task
 
 
 
