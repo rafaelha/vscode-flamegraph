@@ -32,7 +32,7 @@ export function FlameGraph({
         return modules;
     }, [root, functions]);
 
-    const sourceCodeAvailabe = useMemo(() => {
+    const sourceCodeAvailable = useMemo(() => {
         // traverse all nodes from the root and check if the source code is available
         function traverse(node: Flamenode) {
             if (node.sourceCode) {
@@ -317,7 +317,7 @@ export function FlameGraph({
                 totalSamples={totalSamples}
                 showSourceCode={showSourceCode}
                 onToggleSourceCode={() => setShowSourceCode(!showSourceCode)}
-                sourceCodeAvailable={sourceCodeAvailabe}
+                sourceCodeAvailable={sourceCodeAvailable}
                 profileType={profileType}
             />
         </div>
