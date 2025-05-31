@@ -57,8 +57,8 @@ export function FlameGraph({
 
     const filteredRoot = React.useMemo(() => {
         const moduleFiltered = filterTreeByModule(hiddenModules, root, functions);
-        return filterBySearchTerm(moduleFiltered, searchTerm, functions, false, false);
-    }, [hiddenModules, root, functions, searchTerm]);
+        return showFiltered ? filterBySearchTerm(moduleFiltered, searchTerm, functions, false, false) : moduleFiltered;
+    }, [hiddenModules, root, functions, searchTerm, showFiltered]);
 
     const { moduleSamples, moduleOwnSamples, totalSamples } = useMemo(() => {
         return getModuleInfo(filteredRoot, functions);
