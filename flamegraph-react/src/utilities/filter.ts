@@ -82,6 +82,83 @@ export function filterTreeByModule(hiddenModules: Set<string>, root: Flamenode, 
     return rootCopy;
 }
 
+/**
+ * Checks if the string matches the search term.
+ * @param str - The string to check.
+ * @param searchTerm - The search term to check.
+ * @param caseSensitive - Whether the search term should be case sensitive.
+ * @param regex - Whether the search term should be a regular expression.
+ * @returns True if the string matches the search term, false otherwise.
+ */
+function isMatch(str: string, searchTerm: string, caseSensitive: boolean, regex: boolean) {
+    if (regex) {
+        try {
+            return new RegExp(searchTerm, caseSensitive ? 'g' : 'gi').test(str);
+        } catch (e) {}
+    }
+    return caseSensitive ? str.includes(searchTerm) : str.toLowerCase().includes(searchTerm.toLowerCase());
+}
+
+/**
+ * Filters the tree by search term. Nodes that do not include the search term will be removed and their children are appended to their parents.
+ * @param node - The root node of the tree.
+ * @param searchTerm - The search term to filter by.
+ * @param functions - The function list referenced by nodes in the tree.
+ * @param caseSensitive - Whether the search term should be case sensitive.
+ * @param regex - Whether the search term should be a regular expression.
+ * @returns The root node of the filtered tree.
+ */
+export function filterBySearchTerm(
+    node: Flamenode,
+    searchTerm: string,
+    functions: Function[],
+    caseSensitive: boolean,
+    regex: boolean
+) {
+    if (searchTerm === '') {
+        return node;
+    }
+
+    function includesSearchTerm(node: Flamenode, searchTerm: string, functions: Function[]) {
+        const functionData = functions[node.functionId];
+        const str = functionData?.functionName + functionData?.module + functionData?.filePath;
+
+        if (isMatch(str, searchTerm, caseSensitive, regex)) {
+            return true;
+        }
+
+        const results = [];
+        for (const child of node.children) {
+            results.push(includesSearchTerm(child, searchTerm, functions));
+        }
+        const anyIncludesSearchTerm = node.children.some((child) => includesSearchTerm(child, searchTerm, functions));
+        if (anyIncludesSearchTerm) {
+            // loop through all pairs of results and children (zip)
+            const newChildren = [];
+            for (let i = 0; i < results.length; i++) {
+                const result = results[i];
+                const child = node.children[i];
+                if (result) {
+                    newChildren.push(child);
+                }
+            }
+            node.children = newChildren;
+        }
+        node.samples = node.children.reduce((acc, child) => acc + child.samples, 0);
+        node.ownSamples = node.children.reduce((acc, child) => acc + child.ownSamples, 0);
+        return anyIncludesSearchTerm;
+    }
+
+    console.log('searchTerm', searchTerm);
+    const rootCopy: Flamenode = { ...node };
+    const result = includesSearchTerm(rootCopy, searchTerm, functions);
+    if (!result) {
+        // return the root node without any children
+        return { ...node, children: [] };
+    }
+    return rootCopy;
+}
+
 export function getModuleInfo(
     node: Flamenode,
     functions: Function[],

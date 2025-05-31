@@ -16,6 +16,8 @@ interface LegendProps {
     onToggleFiltered: () => void;
     sourceCodeAvailable: boolean;
     profileType: 'py-spy' | 'memray';
+    searchTerm: string;
+    onSearchTermChange: (searchTerm: string) => void;
 }
 
 export function Legend({
@@ -31,6 +33,8 @@ export function Legend({
     onToggleFiltered,
     sourceCodeAvailable,
     profileType,
+    searchTerm,
+    onSearchTermChange,
 }: LegendProps) {
     const legendRef = useRef<HTMLDivElement>(null);
     const controlsRef = useRef<HTMLDivElement>(null);
@@ -157,6 +161,8 @@ export function Legend({
                                     type="text"
                                     placeholder="Filter"
                                     className="bg-transparent text-white text-xs placeholder-white/60 focus:outline-none w-24"
+                                    value={searchTerm}
+                                    onChange={(e) => onSearchTermChange(e.target.value)}
                                 />
                                 <div className="h-4 w-px bg-white/30"></div>
                             </>

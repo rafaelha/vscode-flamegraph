@@ -4,7 +4,7 @@ import { vscode } from '../utilities/vscode';
 import { Legend } from './Legend';
 import { Flamenode, Function } from './types';
 import { FlameNode } from './FlameNode';
-import { filterTreeByModule, getModuleInfo } from '../utilities/filter';
+import { filterTreeByModule, getModuleInfo, filterBySearchTerm } from '../utilities/filter';
 
 export function FlameGraph({
     root,
@@ -53,11 +53,12 @@ export function FlameGraph({
     });
     const [showSourceCode, setShowSourceCode] = useState<boolean>(true);
     const [showFiltered, setShowFiltered] = useState<boolean>(true);
+    const [searchTerm, setSearchTerm] = useState<string>('');
 
-    const filteredRoot = React.useMemo(
-        () => filterTreeByModule(hiddenModules, root, functions),
-        [hiddenModules, root, functions]
-    );
+    const filteredRoot = React.useMemo(() => {
+        const moduleFiltered = filterTreeByModule(hiddenModules, root, functions);
+        return filterBySearchTerm(moduleFiltered, searchTerm, functions, false, false);
+    }, [hiddenModules, root, functions, searchTerm]);
 
     const { moduleSamples, moduleOwnSamples, totalSamples } = useMemo(() => {
         return getModuleInfo(filteredRoot, functions);
@@ -322,6 +323,8 @@ export function FlameGraph({
                 onToggleFiltered={() => setShowFiltered(!showFiltered)}
                 sourceCodeAvailable={sourceCodeAvailable}
                 profileType={profileType}
+                searchTerm={searchTerm}
+                onSearchTermChange={setSearchTerm}
             />
         </div>
     );
