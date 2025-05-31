@@ -171,6 +171,20 @@ export function filterBySearchTerm(
     return rootCopy;
 }
 
+export function getModuleDict(root: Flamenode, functions: Function[]): Map<string, { hue: number }> {
+    const modules = new Map<string, { hue: number }>();
+    function collectModules(node: Flamenode) {
+        const functionData = functions[node.functionId];
+        const module = functionData?.module;
+        if (module && !modules.has(module)) {
+            modules.set(module, { hue: functionData.moduleHue });
+        }
+        node.children.forEach(collectModules);
+    }
+    collectModules(root);
+    return modules;
+}
+
 export function getModuleInfo(
     node: Flamenode,
     functions: Function[],

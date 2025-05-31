@@ -4,7 +4,7 @@ import { vscode } from '../utilities/vscode';
 import { Legend } from './Legend';
 import { Flamenode, Function } from './types';
 import { FlameNode } from './FlameNode';
-import { filterTreeByModule, getModuleInfo, filterBySearchTerm } from '../utilities/filter';
+import { filterTreeByModule, getModuleInfo, filterBySearchTerm, getModuleDict } from '../utilities/filter';
 
 export function FlameGraph({
     root,
@@ -22,17 +22,7 @@ export function FlameGraph({
 
     // Initialize a map of all modules in the flamegraph to their hues
     const moduleDict = useMemo(() => {
-        const modules = new Map<string, { hue: number }>();
-        function collectModules(node: Flamenode) {
-            const functionData = functions[node.functionId];
-            const module = functionData?.module;
-            if (module && !modules.has(module)) {
-                modules.set(module, { hue: functionData.moduleHue });
-            }
-            node.children.forEach(collectModules);
-        }
-        collectModules(root);
-        return modules;
+        return getModuleDict(root, functions);
     }, [root, functions]);
 
     const sourceCodeAvailable = useMemo(() => {
