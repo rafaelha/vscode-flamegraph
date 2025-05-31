@@ -39,6 +39,21 @@ export function Legend({
     const legendRef = useRef<HTMLDivElement>(null);
     const controlsRef = useRef<HTMLDivElement>(null);
     const [legendStyle, setLegendStyle] = useState<React.CSSProperties>({});
+    const [localSearchTerm, setLocalSearchTerm] = useState<string>(searchTerm);
+
+    // Debounce the search term changes
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            onSearchTermChange(localSearchTerm);
+        }, 300); // 300ms debounce delay
+
+        return () => clearTimeout(timer);
+    }, [localSearchTerm, onSearchTermChange]);
+
+    // Update local search term when external search term changes
+    useEffect(() => {
+        setLocalSearchTerm(searchTerm);
+    }, [searchTerm]);
 
     useEffect(() => {
         const updateLegendPosition = () => {
@@ -161,8 +176,8 @@ export function Legend({
                                     type="text"
                                     placeholder="Filter"
                                     className="bg-transparent text-white text-xs placeholder-white/60 focus:outline-none w-24"
-                                    value={searchTerm}
-                                    onChange={(e) => onSearchTermChange(e.target.value)}
+                                    value={localSearchTerm}
+                                    onChange={(e) => setLocalSearchTerm(e.target.value)}
                                 />
                                 <div className="h-4 w-px bg-white/30"></div>
                             </>
