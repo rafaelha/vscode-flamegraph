@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { type LegendItem } from './types';
 import './Flamegraph.css';
+import '@vscode/codicons/dist/codicon.css';
 import { toUnitString } from '../utilities/units';
 
 interface LegendProps {
@@ -167,8 +168,8 @@ export function Legend({
 
             {/* Controls container - positioned on the right */}
             <div ref={controlsRef} className="fixed bottom-4 right-4 z-50">
-                <div className="px-2 py-1 rounded-lg bg-black/70 backdrop-blur-sm">
-                    <div className="flex items-center gap-3">
+                <div className="px-2 h-6 rounded-lg bg-black/70 backdrop-blur-sm flex items-center">
+                    <div className="flex items-center gap-1.5">
                         {/* Filter input - appears when showFiltered is true */}
                         {showFiltered && (
                             <>
@@ -179,31 +180,48 @@ export function Legend({
                                     value={localSearchTerm}
                                     onChange={(e) => setLocalSearchTerm(e.target.value)}
                                 />
+
+                                <button
+                                    className={`text-xs rounded focus:outline-none transition-colors cursor-pointer w-5 h-5 flex items-center justify-center ${
+                                        showFiltered ? 'bg-white/20 text-white' : 'text-white/60'
+                                    }`}
+                                    title="Match Case"
+                                >
+                                    <i className="codicon codicon-case-sensitive text-[8px]"></i>
+                                </button>
+                                <button
+                                    className={`text-xs rounded focus:outline-none transition-colors cursor-pointer w-5 h-5 flex items-center justify-center ${
+                                        showFiltered ? 'bg-white/20 text-white' : 'text-white/60'
+                                    }`}
+                                    title="Use Regular Expression"
+                                >
+                                    <i className="codicon codicon-regex text-[8px]"></i>
+                                </button>
                                 <div className="h-4 w-px bg-white/30"></div>
                             </>
                         )}
 
                         {/* Filter toggle button */}
                         <button
-                            className={`text-xs px-0.5 py-0 rounded focus:outline-none transition-colors cursor-pointer w-6 ${
+                            className={`text-xs rounded focus:outline-none transition-colors cursor-pointer w-5 h-5 flex items-center justify-center ${
                                 showFiltered ? 'bg-white/20 text-white' : 'text-white/60'
                             }`}
                             title="Toggle filtered view"
                             onClick={onToggleFiltered}
                         >
-                            𝓕
+                            <i className="codicon codicon-filter text-[8px]"></i>
                         </button>
 
                         {/* Code toggle button */}
                         {sourceCodeAvailable && (
                             <button
-                                className={`text-xs px-0.5 py-0 rounded focus:outline-none transition-colors cursor-pointer w-6 ${
+                                className={`text-xs px-0 py-0 rounded focus:outline-none transition-colors cursor-pointer w-5 h-5 flex items-center justify-center ${
                                     showSourceCode ? 'bg-white/20 text-white' : 'text-white/60'
                                 }`}
                                 onClick={onToggleSourceCode}
                                 title="Toggle code view"
                             >
-                                &lt;/&gt;
+                                <i className="codicon codicon-code text-[8px]"></i>
                             </button>
                         )}
                     </div>

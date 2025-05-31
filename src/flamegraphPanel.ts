@@ -80,6 +80,7 @@ export class FlamegraphPanel {
                     Uri.joinPath(extensionUri, 'out'),
                     Uri.joinPath(extensionUri, 'flamegraph-react/build'),
                     Uri.joinPath(extensionUri, 'assets'),
+                    Uri.joinPath(extensionUri, 'flamegraph-react/node_modules/@vscode/codicons/dist'),
                 ],
             });
 
@@ -144,6 +145,15 @@ export class FlamegraphPanel {
     private _getWebviewContent(webview: Webview, extensionUri: Uri) {
         // The CSS file from the React build output
         const stylesUri = getUri(webview, extensionUri, ['flamegraph-react', 'build', 'static', 'css', 'main.css']);
+        const codiconsUri = getUri(webview, extensionUri, [
+            'flamegraph-react',
+            'node_modules',
+            '@vscode',
+            'codicons',
+            'dist',
+            'codicon.css',
+        ]);
+        console.log('codicon uri', codiconsUri);
         // The JS file from the React build output
         const scriptUri = getUri(webview, extensionUri, ['flamegraph-react', 'build', 'static', 'js', 'main.js']);
 
@@ -157,8 +167,9 @@ export class FlamegraphPanel {
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
           <meta name="theme-color" content="#000000">
-          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; font-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
           <link rel="stylesheet" type="text/css" href="${stylesUri}">
+          <link rel="stylesheet" type="text/css" href="${codiconsUri}">
           <title>Flamegraph</title>
         </head>
         <body>

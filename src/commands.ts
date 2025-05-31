@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { commands } from 'vscode';
 import * as os from 'os';
-import { selectProfileFile, readTextFile, getPidAndCellFilenameMap, verify, getFilenameMap } from './utilities/fsUtils';
+import { selectProfileFile, readTextFile, getPidAndCellFilenameMap, verify } from './utilities/fsUtils';
 import { FlamegraphPanel } from './flamegraphPanel';
 import { extensionState } from './state';
 import { Flamegraph } from './flamegraph';
@@ -200,16 +200,12 @@ export async function attach(
 }
 
 /**
- * Attaches py-spy to the running process
+ * Attaches py-spy to the running process with the --subprocesses flag
  *
  * @returns The command registration.
  */
 export function attachProfilerCommand() {
     return vscode.commands.registerCommand('flamegraph.attachProfiler', async () => {
-        const filenameMap = await getFilenameMap();
-        if (filenameMap) {
-            extensionState.filenameToJupyterCellMap = filenameMap;
-        }
         await attach();
     });
 }
