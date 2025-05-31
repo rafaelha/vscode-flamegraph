@@ -17,6 +17,9 @@ export function FlameGraph({
     height?: number;
     profileType: 'py-spy' | 'memray';
 }) {
+    const [showFiltered, setShowFiltered] = useState<boolean>(true);
+    const [searchTerm, setSearchTerm] = useState<string>('');
+
     // Initialize a map of all modules in the flamegraph to their hues
     const moduleDict = useMemo(() => {
         const modules = new Map<string, { hue: number }>();
@@ -52,12 +55,10 @@ export function FlameGraph({
         return new Set(['<importlib>', '<runpy>'].filter((m) => moduleDict.has(m)));
     });
     const [showSourceCode, setShowSourceCode] = useState<boolean>(true);
-    const [showFiltered, setShowFiltered] = useState<boolean>(true);
-    const [searchTerm, setSearchTerm] = useState<string>('');
 
     const filteredRoot = React.useMemo(() => {
-        const moduleFiltered = filterTreeByModule(hiddenModules, root, functions);
-        return showFiltered ? filterBySearchTerm(moduleFiltered, searchTerm, functions, false, false) : moduleFiltered;
+        const filt1 = filterTreeByModule(hiddenModules, root, functions);
+        return showFiltered ? filterBySearchTerm(filt1, searchTerm, functions, false, false) : filt1;
     }, [hiddenModules, root, functions, searchTerm, showFiltered]);
 
     const { moduleSamples, moduleOwnSamples, totalSamples } = useMemo(() => {

@@ -110,60 +110,60 @@ export function Legend({
         };
     }, [showFiltered, sourceCodeAvailable, items.length]);
 
-    if (items.length === 0) return null;
-
     return (
         <>
             {/* Legend items container - dynamic positioning */}
-            <div ref={legendRef} className="fixed bottom-4 z-50" style={legendStyle}>
-                <div className="px-2 py-1 rounded-lg bg-black/70 backdrop-blur-sm">
-                    <div className="flex items-center gap-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                        {items.map(({ name, hue }) => {
-                            const isHidden = hiddenModules.has(name);
-                            const samples = moduleSamples.get(name) || 0;
-                            const ownSamples = moduleOwnSamples.get(name) || 0;
-                            let title = '';
-                            const percentageString = ((samples / totalSamples) * 100).toFixed(1) + '%';
-                            const ownPercentageString = ((ownSamples / totalSamples) * 100).toFixed(1) + '%';
-                            if (profileType === 'memray') {
-                                title = `Memory: ${toUnitString(samples, profileType)} (${percentageString}) / Own memory: ${toUnitString(ownSamples, profileType)}${ownSamples > 0 ? ` (${ownPercentageString})` : ''}`;
-                            } else {
-                                title = `Time: ${toUnitString(samples, profileType)} (${percentageString}) / Own time: ${toUnitString(ownSamples, profileType)}${ownSamples > 0 ? ` (${ownPercentageString})` : ''}`;
-                            }
+            {items.length > 0 && (
+                <div ref={legendRef} className="fixed bottom-4 z-50" style={legendStyle}>
+                    <div className="px-2 py-1 rounded-lg bg-black/70 backdrop-blur-sm">
+                        <div className="flex items-center gap-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                            {items.map(({ name, hue }) => {
+                                const isHidden = hiddenModules.has(name);
+                                const samples = moduleSamples.get(name) || 0;
+                                const ownSamples = moduleOwnSamples.get(name) || 0;
+                                let title = '';
+                                const percentageString = ((samples / totalSamples) * 100).toFixed(1) + '%';
+                                const ownPercentageString = ((ownSamples / totalSamples) * 100).toFixed(1) + '%';
+                                if (profileType === 'memray') {
+                                    title = `Memory: ${toUnitString(samples, profileType)} (${percentageString}) / Own memory: ${toUnitString(ownSamples, profileType)}${ownSamples > 0 ? ` (${ownPercentageString})` : ''}`;
+                                } else {
+                                    title = `Time: ${toUnitString(samples, profileType)} (${percentageString}) / Own time: ${toUnitString(ownSamples, profileType)}${ownSamples > 0 ? ` (${ownPercentageString})` : ''}`;
+                                }
 
-                            return (
-                                <div
-                                    key={name}
-                                    className="flex items-center gap-1.5"
-                                    {...(samples > 0 && totalSamples > 0
-                                        ? {
-                                              title,
-                                          }
-                                        : {})}
-                                >
-                                    <label className="flex items-center cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            className="hidden"
-                                            checked={!isHidden}
-                                            onChange={(e) => onModuleVisibilityChange(name, e.target.checked)}
-                                        />
-                                        <div
-                                            className="w-3 h-3 rounded-sm border border-white/20"
-                                            style={{
-                                                backgroundColor: isHidden
-                                                    ? 'white'
-                                                    : `hsl(${hue}, var(--node-saturation), var(--node-lightness))`,
-                                            }}
-                                        />
-                                    </label>
-                                    <span className="text-xs text-white/80 whitespace-nowrap">{name}</span>
-                                </div>
-                            );
-                        })}
+                                return (
+                                    <div
+                                        key={name}
+                                        className="flex items-center gap-1.5"
+                                        {...(samples > 0 && totalSamples > 0
+                                            ? {
+                                                  title,
+                                              }
+                                            : {})}
+                                    >
+                                        <label className="flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                className="hidden"
+                                                checked={!isHidden}
+                                                onChange={(e) => onModuleVisibilityChange(name, e.target.checked)}
+                                            />
+                                            <div
+                                                className="w-3 h-3 rounded-sm border border-white/20"
+                                                style={{
+                                                    backgroundColor: isHidden
+                                                        ? 'white'
+                                                        : `hsl(${hue}, var(--node-saturation), var(--node-lightness))`,
+                                                }}
+                                            />
+                                        </label>
+                                        <span className="text-xs text-white/80 whitespace-nowrap">{name}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
             {/* Controls container - positioned on the right */}
             <div ref={controlsRef} className="fixed bottom-4 right-4 z-50">

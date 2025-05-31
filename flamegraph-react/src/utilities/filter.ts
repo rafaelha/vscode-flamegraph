@@ -119,7 +119,7 @@ export function filterBySearchTerm(
         return node;
     }
 
-    function includesSearchTerm(node: Flamenode, searchTerm: string, functions: Function[]) {
+    function includesSearchTerm(node: Flamenode, searchTerm: string, functions: Function[]): boolean {
         const functionData = functions[node.functionId];
         const str = functionData?.functionName + functionData?.module + functionData?.filePath;
 
@@ -131,9 +131,8 @@ export function filterBySearchTerm(
         for (const child of node.children) {
             results.push(includesSearchTerm(child, searchTerm, functions));
         }
-        const anyIncludesSearchTerm = node.children.some((child) => includesSearchTerm(child, searchTerm, functions));
+        const anyIncludesSearchTerm = results.some((result) => result);
         if (anyIncludesSearchTerm) {
-            // loop through all pairs of results and children (zip)
             const newChildren = [];
             for (let i = 0; i < results.length; i++) {
                 const result = results[i];
@@ -149,8 +148,21 @@ export function filterBySearchTerm(
         return anyIncludesSearchTerm;
     }
 
-    console.log('searchTerm', searchTerm);
-    const rootCopy: Flamenode = { ...node };
+    function deepCopyFlamenode(node: Flamenode, parent?: Flamenode): Flamenode {
+        const copy: Flamenode = {
+            ...node,
+            parent,
+            children: [],
+            mergedUids: node.mergedUids ? [...node.mergedUids] : undefined,
+        };
+
+        copy.children = node.children.map((child) => deepCopyFlamenode(child, copy));
+
+        return copy;
+    }
+
+    const rootCopy = deepCopyFlamenode(node);
+
     const result = includesSearchTerm(rootCopy, searchTerm, functions);
     if (!result) {
         // return the root node without any children
