@@ -52,6 +52,7 @@ export function FlameGraph({
         return new Set(['<importlib>', '<runpy>'].filter((m) => moduleDict.has(m)));
     });
     const [showSourceCode, setShowSourceCode] = useState<boolean>(true);
+    const [showFiltered, setShowFiltered] = useState<boolean>(true);
 
     const filteredRoot = React.useMemo(
         () => filterTreeByModule(hiddenModules, root, functions),
@@ -316,7 +317,9 @@ export function FlameGraph({
                 moduleOwnSamples={moduleOwnSamples}
                 totalSamples={totalSamples}
                 showSourceCode={showSourceCode}
+                showFiltered={showFiltered}
                 onToggleSourceCode={() => setShowSourceCode(!showSourceCode)}
+                onToggleFiltered={() => setShowFiltered(!showFiltered)}
                 sourceCodeAvailable={sourceCodeAvailable}
                 profileType={profileType}
             />
