@@ -200,7 +200,7 @@ export async function attach(
 }
 
 /**
- * Attaches py-spy to the running process with the --subprocesses flag
+ * Attaches py-spy to the running process with the --subprocesses flag.
  *
  * @returns The command registration.
  */
