@@ -184,9 +184,10 @@ export function Legend({
                                 <input
                                     type="text"
                                     placeholder="Filter"
-                                    className="bg-transparent text-white text-xs placeholder-white/60 focus:outline-none w-16"
+                                    className="bg-transparent text-white text-xs placeholder-white/60 focus:outline-none w-24"
                                     value={localSearchTerm}
                                     onChange={(e) => setLocalSearchTerm(e.target.value)}
+                                    title="Filter Flamegraph By Filename, Function Name, Module Name"
                                 />
 
                                 <button
@@ -216,7 +217,7 @@ export function Legend({
                             className={`text-xs rounded focus:outline-none transition-colors cursor-pointer w-5 h-5 flex items-center justify-center ${
                                 showFiltered ? 'bg-white/20 text-white' : 'text-white/60'
                             }`}
-                            title="Toggle filtered view"
+                            title="Filter Flamegraph"
                             onClick={onToggleFiltered}
                         >
                             <i className="codicon codicon-filter text-[8px]"></i>
@@ -229,7 +230,7 @@ export function Legend({
                                     showSourceCode ? 'bg-white/20 text-white' : 'text-white/60'
                                 }`}
                                 onClick={onToggleSourceCode}
-                                title="Toggle code view"
+                                title="Toggle Code View"
                             >
                                 <i className="codicon codicon-code text-[8px]"></i>
                             </button>

@@ -9,6 +9,8 @@ vsc-extension-quickstart.md
 **/*.ts
 node_modules/**
 flamegraph-react/node_modules/**
+!flamegraph-react/node_modules/@vscode/codicons/dist/codicon.css
+!flamegraph-react/node_modules/@vscode/codicons/dist/codicon.ttf
 flamegraph-react/src/**
 flamegraph-react/public/**
 flamegraph-react/scripts/**
@@ -20,9 +22,8 @@ flamegraph-react/postcss.config.js
 flamegraph-react/tailwind.config.js
 flamegraph-react/yarn.lock
 flamegraph-react/build/flamegraph.json
-assets/*.gif
-assets/draft/*
-assets/screenshot*
+assets/**
+!assets/flame.png
 .eslintrc.json
 **/test/**
 **/.git/**
@@ -37,3 +38,4 @@ jest.config.js
 src/performance/*
 out/performance/*
 docs/*
+docker/*

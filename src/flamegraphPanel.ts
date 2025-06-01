@@ -153,7 +153,6 @@ export class FlamegraphPanel {
             'dist',
             'codicon.css',
         ]);
-        console.log('codicon uri', codiconsUri);
         // The JS file from the React build output
         const scriptUri = getUri(webview, extensionUri, ['flamegraph-react', 'build', 'static', 'js', 'main.js']);
 

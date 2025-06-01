@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [unreleased]
+### Added
+- Filtering in the flame graph legend. A new filter button reveals a search input field to filter the flame graph by filename, function name, and module name. The search fields includes toggles for case sensitivity and regular expression matching.
+
 ## [0.5.1] - 2025-05-10
 ### Fixed
 - Resolved an issue with profiling command generation on Linux platforms without `sudo` installed. This issue previously broke notebook profiling in certain Docker container environments.
