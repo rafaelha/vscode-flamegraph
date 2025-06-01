@@ -13,8 +13,12 @@ interface LegendProps {
     totalSamples: number;
     showSourceCode: boolean;
     showFiltered: boolean;
+    matchCase: boolean;
+    useRegex: boolean;
     onToggleSourceCode: () => void;
     onToggleFiltered: () => void;
+    onToggleMatchCase: () => void;
+    onToggleUseRegex: () => void;
     sourceCodeAvailable: boolean;
     profileType: 'py-spy' | 'memray';
     searchTerm: string;
@@ -30,8 +34,12 @@ export function Legend({
     totalSamples,
     showSourceCode,
     showFiltered,
+    matchCase,
+    useRegex,
     onToggleSourceCode,
     onToggleFiltered,
+    onToggleMatchCase,
+    onToggleUseRegex,
     sourceCodeAvailable,
     profileType,
     searchTerm,
@@ -176,24 +184,26 @@ export function Legend({
                                 <input
                                     type="text"
                                     placeholder="Filter"
-                                    className="bg-transparent text-white text-xs placeholder-white/60 focus:outline-none w-24"
+                                    className="bg-transparent text-white text-xs placeholder-white/60 focus:outline-none w-16"
                                     value={localSearchTerm}
                                     onChange={(e) => setLocalSearchTerm(e.target.value)}
                                 />
 
                                 <button
                                     className={`text-xs rounded focus:outline-none transition-colors cursor-pointer w-5 h-5 flex items-center justify-center ${
-                                        showFiltered ? 'bg-white/20 text-white' : 'text-white/60'
+                                        matchCase ? 'bg-white/20 text-white' : 'text-white/60'
                                     }`}
                                     title="Match Case"
+                                    onClick={onToggleMatchCase}
                                 >
                                     <i className="codicon codicon-case-sensitive text-[8px]"></i>
                                 </button>
                                 <button
                                     className={`text-xs rounded focus:outline-none transition-colors cursor-pointer w-5 h-5 flex items-center justify-center ${
-                                        showFiltered ? 'bg-white/20 text-white' : 'text-white/60'
+                                        useRegex ? 'bg-white/20 text-white' : 'text-white/60'
                                     }`}
                                     title="Use Regular Expression"
+                                    onClick={onToggleUseRegex}
                                 >
                                     <i className="codicon codicon-regex text-[8px]"></i>
                                 </button>

@@ -83,20 +83,27 @@ export function filterTreeByModule(hiddenModules: Set<string>, root: Flamenode, 
 }
 
 /**
- * Checks if the string matches the search term.
- * @param str - The string to check.
+ * Checks if the function data matches the search term.
+ * @param functionData - The function data to check.
  * @param searchTerm - The search term to check.
- * @param caseSensitive - Whether the search term should be case sensitive.
- * @param regex - Whether the search term should be a regular expression.
- * @returns True if the string matches the search term, false otherwise.
+ * @param matchCase - Whether the search term should be case sensitive.
+ * @param useRegex - Whether the search term should be a regular expression.
+ * @returns True if any field matches the search term, false otherwise.
  */
-function isMatch(str: string, searchTerm: string, caseSensitive: boolean, regex: boolean) {
-    if (regex) {
+function isMatch(functionData: Function, searchTerm: string, matchCase: boolean, useRegex: boolean) {
+    if (!functionData) return false;
+
+    const fields = [functionData.functionName || '', functionData.module || '', functionData.filePath || ''];
+
+    if (useRegex) {
         try {
-            return new RegExp(searchTerm, caseSensitive ? 'g' : 'gi').test(str);
+            const regex = new RegExp(searchTerm, matchCase ? 'g' : 'gi');
+            return fields.some((field) => regex.test(field));
         } catch (e) {}
     }
-    return caseSensitive ? str.includes(searchTerm) : str.toLowerCase().includes(searchTerm.toLowerCase());
+    return fields.some((field) =>
+        matchCase ? field.includes(searchTerm) : field.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 }
 
 /**
@@ -104,16 +111,16 @@ function isMatch(str: string, searchTerm: string, caseSensitive: boolean, regex:
  * @param node - The root node of the tree.
  * @param searchTerm - The search term to filter by.
  * @param functions - The function list referenced by nodes in the tree.
- * @param caseSensitive - Whether the search term should be case sensitive.
- * @param regex - Whether the search term should be a regular expression.
+ * @param matchCase - Whether the search term should be case sensitive.
+ * @param useRegex - Whether the search term should be a regular expression.
  * @returns The root node of the filtered tree.
  */
 export function filterBySearchTerm(
     node: Flamenode,
     searchTerm: string,
     functions: Function[],
-    caseSensitive: boolean,
-    regex: boolean
+    matchCase: boolean,
+    useRegex: boolean
 ) {
     if (searchTerm === '') {
         return node;
@@ -121,9 +128,8 @@ export function filterBySearchTerm(
 
     function includesSearchTerm(node: Flamenode, searchTerm: string, functions: Function[]): boolean {
         const functionData = functions[node.functionId];
-        const str = functionData?.functionName + functionData?.module + functionData?.filePath;
 
-        if (isMatch(str, searchTerm, caseSensitive, regex)) {
+        if (isMatch(functionData, searchTerm, matchCase, useRegex)) {
             return true;
         }
 

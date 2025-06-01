@@ -17,8 +17,10 @@ export function FlameGraph({
     height?: number;
     profileType: 'py-spy' | 'memray';
 }) {
-    const [showFiltered, setShowFiltered] = useState<boolean>(true);
+    const [showFiltered, setShowFiltered] = useState<boolean>(false);
     const [searchTerm, setSearchTerm] = useState<string>('');
+    const [matchCase, setMatchCase] = useState<boolean>(false);
+    const [useRegex, setUseRegex] = useState<boolean>(false);
 
     // Initialize a map of all modules in the flamegraph to their hues
     const moduleDict = useMemo(() => {
@@ -48,8 +50,8 @@ export function FlameGraph({
 
     const filteredRoot = React.useMemo(() => {
         const filt1 = filterTreeByModule(hiddenModules, root, functions);
-        return showFiltered ? filterBySearchTerm(filt1, searchTerm, functions, false, false) : filt1;
-    }, [hiddenModules, root, functions, searchTerm, showFiltered]);
+        return showFiltered ? filterBySearchTerm(filt1, searchTerm, functions, matchCase, useRegex) : filt1;
+    }, [hiddenModules, root, functions, searchTerm, showFiltered, matchCase, useRegex]);
 
     const { moduleSamples, moduleOwnSamples, totalSamples } = useMemo(() => {
         return getModuleInfo(filteredRoot, functions);
@@ -310,8 +312,12 @@ export function FlameGraph({
                 totalSamples={totalSamples}
                 showSourceCode={showSourceCode}
                 showFiltered={showFiltered}
+                matchCase={matchCase}
+                useRegex={useRegex}
                 onToggleSourceCode={() => setShowSourceCode(!showSourceCode)}
                 onToggleFiltered={() => setShowFiltered(!showFiltered)}
+                onToggleMatchCase={() => setMatchCase(!matchCase)}
+                onToggleUseRegex={() => setUseRegex(!useRegex)}
                 sourceCodeAvailable={sourceCodeAvailable}
                 profileType={profileType}
                 searchTerm={searchTerm}
