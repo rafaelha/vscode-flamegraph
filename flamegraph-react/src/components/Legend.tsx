@@ -117,7 +117,7 @@ export function Legend({
         return () => {
             window.removeEventListener('resize', updateLegendPosition);
         };
-    }, [showFiltered, sourceCodeAvailable, items.length]);
+    }, [showFiltered, sourceCodeAvailable, items]);
 
     return (
         <>
