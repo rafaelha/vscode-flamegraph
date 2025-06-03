@@ -88,22 +88,31 @@ export function filterTreeByModule(hiddenModules: Set<string>, root: Flamenode, 
  * @param searchTerm - The search term to check.
  * @param matchCase - Whether the search term should be case sensitive.
  * @param useRegex - Whether the search term should be a regular expression.
- * @returns True if any field matches the search term, false otherwise.
+ * @returns Object with match result and regex validity.
  */
-function isMatch(functionData: Function, searchTerm: string, matchCase: boolean, useRegex: boolean) {
-    if (!functionData) return false;
+function isMatch(
+    functionData: Function,
+    searchTerm: string,
+    matchCase: boolean,
+    useRegex: boolean
+): { matches: boolean; regexValid: boolean } {
+    if (!functionData) return { matches: false, regexValid: true };
 
     const fields = [functionData.functionName || '', functionData.module || '', functionData.filePath || ''];
+    let regexValid = true;
 
     if (useRegex) {
         try {
             const regex = new RegExp(searchTerm, matchCase ? 'g' : 'gi');
-            return fields.some((field) => regex.test(field));
-        } catch (e) {}
+            return { matches: fields.some((field) => regex.test(field)), regexValid: true };
+        } catch (e) {
+            regexValid = false;
+        }
     }
-    return fields.some((field) =>
+    const matches = fields.some((field) =>
         matchCase ? field.includes(searchTerm) : field.toLowerCase().includes(searchTerm.toLowerCase())
     );
+    return { matches, regexValid };
 }
 
 /**
@@ -113,7 +122,7 @@ function isMatch(functionData: Function, searchTerm: string, matchCase: boolean,
  * @param functions - The function list referenced by nodes in the tree.
  * @param matchCase - Whether the search term should be case sensitive.
  * @param useRegex - Whether the search term should be a regular expression.
- * @returns The root node of the filtered tree.
+ * @returns Object with the root node of the filtered tree and regex validity.
  */
 export function filterBySearchTerm(
     node: Flamenode,
@@ -121,15 +130,22 @@ export function filterBySearchTerm(
     functions: Function[],
     matchCase: boolean,
     useRegex: boolean
-) {
+): { filteredNode: Flamenode; regexValid: boolean } {
     if (searchTerm === '') {
-        return node;
+        return { filteredNode: node, regexValid: true };
     }
+
+    let regexValid = true;
 
     function includesSearchTerm(node: Flamenode, searchTerm: string, functions: Function[]): boolean {
         const functionData = functions[node.functionId];
 
-        if (isMatch(functionData, searchTerm, matchCase, useRegex)) {
+        const matchResult = isMatch(functionData, searchTerm, matchCase, useRegex);
+        if (!matchResult.regexValid) {
+            regexValid = false;
+        }
+
+        if (matchResult.matches) {
             return true;
         }
 
@@ -172,9 +188,9 @@ export function filterBySearchTerm(
     const result = includesSearchTerm(rootCopy, searchTerm, functions);
     if (!result) {
         // return the root node without any children
-        return { ...node, children: [] };
+        return { filteredNode: { ...node, children: [] }, regexValid };
     }
-    return rootCopy;
+    return { filteredNode: rootCopy, regexValid };
 }
 
 export function getModuleDict(root: Flamenode, functions: Function[]): Map<string, { hue: number }> {

@@ -21,6 +21,7 @@ export function FlameGraph({
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [matchCase, setMatchCase] = useState<boolean>(false);
     const [useRegex, setUseRegex] = useState<boolean>(false);
+    const [regexValid, setRegexValid] = useState<boolean>(true);
 
     // Initialize a map of all modules in the flamegraph to their hues
     const moduleDict = useMemo(() => {
@@ -49,8 +50,15 @@ export function FlameGraph({
     const [showSourceCode, setShowSourceCode] = useState<boolean>(true);
 
     const filteredRoot = React.useMemo(() => {
-        const filt1 = filterTreeByModule(hiddenModules, root, functions);
-        return showFiltered ? filterBySearchTerm(filt1, searchTerm, functions, matchCase, useRegex) : filt1;
+        const moduleFiltered = filterTreeByModule(hiddenModules, root, functions);
+        if (showFiltered) {
+            const filterResult = filterBySearchTerm(moduleFiltered, searchTerm, functions, matchCase, useRegex);
+            setRegexValid(filterResult.regexValid);
+            return filterResult.filteredNode;
+        } else {
+            setRegexValid(true);
+            return moduleFiltered;
+        }
     }, [hiddenModules, root, functions, searchTerm, showFiltered, matchCase, useRegex]);
 
     const { moduleSamples, moduleOwnSamples, totalSamples } = useMemo(() => {
@@ -314,6 +322,7 @@ export function FlameGraph({
                 showFiltered={showFiltered}
                 matchCase={matchCase}
                 useRegex={useRegex}
+                regexValid={regexValid}
                 onToggleSourceCode={() => setShowSourceCode(!showSourceCode)}
                 onToggleFiltered={() => setShowFiltered(!showFiltered)}
                 onToggleMatchCase={() => setMatchCase(!matchCase)}

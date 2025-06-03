@@ -15,6 +15,7 @@ interface LegendProps {
     showFiltered: boolean;
     matchCase: boolean;
     useRegex: boolean;
+    regexValid: boolean;
     onToggleSourceCode: () => void;
     onToggleFiltered: () => void;
     onToggleMatchCase: () => void;
@@ -36,6 +37,7 @@ export function Legend({
     showFiltered,
     matchCase,
     useRegex,
+    regexValid,
     onToggleSourceCode,
     onToggleFiltered,
     onToggleMatchCase,
@@ -52,6 +54,12 @@ export function Legend({
 
     // Debounce the search term changes
     useEffect(() => {
+        // Skip debounce delay when search term is empty
+        if (localSearchTerm === '') {
+            onSearchTermChange(localSearchTerm);
+            return;
+        }
+
         const timer = setTimeout(() => {
             onSearchTermChange(localSearchTerm);
         }, 300); // 300ms debounce delay
@@ -201,9 +209,17 @@ export function Legend({
                                 </button>
                                 <button
                                     className={`text-xs rounded focus:outline-none transition-colors cursor-pointer w-5 h-5 flex items-center justify-center ${
-                                        useRegex ? 'bg-white/20 text-white' : 'text-white/60'
+                                        useRegex && regexValid
+                                            ? 'bg-white/20 text-white'
+                                            : useRegex && !regexValid
+                                              ? 'bg-red-500 text-white'
+                                              : 'text-white/60'
                                     }`}
-                                    title="Use Regular Expression"
+                                    title={
+                                        useRegex && !regexValid
+                                            ? 'Invalid Regular Expression'
+                                            : 'Use Regular Expression'
+                                    }
                                     onClick={onToggleUseRegex}
                                 >
                                     <i className="codicon codicon-regex text-[8px]"></i>
