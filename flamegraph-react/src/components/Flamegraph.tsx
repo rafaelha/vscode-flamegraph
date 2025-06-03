@@ -4,7 +4,7 @@ import { vscode } from '../utilities/vscode';
 import { Legend } from './Legend';
 import { Flamenode, Function } from './types';
 import { FlameNode } from './FlameNode';
-import { filterTreeByModule, getModuleInfo } from '../utilities/filter';
+import { filterTreeByModule, getModuleInfo, filterBySearchTerm, getModuleDict } from '../utilities/filter';
 
 export function FlameGraph({
     root,
@@ -17,19 +17,15 @@ export function FlameGraph({
     height?: number;
     profileType: 'py-spy' | 'memray';
 }) {
+    const [showFiltered, setShowFiltered] = useState<boolean>(false);
+    const [searchTerm, setSearchTerm] = useState<string>('');
+    const [matchCase, setMatchCase] = useState<boolean>(false);
+    const [useRegex, setUseRegex] = useState<boolean>(false);
+    const [regexValid, setRegexValid] = useState<boolean>(true);
+
     // Initialize a map of all modules in the flamegraph to their hues
     const moduleDict = useMemo(() => {
-        const modules = new Map<string, { hue: number }>();
-        function collectModules(node: Flamenode) {
-            const functionData = functions[node.functionId];
-            const module = functionData?.module;
-            if (module && !modules.has(module)) {
-                modules.set(module, { hue: functionData.moduleHue });
-            }
-            node.children.forEach(collectModules);
-        }
-        collectModules(root);
-        return modules;
+        return getModuleDict(root, functions);
     }, [root, functions]);
 
     const sourceCodeAvailable = useMemo(() => {
@@ -53,10 +49,17 @@ export function FlameGraph({
     });
     const [showSourceCode, setShowSourceCode] = useState<boolean>(true);
 
-    const filteredRoot = React.useMemo(
-        () => filterTreeByModule(hiddenModules, root, functions),
-        [hiddenModules, root, functions]
-    );
+    const filteredRoot = React.useMemo(() => {
+        const moduleFiltered = filterTreeByModule(hiddenModules, root, functions);
+        if (showFiltered) {
+            const filterResult = filterBySearchTerm(moduleFiltered, searchTerm, functions, matchCase, useRegex);
+            setRegexValid(filterResult.regexValid);
+            return filterResult.filteredNode;
+        } else {
+            setRegexValid(true);
+            return moduleFiltered;
+        }
+    }, [hiddenModules, root, functions, searchTerm, showFiltered, matchCase, useRegex]);
 
     const { moduleSamples, moduleOwnSamples, totalSamples } = useMemo(() => {
         return getModuleInfo(filteredRoot, functions);
@@ -316,9 +319,18 @@ export function FlameGraph({
                 moduleOwnSamples={moduleOwnSamples}
                 totalSamples={totalSamples}
                 showSourceCode={showSourceCode}
+                showFiltered={showFiltered}
+                matchCase={matchCase}
+                useRegex={useRegex}
+                regexValid={regexValid}
                 onToggleSourceCode={() => setShowSourceCode(!showSourceCode)}
+                onToggleFiltered={() => setShowFiltered(!showFiltered)}
+                onToggleMatchCase={() => setMatchCase(!matchCase)}
+                onToggleUseRegex={() => setUseRegex(!useRegex)}
                 sourceCodeAvailable={sourceCodeAvailable}
                 profileType={profileType}
+                searchTerm={searchTerm}
+                onSearchTermChange={setSearchTerm}
             />
         </div>
     );

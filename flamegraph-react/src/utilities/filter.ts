@@ -82,6 +82,131 @@ export function filterTreeByModule(hiddenModules: Set<string>, root: Flamenode, 
     return rootCopy;
 }
 
+/**
+ * Checks if the function data matches the search term.
+ * @param functionData - The function data to check.
+ * @param searchTerm - The search term to check.
+ * @param matchCase - Whether the search term should be case sensitive.
+ * @param useRegex - Whether the search term should be a regular expression.
+ * @returns Object with match result and regex validity.
+ */
+function isMatch(
+    functionData: Function,
+    searchTerm: string,
+    matchCase: boolean,
+    useRegex: boolean
+): { matches: boolean; regexValid: boolean } {
+    if (!functionData) return { matches: false, regexValid: true };
+
+    const fields = [functionData.functionName || '', functionData.module || '', functionData.filePath || ''];
+    let regexValid = true;
+
+    if (useRegex) {
+        try {
+            const regex = new RegExp(searchTerm, matchCase ? 'g' : 'gi');
+            return { matches: fields.some((field) => regex.test(field)), regexValid: true };
+        } catch (e) {
+            regexValid = false;
+        }
+    }
+    const matches = fields.some((field) =>
+        matchCase ? field.includes(searchTerm) : field.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    return { matches, regexValid };
+}
+
+/**
+ * Filters the tree by search term. Nodes that do not include the search term will be removed and their children are appended to their parents.
+ * @param node - The root node of the tree.
+ * @param searchTerm - The search term to filter by.
+ * @param functions - The function list referenced by nodes in the tree.
+ * @param matchCase - Whether the search term should be case sensitive.
+ * @param useRegex - Whether the search term should be a regular expression.
+ * @returns Object with the root node of the filtered tree and regex validity.
+ */
+export function filterBySearchTerm(
+    node: Flamenode,
+    searchTerm: string,
+    functions: Function[],
+    matchCase: boolean,
+    useRegex: boolean
+): { filteredNode: Flamenode; regexValid: boolean } {
+    if (searchTerm === '') {
+        return { filteredNode: node, regexValid: true };
+    }
+
+    let regexValid = true;
+
+    function includesSearchTerm(node: Flamenode, searchTerm: string, functions: Function[]): boolean {
+        const functionData = functions[node.functionId];
+
+        const matchResult = isMatch(functionData, searchTerm, matchCase, useRegex);
+        if (!matchResult.regexValid) {
+            regexValid = false;
+        }
+
+        if (matchResult.matches) {
+            return true;
+        }
+
+        const results = [];
+        for (const child of node.children) {
+            results.push(includesSearchTerm(child, searchTerm, functions));
+        }
+        const anyIncludesSearchTerm = results.some((result) => result);
+        if (anyIncludesSearchTerm) {
+            const newChildren = [];
+            for (let i = 0; i < results.length; i++) {
+                const result = results[i];
+                const child = node.children[i];
+                if (result) {
+                    newChildren.push(child);
+                }
+            }
+            node.children = newChildren;
+        }
+        node.samples = node.children.reduce((acc, child) => acc + child.samples, 0);
+        node.ownSamples = node.children.reduce((acc, child) => acc + child.ownSamples, 0);
+        return anyIncludesSearchTerm;
+    }
+
+    function deepCopyFlamenode(node: Flamenode, parent?: Flamenode): Flamenode {
+        const copy: Flamenode = {
+            ...node,
+            parent,
+            children: [],
+            mergedUids: node.mergedUids ? [...node.mergedUids] : undefined,
+        };
+
+        copy.children = node.children.map((child) => deepCopyFlamenode(child, copy));
+
+        return copy;
+    }
+
+    const rootCopy = deepCopyFlamenode(node);
+
+    const result = includesSearchTerm(rootCopy, searchTerm, functions);
+    if (!result) {
+        // return the root node without any children
+        return { filteredNode: { ...node, children: [] }, regexValid };
+    }
+    return { filteredNode: rootCopy, regexValid };
+}
+
+export function getModuleDict(root: Flamenode, functions: Function[]): Map<string, { hue: number }> {
+    const modules = new Map<string, { hue: number }>();
+    function collectModules(node: Flamenode) {
+        const functionData = functions[node.functionId];
+        const module = functionData?.module;
+        if (module && !modules.has(module)) {
+            modules.set(module, { hue: functionData.moduleHue });
+        }
+        node.children.forEach(collectModules);
+    }
+    collectModules(root);
+    return modules;
+}
+
 export function getModuleInfo(
     node: Flamenode,
     functions: Function[],
