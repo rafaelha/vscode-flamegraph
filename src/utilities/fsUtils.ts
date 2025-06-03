@@ -211,7 +211,8 @@ export async function getMemrayPath(): Promise<string | undefined> {
 async function installPythonPackage(
     packageName: string,
     pythonPath: string,
-    getPackagePath: () => Promise<string | undefined>
+    getPackagePath: () => Promise<string | undefined>,
+    silent: boolean = false
 ): Promise<string | undefined> {
     return vscode.window.withProgress(
         {
@@ -244,12 +245,16 @@ async function installPythonPackage(
                     // check if package was installed successfully
                     const packagePath = await getPackagePath();
                     if (packagePath) {
-                        vscode.window.showInformationMessage(`${packageName} installed successfully.`);
+                        if (!silent) {
+                            vscode.window.showInformationMessage(`${packageName} installed successfully.`);
+                        }
                         resolve(packagePath);
                     } else {
-                        vscode.window.showErrorMessage(
-                            `Failed to install ${packageName}. Please install it manually with "pip install ${packageName}". ${errorOutput || 'Unknown error'}`
-                        );
+                        if (!silent) {
+                            vscode.window.showErrorMessage(
+                                `Failed to install ${packageName}. Please install it manually with "pip install ${packageName}". ${errorOutput || 'Unknown error'}`
+                            );
+                        }
                         resolve(undefined);
                     }
                 });
@@ -306,6 +311,7 @@ export async function getOrInstallPySpy(): Promise<string | undefined> {
     if (installPySpy !== 'Yes') return undefined;
 
     let pythonPath: string | undefined;
+    const pythonExtensionPythonPath = await getPythonPath();
     if (os.platform() !== 'linux') {
         // Try to get the global python path
         try {
@@ -323,7 +329,12 @@ export async function getOrInstallPySpy(): Promise<string | undefined> {
         }
 
         if (pythonPath) {
-            const result = await installPythonPackage('py-spy', pythonPath, getPyspyPath);
+            const result = await installPythonPackage(
+                'py-spy',
+                pythonPath,
+                getPyspyPath,
+                pythonExtensionPythonPath !== undefined
+            );
             if (result) {
                 return result;
             }
@@ -333,9 +344,10 @@ export async function getOrInstallPySpy(): Promise<string | undefined> {
         }
     }
     // If we get here, we will try to install py-spy using the python path from the python extension
-    pythonPath = await getPythonPath();
-    if (!pythonPath) return undefined;
-    return installPythonPackage('py-spy', pythonPath, getPyspyPath);
+    if (!pythonExtensionPythonPath) {
+        return undefined;
+    }
+    return installPythonPackage('py-spy', pythonExtensionPythonPath, getPyspyPath);
 }
 
 /**
