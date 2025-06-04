@@ -95,7 +95,7 @@ async function checkSudoInstalled(): Promise<boolean> {
 
 /**
  * On MacOS or Linux, checks if py-spy is given passwordless sudo access in the sudoers file.
- * Returns true on all other platforms. The user will be prompted to add py-spy to the sudoers file
+ * Returns true on all other platforms. The user will be prompted to add py-spy to their sudoers file
  * if they don't have passwordless sudo access. The user will be given a link to the setup instructions
  * for their platform.
  *
@@ -108,9 +108,7 @@ export async function checkSudoAccess(
     modal: boolean = true,
     profilerName: string = 'py-spy'
 ): Promise<boolean> {
-    // Check for passwordless sudo access to py-spy on macOS
     if (os.platform() === 'darwin' || os.platform() === 'linux') {
-        // get user name by running `whoami`
         const userName = await execAsync('whoami');
         if (pySpyPath === 'py-spy') {
             pySpyPath = (await execAsync('which py-spy')).stdout.trim();
@@ -206,6 +204,7 @@ export async function getMemrayPath(): Promise<string | undefined> {
  *
  * @param packageName - The name of the package to install.
  * @param pythonPath - The path to the Python interpreter.
+ * @param silent - Whether to show a notification when the package is installed successfully.
  * @returns The path to the installed package or undefined if installation fails.
  */
 async function installPythonPackage(
@@ -252,7 +251,7 @@ async function installPythonPackage(
                     } else {
                         if (!silent) {
                             vscode.window.showErrorMessage(
-                                `Failed to install ${packageName}. Please install it manually with "pip install ${packageName}". ${errorOutput || 'Unknown error'}`
+                                `Failed to install ${packageName}. Please install it manually with "pip install ${packageName}". ${errorOutput || ''}`
                             );
                         }
                         resolve(undefined);

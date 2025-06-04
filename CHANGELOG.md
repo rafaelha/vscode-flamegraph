@@ -4,9 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [unreleased]
+## [0.6.0] - 2025-06-03
 ### Added
-- Filtering in the flame graph legend. A new filter button reveals a search input field to filter the flame graph by filename, function name, and module name. The search fields includes toggles for case sensitivity and regular expression matching.
+- Added filtering features to the flame graph legend. Users can now filter the flame graph by filename, function name, and module name through a text field. The filter feature includes advanced options for case-sensitive matching and regular expression support.
+
+### Changed
+- New Flamegraph logo.
 
 ## [0.5.1] - 2025-05-10
 ### Fixed

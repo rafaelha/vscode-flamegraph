@@ -9,6 +9,7 @@ import {
     Selection,
     TextEditorRevealType,
     TextDocument,
+    commands,
 } from 'vscode';
 import { getUri } from './utilities/fsUtils';
 import { getNonce } from './utilities/nonceUtils';
@@ -222,6 +223,13 @@ export class FlamegraphPanel {
                                 editor.selection = new Selection(range.start, range.start);
                                 editor.revealRange(range, TextEditorRevealType.InCenter);
                             }
+
+                            // Scroll the document all the way to the left
+                            await Promise.all(
+                                Array(10)
+                                    .fill(0)
+                                    .map(() => commands.executeCommand('scrollLeft'))
+                            );
                         } catch (error) {
                             // do nothing, error messages are overly verbose
                         }
