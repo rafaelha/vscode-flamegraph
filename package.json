@@ -141,13 +141,13 @@
                 "flamegraph.py-spy.subprocesses": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Profile subprocesses of the original process. Note: On Winodows and for some Python versions, this option must be enabled for the profiler to find the python process.",
+                    "description": "Profile subprocesses of the original process. Note: On Windows and for some Python versions, this option must be enabled for the profiler to find the python process.",
                     "scope": "resource"
                 },
                 "flamegraph.py-spy.subprocessesAttach": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Profile subprocesses that are spawned by the process that py-spy is attached to. Note: On Winodows and for some Python versions, this option must be enabled for the profiler to find the python process.",
+                    "description": "Profile subprocesses that are spawned by the process that py-spy is attached to. Note: On Windows and for some Python versions, this option must be enabled for the profiler to find the Python process.",
                     "scope": "resource"
                 },
                 "flamegraph.py-spy.native": {
@@ -177,7 +177,7 @@
                 "flamegraph.py-spy.nonblocking": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Don't pause the python process when collecting samples. This will reduce the performance impact of sampling, but may lead to inaccurate results.",
+                    "description": "Don't pause the Python process when collecting samples. This will reduce the performance impact of sampling, but may lead to inaccurate results.",
                     "scope": "resource"
                 },
                 "flamegraph.py-spy.alwaysUseSudo": {
