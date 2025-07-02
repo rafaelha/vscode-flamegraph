@@ -15,6 +15,7 @@ import { getUri } from './utilities/fsUtils';
 import { getNonce } from './utilities/nonceUtils';
 import { Flamegraph } from './flamegraph';
 import { extensionState } from './state';
+import { flattenFlamegraphTree } from './utilities/flamegraphUtils';
 
 /**
  * This class manages the state and behavior of HelloWorld webview panels.
@@ -93,15 +94,19 @@ export class FlamegraphPanel {
         }
 
         if (FlamegraphPanel.currentPanel) {
+            // Flatten the tree structure to avoid JSON serialization issues with deep trees
+            const flattenedNodes = flattenFlamegraphTree(flamegraph.root);
+
             FlamegraphPanel.currentPanel._panel.webview.postMessage({
                 type: 'profile-data',
                 data: {
-                    root: flamegraph.root,
+                    flattenedNodes,
+                    rootUid: flamegraph.root.uid,
+                    focusUid: extensionState.focusNode,
                     functions: flamegraph.functions,
                     sourceCode: extensionState.sourceCode,
                     profileType: flamegraph.profileType,
                 },
-                focusUid: extensionState.focusNode,
             });
         }
     }

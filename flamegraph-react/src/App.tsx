@@ -1,7 +1,8 @@
 import { FlameGraph } from './components/Flamegraph';
-import { Flamenode, Function } from './components/types';
+import { Flamenode, FlattenedFlamenode, Function } from './components/types';
 import { useState, useEffect } from 'react';
 import './tailwind.css';
+import { reconstructTreeFromFlattened, addParents, updateNodesWithSourceCode } from './utilities/flamegraphUtils';
 
 declare global {
     interface Window {
@@ -11,55 +12,12 @@ declare global {
     }
 }
 
-/**
- * Adds parents to the tree nodes.
- *
- * @param node - The node to add parents to.
- * @param parent - The parent node.
- */
-function addParents(node: Flamenode, parent?: Flamenode) {
-    if (parent) node.parent = parent;
-    if (node.children) node.children.forEach((child) => addParents(child, node));
-}
-
-/**
- * Traverses the tree starting from `node` and returns the node with the given UID.
- *
- * @param node - The node to search.
- * @param uid - The UID to search for.
- * @returns The node with the given UID or null if not found.
- */
-function getNodeWithUid(node: Flamenode, uid: number): Flamenode | null {
-    if (node.uid === uid) return node;
-    if (!node.children) return null;
-
-    for (const child of node.children) {
-        const result = getNodeWithUid(child, uid);
-        if (result) return result;
-    }
-    return null;
-}
-
-/**
- * Updates the nodes with source code
- * @param node - The node to update
- * @param sourceCodeArray - The source code array
- */
-const updateNodesWithSourceCode = (node: Flamenode, sourceCodeArray?: string[]) => {
-    if (!sourceCodeArray) return;
-    // If the node has a UID that corresponds to an index in the sourceCodeArray
-    if (node.uid >= 0 && node.uid < sourceCodeArray.length) {
-        node.sourceCode = sourceCodeArray[node.uid];
-    }
-
-    // Process children recursively
-    if (node.children) {
-        node.children.forEach((child) => updateNodesWithSourceCode(child, sourceCodeArray));
-    }
-};
-
 export default function Home() {
-    const [parsedData, setParsedData] = useState<{ root: Flamenode; functions: Function[]; profileType: 'py-spy' | 'memray' } | null>(null);
+    const [parsedData, setParsedData] = useState<{
+        root: Flamenode;
+        functions: Function[];
+        profileType: 'py-spy' | 'memray';
+    } | null>(null);
     const [originalRoot, setOriginalRoot] = useState<Flamenode | null>(null);
     const [sourceCodeVersion, setSourceCodeVersion] = useState(0);
 
@@ -68,22 +26,22 @@ export default function Home() {
             const message = event.data;
 
             if (message.type === 'profile-data') {
-                const { root, functions, sourceCode, profileType } = message.data as {
-                    root: Flamenode;
+                const { flattenedNodes, rootUid, focusUid, functions, sourceCode, profileType } = message.data as {
+                    flattenedNodes: FlattenedFlamenode[];
+                    rootUid: number;
+                    focusUid: number;
                     functions: Function[];
                     sourceCode: string[];
                     profileType: 'py-spy' | 'memray';
                 };
-                const focusUid = message.focusUid as number;
+                const { root, focusNode } = reconstructTreeFromFlattened(flattenedNodes || [], rootUid, focusUid);
 
                 addParents(root);
                 setOriginalRoot(root);
                 updateNodesWithSourceCode(root, sourceCode);
-                setParsedData({ root: getNodeWithUid(root, focusUid) || root, functions, profileType });
+                setParsedData({ root: focusNode, functions, profileType });
             } else if (message.type === 'source-code' && originalRoot) {
                 const sourceCodeArray = message.data as string[];
-
-                // Update the nodes with source code in place
                 updateNodesWithSourceCode(originalRoot, sourceCodeArray);
 
                 // Increment the version to force a re-render
