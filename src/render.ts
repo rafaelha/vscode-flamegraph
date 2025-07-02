@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { Flamegraph, Flamenode } from './flamegraph';
+import { Flamegraph } from './flamegraph';
+import { Flamenode } from './types';
 import { extensionState } from './state';
 
 // TODO: Make this configurable in VS Code settings
