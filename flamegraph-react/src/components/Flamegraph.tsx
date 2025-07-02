@@ -8,11 +8,13 @@ import { filterTreeByModule, getModuleInfo, filterBySearchTerm, getModuleDict } 
 
 export function FlameGraph({
     root,
+    initialFocusNode,
     functions,
     height = 23,
     profileType,
 }: {
     root: Flamenode;
+    initialFocusNode: Flamenode;
     functions: Function[];
     height?: number;
     profileType: 'py-spy' | 'memray';
@@ -69,7 +71,7 @@ export function FlameGraph({
         return getModuleInfo(root, functions);
     }, [root, functions]);
 
-    const [focusNode, setFocusNode] = useState<Flamenode>(filteredRoot);
+    const [focusNode, setFocusNode] = useState<Flamenode>(initialFocusNode);
     const [hoveredLineId, setHoveredLineId] = useState<number | null>(null);
     const [hoveredFunctionId, setHoveredFunctionId] = useState<number | null>(null);
     const [isCommandPressed, setIsCommandPressed] = useState(false);

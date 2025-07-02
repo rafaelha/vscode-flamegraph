@@ -102,7 +102,7 @@ export class FlamegraphPanel {
                 data: {
                     flattenedNodes,
                     rootUid: flamegraph.root.uid,
-                    focusUid: extensionState.focusNode,
+                    focusUid: extensionState.focusNode.length === 1 ? extensionState.focusNode[0] : flamegraph.root.uid,
                     functions: flamegraph.functions,
                     sourceCode: extensionState.sourceCode,
                     profileType: flamegraph.profileType,

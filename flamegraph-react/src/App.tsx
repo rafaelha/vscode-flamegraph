@@ -15,6 +15,7 @@ declare global {
 export default function Home() {
     const [parsedData, setParsedData] = useState<{
         root: Flamenode;
+        focusNode: Flamenode;
         functions: Function[];
         profileType: 'py-spy' | 'memray';
     } | null>(null);
@@ -39,7 +40,7 @@ export default function Home() {
                 addParents(root);
                 setOriginalRoot(root);
                 updateNodesWithSourceCode(root, sourceCode);
-                setParsedData({ root: focusNode, functions, profileType });
+                setParsedData({ root, focusNode, functions, profileType });
             } else if (message.type === 'source-code' && originalRoot) {
                 const sourceCodeArray = message.data as string[];
                 updateNodesWithSourceCode(originalRoot, sourceCodeArray);
@@ -66,6 +67,7 @@ export default function Home() {
             <div className="pb-12">
                 <FlameGraph
                     root={parsedData.root}
+                    initialFocusNode={parsedData.focusNode}
                     functions={parsedData.functions}
                     profileType={parsedData.profileType}
                     key={`flamegraph-${sourceCodeVersion}`}
