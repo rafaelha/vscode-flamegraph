@@ -237,11 +237,11 @@ export class Flamegraph {
 
                 const fileUri = this.functions[functionId].filePath;
                 const fileKey = `${fileUri}:${line}`;
-                const occurencesFileLine = sameFileLineCounts.get(fileKey) ?? 1;
-                let firstFileLineOccurence = false;
-                if (occurencesFileLine >= 1) {
-                    firstFileLineOccurence = true;
-                    sameFileLineCounts.set(fileKey, 0); // ensure that the next occurence is discarded
+                const occurrencesFileLine = sameFileLineCounts.get(fileKey) ?? 1;
+                let firstFileLineOccurrence = false;
+                if (occurrencesFileLine >= 1) {
+                    firstFileLineOccurrence = true;
+                    sameFileLineCounts.set(fileKey, 0); // ensure that the next occurrence is discarded
                 }
 
                 const existingChild = current.children.find((child) => child.frameId === frameId);
@@ -249,7 +249,7 @@ export class Flamegraph {
                 if (existingChild) {
                     current = existingChild;
                     current.samples += samples;
-                    if (occurrences === 1 && firstFileLineOccurence) current.ownSamples += samples;
+                    if (occurrences === 1 && firstFileLineOccurrence) current.ownSamples += samples;
                 } else {
                     const newNode: Flamenode = {
                         uid: this.nodes.length,
@@ -259,7 +259,7 @@ export class Flamegraph {
                         line,
                         depth: current.depth + 1,
                         samples,
-                        ownSamples: occurrences === 1 && firstFileLineOccurence ? samples : 0,
+                        ownSamples: occurrences === 1 && firstFileLineOccurrence ? samples : 0,
                         children: [],
                     };
                     current.children.push(newNode);
