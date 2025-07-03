@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [unreleased]
+### Fixed
+- Resolved rendering issues with deeply nested flamegraphs in the webview panel caused by serialization recursion limits.
+
 ## [0.6.0] - 2025-06-03
 ### Added
 - Added filtering features to the flame graph legend. Users can now filter the flame graph by filename, function name, and module name through a text field. The filter feature includes advanced options for case-sensitive matching and regular expression support.
@@ -67,7 +71,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.3.10] - 2025-04-10
 ### Changed
-- Improved legend in the flamegraph. Now, filtering by module (by deselcting items in the legend) does not reset the zoom level, unless the currently selected node is affected by the module filtering.
+- Improved legend in the flamegraph. Now, filtering by module (by deselecting items in the legend) does not reset the zoom level, unless the currently selected node is affected by the module filtering.
 - Legend items are now sorted by total time (previously they were sorted by visible area in the flamegraph).
 
 ### Added

@@ -38,3 +38,7 @@ export type Flamenode = {
     sourceCode?: string;
     parent?: Flamenode;
 };
+
+export type FlattenedFlamenode = Omit<Flamenode, 'children'> & {
+    childrenUids: number[];
+};

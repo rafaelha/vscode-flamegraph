@@ -3,51 +3,17 @@ import { basename, isAbsolute } from 'path';
 import { URI } from './utilities/uri';
 import { strToHue } from './utilities/colors';
 import { getModuleName, toUnixPath, splitOutsideQuotes } from './utilities/pathUtils';
-import { NotebookCellMap, UriToCodeMap } from './types';
-
-type FrameId = number;
-type FunctionId = number;
-type LineNumber = number;
-
-export type Function = {
-    functionName: string;
-    shortFunctionName?: string;
-    filePath?: string;
-    fileName?: string;
-    shortFilename?: string;
-    module?: string;
-    moduleHue: number; // for module name
-    functionHue?: number; // for function name
-};
-
-export type Flamenode = {
-    uid: number;
-    parentUid?: number;
-    frameId: FrameId; // unique id for the frame, which is (functionName, filePath, lineNumber)
-    functionId: FunctionId; // unique id for the function, which is (functionName, filePath)
-    line?: LineNumber; // line number of the source code for this node
-    cell?: number; // cell number of the source code for this node, if the source code is in a jupyter notebook
-    sourceCode?: string; // the string of source code for this line
-    depth: number; // depth in the tree
-    samples: number; // total number of samples for this node as recorded in the profile
-    ownSamples: number; // for recursive functions, this is the number of samples for the deepest occurrence
-    children: Flamenode[];
-    enterTime?: number; // Euler tour enter time
-    exitTime?: number; // Euler tour exit time
-};
-
-type LineProfile = {
-    line: number;
-    nodes: Flamenode[];
-};
-
-type FileIndex = {
-    // map fileName to a list of matching filePaths
-    [fileName: string]: {
-        filePath: string;
-        lineProfiles: LineProfile[]; // profile data associated with lines in the file
-    }[];
-};
+import {
+    FrameId,
+    FunctionId,
+    LineNumber,
+    Flamenode,
+    FileIndex,
+    Function,
+    NotebookCellMap,
+    UriToCodeMap,
+    LineProfile,
+} from './types';
 
 export class Flamegraph {
     private frameCache: Map<string, [FrameId, FunctionId, LineNumber | undefined, number | undefined]>;
@@ -271,11 +237,11 @@ export class Flamegraph {
 
                 const fileUri = this.functions[functionId].filePath;
                 const fileKey = `${fileUri}:${line}`;
-                const occurencesFileLine = sameFileLineCounts.get(fileKey) ?? 1;
-                let firstFileLineOccurence = false;
-                if (occurencesFileLine >= 1) {
-                    firstFileLineOccurence = true;
-                    sameFileLineCounts.set(fileKey, 0); // ensure that the next occurence is discarded
+                const occurrencesFileLine = sameFileLineCounts.get(fileKey) ?? 1;
+                let firstFileLineOccurrence = false;
+                if (occurrencesFileLine >= 1) {
+                    firstFileLineOccurrence = true;
+                    sameFileLineCounts.set(fileKey, 0); // ensure that the next occurrence is discarded
                 }
 
                 const existingChild = current.children.find((child) => child.frameId === frameId);
@@ -283,7 +249,7 @@ export class Flamegraph {
                 if (existingChild) {
                     current = existingChild;
                     current.samples += samples;
-                    if (occurrences === 1 && firstFileLineOccurence) current.ownSamples += samples;
+                    if (occurrences === 1 && firstFileLineOccurrence) current.ownSamples += samples;
                 } else {
                     const newNode: Flamenode = {
                         uid: this.nodes.length,
@@ -293,7 +259,7 @@ export class Flamegraph {
                         line,
                         depth: current.depth + 1,
                         samples,
-                        ownSamples: occurrences === 1 && firstFileLineOccurence ? samples : 0,
+                        ownSamples: occurrences === 1 && firstFileLineOccurrence ? samples : 0,
                         children: [],
                     };
                     current.children.push(newNode);
