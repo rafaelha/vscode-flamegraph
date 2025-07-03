@@ -4,9 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [unreleased]
+### Fixed
+- Fixed an issue where the flamegraph would not render for memray profiles with a single corrupted stack trace.
 ## [0.6.1] - 2025-07-02
 ### Fixed
-- Fixed an issue where flame graph panels was stuck "Loading profile data..." for profiles of very recursive programs.
+- Fixed an issue where flame graph panel was stuck at "Loading profile data..." for profiles of very recursive programs.
 - Fixed an issue where the flamegraph panel would not maintain its focus state when closed and reopened.
 
 ## [0.6.0] - 2025-06-03

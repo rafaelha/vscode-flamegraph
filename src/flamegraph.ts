@@ -185,7 +185,9 @@ export class Flamegraph {
             let samples: number;
             if (this.profileType === 'memray') {
                 const elements = row.split(',');
+                if (elements.length < 6) continue; // Guard against malformed rows
                 samples = parseInt(elements[2], 10);
+                if (Number.isNaN(samples)) continue;
                 const stackTraceStr = elements[5];
                 stackTrace = splitOutsideQuotes(stackTraceStr, '|').reverse();
             } else {
@@ -193,6 +195,7 @@ export class Flamegraph {
                 if (lastSpaceIndex === -1) continue;
                 const stackTraceStr = row.substring(0, lastSpaceIndex);
                 samples = parseInt(row.substring(lastSpaceIndex + 1), 10);
+                if (Number.isNaN(samples)) continue;
                 stackTrace = splitOutsideQuotes(stackTraceStr, ';');
             }
             this.root.samples += samples;
