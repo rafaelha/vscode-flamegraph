@@ -34,6 +34,8 @@ format.md
 jest.config.js
 *.zip
 .env.local
+*.pyspy
+*.memray
 
 src/performance/*
 out/performance/*
