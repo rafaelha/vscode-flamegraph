@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.6.3] - 2025-07-22
 ### Fixed
-- Fixed an issue where py-spy and memray installations where not found on Windows in conda environments.
+- Fixed an issue where py-spy and memray installations were not found on Windows in conda environments.
 
 ## [0.6.2] - 2025-07-03
 ### Fixed
