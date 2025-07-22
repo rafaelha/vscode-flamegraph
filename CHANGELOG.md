@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.3] - 2025-07-22
+### Fixed
+- Fixed an issue where py-spy and memray installations were not found on Windows in conda environments.
+
 ## [0.6.2] - 2025-07-03
 ### Fixed
 - Fixed an issue where the flame graph would not render for memray profiles with a single corrupted stack trace.
