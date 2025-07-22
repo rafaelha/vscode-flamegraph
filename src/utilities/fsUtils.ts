@@ -168,15 +168,24 @@ export async function getPyspyPath(): Promise<string | undefined> {
         await execAsync(`py-spy --version`);
         return (await execAsync(`which py-spy`)).stdout.trim();
     } catch {
+        let pythonPath: string | undefined;
         try {
             // get python path
-            const pythonPath = await getPythonPath();
+            pythonPath = await getPythonPath();
             if (!pythonPath) return undefined;
             const profilerPath = path.join(path.dirname(pythonPath), 'py-spy');
             await execAsync(`"${profilerPath}" --version`);
             return profilerPath;
         } catch {
-            return undefined;
+            try {
+                // get python path
+                if (!pythonPath) return undefined;
+                const profilerPath = path.join(path.dirname(pythonPath), 'Scripts', 'py-spy');
+                await execAsync(`"${profilerPath}" --version`);
+                return profilerPath;
+            } catch {
+                return undefined;
+            }
         }
     }
 }
@@ -187,15 +196,20 @@ export async function getPyspyPath(): Promise<string | undefined> {
  * @returns The command to run memray or undefined if it is not installed.
  */
 export async function getMemrayPath(): Promise<string | undefined> {
+    const pythonPath = await getPythonPath();
+    if (!pythonPath) return undefined;
     try {
-        const pythonPath = await getPythonPath();
-        if (!pythonPath) return undefined;
-
         const profilerPath = path.join(path.dirname(pythonPath), 'memray');
         await execAsync(`"${profilerPath}" --version`);
         return profilerPath;
     } catch {
-        return undefined;
+        try {
+            const profilerPath = path.join(path.dirname(pythonPath), 'Scripts', 'memray');
+            await execAsync(`"${profilerPath}" --version`);
+            return profilerPath;
+        } catch {
+            return undefined;
+        }
     }
 }
 
