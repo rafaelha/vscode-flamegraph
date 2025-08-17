@@ -385,10 +385,7 @@ export function runMemrayProfilerCommand() {
             },
             MEMORY_TASK_TERMINAL_NAME
         );
-
-        await vscode.tasks.executeTask(task);
-
-        // Wait for the first task to complete before running the transform task
+        // Execute the memray run task and wait for it to complete before transforming the results
         const taskExecution = await vscode.tasks.executeTask(task);
 
         // Create a promise that resolves when the task completes

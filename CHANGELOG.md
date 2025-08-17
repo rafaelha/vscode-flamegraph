@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [unreleased]
+### Fixed
+- Fixed issue where the extension attempted to start the memray file profiling task twice, which led to an unnecessary ask to terminate a task instance.
+
 ## [0.6.3] - 2025-07-22
 ### Fixed
 - Fixed an issue where py-spy and memray installations were not found on Windows in conda environments.
