@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [unreleased]
 ### Fixed
-- Fixed issue where the extension attempted to start the memray file profiling task twice, which led to an unnecessary ask to terminate a task instance.
+- Fixed an issue where the extension attempted to start the memray file profiling task twice, which led to an unnecessary request to terminate the task instance.
 
 ## [0.6.3] - 2025-07-22
 ### Fixed
@@ -64,7 +64,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - New VS Code setting `flamegraph.showFlamegraph` to control how the flamegraph is displayed after profiling completes. Options are `show`, `showAndFocus`, and `onlyShowCodeAnnotations`. The `onlyShowCodeAnnotations` option will only show the code annotations after profiling completes and will not open the flamegraph tab. The flamegraph panel can still be manually opened by the `Flamegraph: Show` command.
 
 ### Changed
-- Changed seeting `flamegraph.alwaysUseSudo` to `flamegraph.py-spy.alwaysUseSudo` for consistency.
+- Changed setting `flamegraph.alwaysUseSudo` to `flamegraph.py-spy.alwaysUseSudo` for consistency.
 - Small improvements to the flamegraph legend.
 
 
@@ -134,9 +134,9 @@ can be enabled with the setting `flamegraph.py-spy.native` or by defining a cust
 ### Changed
 - Improved py-spy installation process. Now, py-spy installations in the currently selected virtual environment
 are used if no global installation is found.
-- On windows, the VS Code taks will now always use `powershell`.
+- On Windows, the VS Code tasks will now always use `PowerShell`.
 - Improved instructions on how to add py-spy to the sudoers file on macOS and Linux.
-- The flamegraph does not show source code anymore to improve load time. This features will be added back in a future release.
+- The flamegraph no longer shows source code to improve load time. This feature will be added back in a future release.
 
 
 ## [0.3.4] - 2025-02-17

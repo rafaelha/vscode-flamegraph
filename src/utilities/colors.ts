@@ -24,7 +24,7 @@ export function strToHue(str: string): number {
 }
 
 /**
- * Convert a function name to a hsl color.
+ * Convert a function name to an HSL color.
  * @param functionName - The function name.
  * @param theme - The color theme.
  * @returns The color for the function.
