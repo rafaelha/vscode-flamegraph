@@ -41,3 +41,8 @@ src/performance/*
 out/performance/*
 docs/*
 docker/*
+.claude
+.test-extensions
+CLAUDE.md
+.vscode-test.mjs
+settings.json

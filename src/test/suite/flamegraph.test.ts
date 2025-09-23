@@ -1,7 +1,8 @@
+import { expect } from 'chai';
 import { Flamegraph } from '../../flamegraph';
 
 describe('Flamegraph', () => {
-    test('should create a flamegraph with root node', () => {
+    it('should create a flamegraph with root node', () => {
         // Create a simple profile string with one sample
         const profileData = 'main.py (main.py:1) 1';
 
@@ -9,9 +10,8 @@ describe('Flamegraph', () => {
         const flamegraph = new Flamegraph(profileData);
 
         // Basic assertions
-        expect(flamegraph.root).toBeDefined();
-        expect(flamegraph.root.samples).toBe(1);
-        expect(flamegraph.root.depth).toBe(0);
-        expect(flamegraph.root.children.length).toBe(1);
+        expect(flamegraph.root.samples).to.equal(1);
+        expect(flamegraph.root.depth).to.equal(0);
+        expect(flamegraph.root.children.length).to.equal(1);
     });
 });
