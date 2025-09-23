@@ -1,8 +1,10 @@
 out
 dist
 old
+docker
 node_modules
 .vscode-test/
+.vscode
 *.vsix
 *.zip
 .env.local
