@@ -6,9 +6,12 @@ import { Flamegraph } from '../../flamegraph';
 describe('Flamegraph Performance', () => {
     let profileContent: string;
 
+    // Define the test fixtures directory as a constant, resolved from the current file
+    const FIXTURES_DIR = path.resolve(__dirname, '../../../src/test/fixtures');
+
     before(() => {
-        // Load the test profile file from source directory (not compiled output)
-        const testFilePath = path.join(__dirname, '../../../src/test/fixtures/large-profile.txt');
+        // Load the test profile file from the fixtures directory
+        const testFilePath = path.join(FIXTURES_DIR, 'large-profile.txt');
         profileContent = fs.readFileSync(testFilePath, 'utf8');
     });
 
