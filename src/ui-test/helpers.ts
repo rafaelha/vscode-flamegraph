@@ -39,7 +39,7 @@ export async function waitForFlamegraphWebView() {
                 return false;
             }
         },
-        20_000,
+        5_000,
         'Timed out waiting for Flamegraph WebView to load'
     );
 }
