@@ -10,6 +10,7 @@ describe('Flamegraph', () => {
         const flamegraph = new Flamegraph(profileData);
 
         // Basic assertions
+        expect(flamegraph.root).to.exist;
         expect(flamegraph.root.samples).to.equal(1);
         expect(flamegraph.root.depth).to.equal(0);
         expect(flamegraph.root.children.length).to.equal(1);
