@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { Workbench, VSBrowser, EditorView, WebView, By } from 'vscode-extension-tester';
 import * as path from 'path';
+import { waitForFlamegraphWebView } from './helpers';
 
 describe('Flamegraph webview', () => {
     let view: WebView;
@@ -8,8 +9,7 @@ describe('Flamegraph webview', () => {
         await new EditorView().closeAllEditors();
         await VSBrowser.instance.openResources(path.join('src', 'ui-test', 'resources', 'test-project', 'main.py'));
         await new Workbench().executeCommand('Flamegraph: Profile file with py-spy');
-        await VSBrowser.instance.driver.sleep(2000);
-
+        await waitForFlamegraphWebView();
         view = new WebView();
         await view.switchToFrame();
     });

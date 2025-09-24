@@ -1,5 +1,6 @@
 import * as path from 'path';
 import * as fs from 'fs';
+import { By, VSBrowser, WebView } from 'vscode-extension-tester';
 
 export const PYSPY_PROFILE_PATH = path.join('src', 'ui-test', 'resources', 'test-project', 'profile.pyspy');
 export const MEMRAY_PROFILE_PATH = path.join('src', 'ui-test', 'resources', 'test-project', 'profile.memray');
@@ -16,5 +17,29 @@ export async function cleanUpProfileFiles() {
                 // File might not exist, which is fine
             }
         })
+    );
+}
+
+export async function waitForFlamegraphWebView() {
+    return VSBrowser.instance.driver.wait(
+        async () => {
+            const view = new WebView();
+            try {
+                await view.switchToFrame();
+                // Wait for a known element inside the webview to confirm it has loaded
+                await view.findWebElement(By.className('codicon-code'));
+                view.switchBack();
+                return true;
+            } catch (err) {
+                try {
+                    await view.switchBack();
+                } catch (e) {
+                    /* noop */
+                }
+                return false;
+            }
+        },
+        20_000,
+        'Timed out waiting for Flamegraph WebView to load'
     );
 }

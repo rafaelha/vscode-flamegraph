@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { Workbench, VSBrowser, EditorView } from 'vscode-extension-tester';
 import * as path from 'path';
 import * as fs from 'fs';
-import { cleanUpProfileFiles, PYSPY_PROFILE_PATH, MEMRAY_PROFILE_PATH } from './helpers';
+import { cleanUpProfileFiles, PYSPY_PROFILE_PATH, MEMRAY_PROFILE_PATH, waitForFlamegraphWebView } from './helpers';
 
 describe('Run profilers', () => {
     beforeEach(async () => {
@@ -14,7 +14,7 @@ describe('Run profilers', () => {
         expect(fs.existsSync(PYSPY_PROFILE_PATH)).to.be.false;
         await VSBrowser.instance.openResources(path.join('src', 'ui-test', 'resources', 'test-project', 'main.py'));
         await new Workbench().executeCommand('Flamegraph: Profile file with py-spy');
-        await VSBrowser.instance.driver.sleep(2000);
+        await waitForFlamegraphWebView();
 
         expect(fs.existsSync(PYSPY_PROFILE_PATH)).to.be.true;
     });
@@ -24,7 +24,7 @@ describe('Run profilers', () => {
         await VSBrowser.instance.openResources(path.join('src', 'ui-test', 'resources', 'test-project', 'main.py'));
 
         await new Workbench().executeCommand('Flamegraph: Profile file with memray');
-        await VSBrowser.instance.driver.sleep(4000);
+        await waitForFlamegraphWebView();
 
         expect(fs.existsSync(MEMRAY_PROFILE_PATH)).to.be.true;
     });
