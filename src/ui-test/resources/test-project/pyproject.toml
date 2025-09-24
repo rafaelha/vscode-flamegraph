@@ -1,0 +1,10 @@
+[project]
+name = "test-project"
+version = "0.1.0"
+description = "Python test project"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "ipykernel>=6.30.1",
+    "memray>=1.18.0",
+]
