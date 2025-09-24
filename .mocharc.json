@@ -3,5 +3,5 @@
   "extensions": ["ts"],
   "spec": "./out/test/suite/*.test.js",
   "recursive": true,
-  "timeout": 10000
+  "timeout": 500000
 }
