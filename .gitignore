@@ -7,6 +7,7 @@ node_modules
 .vscode
 *.vsix
 *.zip
+.test-extensions
 .env.local
 
 *.png
@@ -19,3 +20,8 @@ node_modules
 flamegraph-react/public/flamegraph.json
 flamegraph-react/src/components/*.js
 flamegraph-react/src/components/*.map
+
+src/ui-test/resources/test-project/.venv
+*__pycache__*
+profile.pyspy
+profile.memray

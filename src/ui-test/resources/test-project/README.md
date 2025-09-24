@@ -1,0 +1,1 @@
+A test Python project for UI tests of the Flamegraph extension.

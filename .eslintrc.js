@@ -3,7 +3,7 @@ module.exports = {
         browser: true,
         es2021: true,
         node: true,
-        jest: true,
+        mocha: true,
     },
     extends: ['plugin:react/recommended', 'airbnb', 'prettier', 'plugin:prettier/recommended'],
     parser: '@typescript-eslint/parser',
@@ -35,7 +35,21 @@ module.exports = {
         'import/prefer-default-export': 'off',
         'class-methods-use-this': 'off',
         'no-param-reassign': 'off',
+        'import/no-extraneous-dependencies': [
+            'error',
+            {
+                devDependencies: ['src/test/**/*', 'src/ui-test/**/*'],
+            },
+        ],
     },
+    overrides: [
+        {
+            files: ['src/test/**/*', 'src/ui-test/**/*'],
+            rules: {
+                'no-unused-expressions': 'off',
+            },
+        },
+    ],
     settings: {
         'import/resolver': {
             typescript: {},
