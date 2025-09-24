@@ -10,7 +10,7 @@ describe('Run profilers', () => {
         await new EditorView().closeAllEditors();
     });
 
-    it('Run py-spy on Python fileand verify profile file was created', async () => {
+    it('Run py-spy on Python file and verify profile file was created', async () => {
         expect(fs.existsSync(PYSPY_PROFILE_PATH)).to.be.false;
         await VSBrowser.instance.openResources(path.join('src', 'ui-test', 'resources', 'test-project', 'main.py'));
         await new Workbench().executeCommand('Flamegraph: Profile file with py-spy');
