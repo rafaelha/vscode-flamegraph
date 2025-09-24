@@ -23,7 +23,5 @@ flamegraph-react/src/components/*.map
 
 src/ui-test/resources/test-project/.venv
 *__pycache__*
-*.py
-*.ipynb
-*.pyspy
-*.memray
+profile.pyspy
+profile.memray
