@@ -634,8 +634,7 @@ export async function selectPid(): Promise<string | undefined> {
                     } else {
                         // Otherwise fall back to the regular prompt
                         quickPick.hide();
-                        promptForPid().then(resolve);
-                        return;
+                        resolve(promptForPid());
                     }
                 } else {
                     // User selected a process from the list
