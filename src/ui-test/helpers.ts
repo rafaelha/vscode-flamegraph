@@ -43,3 +43,34 @@ export async function waitForFlamegraphWebView() {
         'Timed out waiting for Flamegraph WebView to load'
     );
 }
+
+/**
+ * Gets text from a view with retry logic for ElementNotInteractableError
+ * @param view The view to get text from (must have a getText() method)
+ * @param timeoutMs Maximum time to retry in milliseconds (default: 3000)
+ * @param retryDelayMs Delay between retries in milliseconds (default: 100)
+ * @returns Promise that resolves to the text content
+ */
+export async function getTextWithRetry(
+    view: { getText(): Promise<string> },
+    timeoutMs: number = 3000,
+    retryDelayMs: number = 100
+): Promise<string> {
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < timeoutMs) {
+        try {
+            // eslint-disable-next-line no-await-in-loop
+            return await view.getText();
+        } catch (error) {
+            if (error instanceof Error && error.name === 'ElementNotInteractableError') {
+                // eslint-disable-next-line no-await-in-loop
+                await VSBrowser.instance.driver.sleep(retryDelayMs);
+                continue;
+            }
+            throw error;
+        }
+    }
+
+    return view.getText();
+}

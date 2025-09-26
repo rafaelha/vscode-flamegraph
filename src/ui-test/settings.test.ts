@@ -9,6 +9,7 @@ import {
     VSBrowser,
     Workbench,
 } from 'vscode-extension-tester';
+import { getTextWithRetry } from './helpers';
 
 describe('Settings Editor sample tests', () => {
     let settings: SettingsEditor;
@@ -57,8 +58,7 @@ describe('Settings Editor sample tests', () => {
                 );
                 await new Workbench().executeCommand(`Flamegraph: Profile file with ${profiler}`);
 
-                await VSBrowser.instance.driver.sleep(profiler === 'Py-spy' ? 500 : 3000);
-                const text = await view.getText();
+                const text = await getTextWithRetry(view);
                 await view.killTerminal();
 
                 if (newValue) expect(text).to.contain(commandFlag);
