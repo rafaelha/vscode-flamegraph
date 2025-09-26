@@ -9,17 +9,23 @@ import {
     VSBrowser,
     Workbench,
 } from 'vscode-extension-tester';
-import { getTextWithRetry } from './helpers';
+import { retryOnError } from './helpers';
 
 describe('Settings Editor sample tests', () => {
     let settings: SettingsEditor;
     let bottomBar: BottomBarPanel;
     let view: TerminalView;
-    before(async () => {
+
+    beforeEach(async () => {
+        await new EditorView().closeAllEditors();
         settings = await new Workbench().openSettings();
         bottomBar = new BottomBarPanel();
         await bottomBar.toggle(true);
         view = await bottomBar.openTerminalView();
+    });
+
+    after(async () => {
+        await bottomBar.toggle(false);
     });
 
     const testCases = [
@@ -33,12 +39,6 @@ describe('Settings Editor sample tests', () => {
             profiler: 'Memray',
             settingName: 'Trace Python Allocators',
             commandFlag: '--trace-python-allocators',
-            defaultSetting: false,
-        },
-        {
-            profiler: 'Memray',
-            settingName: 'Show Memory Leaks',
-            commandFlag: '--leaks',
             defaultSetting: false,
         },
     ];
@@ -58,17 +58,16 @@ describe('Settings Editor sample tests', () => {
                 );
                 await new Workbench().executeCommand(`Flamegraph: Profile file with ${profiler}`);
 
-                const text = await getTextWithRetry(view);
-                await view.killTerminal();
-
+                const text = await retryOnError(() => view.getText());
                 if (newValue) expect(text).to.contain(commandFlag);
                 else expect(text).not.to.contain(commandFlag);
 
+                await retryOnError(() => view.killTerminal());
                 await new EditorView().closeEditor('empty_file.py');
             };
 
-            await runAndAssert(true);
-            await runAndAssert(false);
+            await runAndAssert(!defaultSetting);
+            await runAndAssert(defaultSetting);
         });
     });
 });

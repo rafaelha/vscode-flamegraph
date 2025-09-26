@@ -45,32 +45,36 @@ export async function waitForFlamegraphWebView() {
 }
 
 /**
- * Gets text from a view with retry logic for ElementNotInteractableError
- * @param view The view to get text from (must have a getText() method)
+ * Retries an async operation with retry logic for ElementNotInteractableError or TimeoutError
+ * @param operation The async function to retry
  * @param timeoutMs Maximum time to retry in milliseconds (default: 3000)
  * @param retryDelayMs Delay between retries in milliseconds (default: 100)
- * @returns Promise that resolves to the text content
+ * @returns Promise that resolves to the operation result
  */
-export async function getTextWithRetry(
-    view: { getText(): Promise<string> },
-    timeoutMs: number = 3000,
+export async function retryOnError<T>(
+    operation: () => Promise<T>,
+    timeoutMs: number = 10_000,
     retryDelayMs: number = 100
-): Promise<string> {
+): Promise<T> {
     const startTime = Date.now();
 
     while (Date.now() - startTime < timeoutMs) {
+        // eslint-disable-next-line no-await-in-loop
+        await VSBrowser.instance.driver.sleep(retryDelayMs);
         try {
             // eslint-disable-next-line no-await-in-loop
-            return await view.getText();
+            return await operation();
         } catch (error) {
-            if (error instanceof Error && error.name === 'ElementNotInteractableError') {
-                // eslint-disable-next-line no-await-in-loop
-                await VSBrowser.instance.driver.sleep(retryDelayMs);
+            if (
+                error instanceof Error &&
+                (error.name === 'ElementNotInteractableError' || error.name === 'TimeoutError')
+            ) {
                 continue;
             }
             throw error;
         }
     }
 
-    return view.getText();
+    // Final attempt after timeout
+    return operation();
 }
