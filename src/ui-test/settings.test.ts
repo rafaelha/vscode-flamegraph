@@ -22,16 +22,29 @@ describe('Settings Editor sample tests', () => {
     });
 
     const testCases = [
-        { settingName: 'Gil', commandFlag: '--gil', defaultSetting: false },
-        { settingName: 'Subprocesses', commandFlag: '--subprocesses', defaultSetting: true },
-        { settingName: 'Native', commandFlag: '--native', defaultSetting: false },
-        { settingName: 'Idle', commandFlag: '--idle', defaultSetting: false },
-        { settingName: 'Nonblocking', commandFlag: '--nonblocking', defaultSetting: false },
+        { profiler: 'Py-spy', settingName: 'Gil', commandFlag: '--gil', defaultSetting: false },
+        { profiler: 'Py-spy', settingName: 'Subprocesses', commandFlag: '--subprocesses', defaultSetting: true },
+        { profiler: 'Py-spy', settingName: 'Native', commandFlag: '--native', defaultSetting: false },
+        { profiler: 'Py-spy', settingName: 'Idle', commandFlag: '--idle', defaultSetting: false },
+        { profiler: 'Py-spy', settingName: 'Nonblocking', commandFlag: '--nonblocking', defaultSetting: false },
+        { profiler: 'Memray', settingName: 'Native', commandFlag: '--native', defaultSetting: false },
+        {
+            profiler: 'Memray',
+            settingName: 'Trace Python Allocators',
+            commandFlag: '--trace-python-allocators',
+            defaultSetting: false,
+        },
+        {
+            profiler: 'Memray',
+            settingName: 'Show Memory Leaks',
+            commandFlag: '--leaks',
+            defaultSetting: false,
+        },
     ];
 
-    testCases.forEach(({ settingName, commandFlag, defaultSetting }) => {
-        it(`Manipulate setting and verify command flag: ${settingName}`, async () => {
-            const setting = await settings.findSetting(settingName, 'Flamegraph', 'Py-spy');
+    testCases.forEach(({ profiler, settingName, commandFlag, defaultSetting }) => {
+        it(`Manipulate setting and verify command flag: Flamegraph > ${profiler} > ${settingName}`, async () => {
+            const setting = await settings.findSetting(settingName, 'Flamegraph', profiler);
             const simpleDialogSetting = setting as CheckboxSetting;
             const value = await simpleDialogSetting.getValue();
             expect(value).to.equal(defaultSetting);
@@ -42,9 +55,9 @@ describe('Settings Editor sample tests', () => {
                 await VSBrowser.instance.openResources(
                     path.join('src', 'ui-test', 'resources', 'test-project', 'empty_file.py')
                 );
-                await new Workbench().executeCommand('Flamegraph: Profile file with py-spy');
+                await new Workbench().executeCommand(`Flamegraph: Profile file with ${profiler}`);
 
-                await VSBrowser.instance.driver.sleep(500);
+                await VSBrowser.instance.driver.sleep(profiler === 'Py-spy' ? 500 : 3000);
                 const text = await view.getText();
                 await view.killTerminal();
 
