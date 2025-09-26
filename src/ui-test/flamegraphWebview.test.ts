@@ -45,4 +45,27 @@ describe('Flamegraph webview', () => {
 
         await toggle.click();
     });
+
+    it('Filters module by clicking on the module name in legend', async () => {
+        const toggle = await view.findWebElement(
+            By.xpath(
+                "//label[contains(@class,'flex items-center cursor-pointer') " +
+                    "and following-sibling::span[normalize-space()='main.py']]"
+            )
+        );
+        const expectedCode = ['total += sqrt(i)', 'main()'];
+        let elements = await view.findWebElements(By.css('div.node-label > span:first-of-type'));
+        let texts = new Set(await Promise.all(elements.map((element) => element.getText())));
+        const allCodeIncluded = expectedCode.every((code) => texts.has(code));
+        expect(allCodeIncluded).to.be.true;
+
+        await toggle.click();
+
+        elements = await view.findWebElements(By.css('div.node-label > span:first-of-type'));
+        texts = new Set(await Promise.all(elements.map((element) => element.getText())));
+        const anyCodeIncluded = expectedCode.some((code) => texts.has(code));
+        expect(anyCodeIncluded).to.be.false;
+
+        await toggle.click();
+    });
 });

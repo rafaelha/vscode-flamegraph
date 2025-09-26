@@ -222,7 +222,6 @@ export function createMemrayProfileTask(
 
     const native = definition.pid ? config.get<boolean>('nativeAttach', false) : config.get<boolean>('native', false);
     const leaks = config.get<boolean>('showMemoryLeaks', false);
-    // const fork = config.get<boolean>('followFork', false);
     const fork = false; // TODO: enable follow-fork flag. Currently, memray seems to create one .bin file per process
     const allocators = config.get<boolean>('tracePythonAllocators', false);
 
