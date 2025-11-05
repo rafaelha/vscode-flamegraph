@@ -307,7 +307,7 @@ export async function getOrInstallMemray(): Promise<string | undefined> {
 /**
  * Get the path to py-spy. If py-spy is not found, the user will be guided to install it.
  * The global python environment will be checked first, then the currently selected virtual environment.
- * For installation py-spy, the global python environment is preferred
+ * For installing py-spy, the global python environment is preferred
  *
  * @returns The path to py-spy or undefined if installation is aborted or fails.
  */
@@ -421,7 +421,7 @@ export async function executeCodeOnIPythonKernel(code: string): Promise<string |
                 if (outputItem.mime === ErrorMimeType) {
                     const error = JSON.parse(textDecoder.decode(outputItem.data)) as Error;
                     vscode.window.showErrorMessage(
-                        `Could not get notebook kernel info:${error.name}. ${error.message},/n ${error.stack}`
+                        `Could not get notebook kernel info:${error.name}. ${error.message},\n ${error.stack}`
                     );
                 } else {
                     decodedOutput = textDecoder.decode(outputItem.data);

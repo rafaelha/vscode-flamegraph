@@ -476,7 +476,7 @@ async function handleNotebookMemoryProfiling(notebook: vscode.NotebookDocument, 
     const success = await attachMemoryProfiler(pid, 'attach', true);
     if (!success) return;
 
-    // small delay to ensure memrayis running
+    // small delay to ensure memray is running
     await new Promise((resolve) => {
         setTimeout(resolve, 500);
     });

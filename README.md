@@ -131,7 +131,6 @@ Or, you can profile a specific unit test (via `pytest`) with the following task 
 			],
 			"subprocesses": false,
 			"native": true,
-			"subprocesses": false,
 			"gil": false,
 			"idle": false,
 			"nonblocking": false,
